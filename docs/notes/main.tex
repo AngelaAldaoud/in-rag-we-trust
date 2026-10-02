@@ -1,0 +1,394 @@
+% ============================================================
+% NLP-P5 · "In RAG We Trust?" — Project working notes
+% Course: Natural Language Processing (Prof. A. Ferrara), UniMi
+% ============================================================
+\documentclass[11pt,a4paper]{report}
+
+% ---------- 1. Fonts and encoding ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+% ---------- 2. Page layout ----------
+\usepackage[margin=2.5cm]{geometry}
+
+% ---------- 3. Mathematics ----------
+\usepackage{amsmath, amssymb}
+
+% ---------- 4. Tables ----------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% ---------- 5. Lists ----------
+\usepackage{enumitem}
+
+% ---------- 6. Colours and boxes ----------
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+
+\newtcolorbox{definitionbox}[1]{%
+  colback=blue!4, colframe=blue!50!black,
+  fonttitle=\bfseries, title={Definition: #1}}
+
+\newtcolorbox{examplebox}{%
+  colback=gray!6, colframe=gray!60!black,
+  fonttitle=\bfseries, title={Example}}
+
+\newtcolorbox{notebox}{%
+  colback=yellow!8, colframe=orange!70!black,
+  fonttitle=\bfseries, title={Note}}
+
+\newtcolorbox{decisionbox}[1]{%
+  colback=green!5, colframe=green!40!black,
+  fonttitle=\bfseries, title={Decision #1}}
+
+% ---------- 7. Citations ----------
+\usepackage[round,authoryear]{natbib}
+
+% ---------- 8. Hyperlinks (always load last) ----------
+\usepackage[colorlinks=true,
+            linkcolor=blue!50!black,
+            citecolor=green!40!black,
+            urlcolor=blue!70!black]{hyperref}
+
+% ---------- 9. Title information ----------
+\title{\textbf{In RAG We Trust?}\\[4pt]
+       \large Project Working Notes --- NLP Final Project (P5)}
+\author{Angela\\ Università degli Studi di Milano}
+\date{\today}
+
+% ============================================================
+\begin{document}
+
+\pagenumbering{alph}    % title page gets letter numbering (avoids a duplicate "page 1")
+\maketitle
+\pagenumbering{arabic}  % normal numbering 1, 2, 3 ... from here on
+\tableofcontents
+
+\chapter{Project Overview}\label{ch:overview}
+
+\chapter{Literature Audit (A1)}\label{ch:literature}
+\section{Scope of the audit}\label{sec:audit-scope}
+
+The project specification for P5 lists three references
+\citep{lewis2020rag,zhou2024trustworthiness,singal2024evidence} and states
+that they are a starting guideline. We add the two empirical studies closest
+to our experiment \citep{jin2024tugofwar,wu2024clasheval}: both measure how
+LLMs behave when retrieved evidence is false or conflicting.
+Table~\ref{tab:audit} summarises each work.
+
+\begin{notebox}
+This area is well studied. Our study does not claim a new finding; its
+contribution is a careful, controlled measurement and an honest discussion
+of the results.
+\end{notebox}
+
+\section{Annotated table}\label{sec:audit-table}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{2.2cm}
+  >{\raggedright\arraybackslash}p{3.9cm}
+  >{\raggedright\arraybackslash}p{3.9cm}
+  >{\raggedright\arraybackslash}p{4.2cm}}
+\caption{Annotated literature audit.}\label{tab:audit}\\
+\toprule
+\textbf{Reference} & \textbf{What they did} & \textbf{What they found} & \textbf{Relation to our study} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Reference} & \textbf{What they did} & \textbf{What they found} & \textbf{Relation to our study} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\citet{lewis2020rag}
+& Combined a pre-trained seq2seq generator with a dense vector index of
+  Wikipedia, searched by a neural retriever; trained the two together.
+& State of the art on three open-domain QA tasks; more specific, diverse
+  and factual generation than a model without retrieval.
+& Origin of RAG. It assumes the retrieved documents are correct; we test
+  what happens when they are not. We use the modern form (frozen
+  instruction-tuned LLM + separate retriever, no training). \\
+\midrule
+
+\citet{zhou2024trustworthiness}
+& Survey. Organised RAG trustworthiness into six dimensions: factuality,
+  robustness, fairness, transparency, accountability, privacy.
+& Most RAG research targets accuracy and efficiency; trustworthiness is
+  under-explored. Inappropriate or poorly used retrieval can produce
+  undesirable output.
+& Gives our vocabulary: the study sits in the \emph{robustness} and
+  \emph{factuality} dimensions. \\
+\midrule
+
+\citet{singal2024evidence}
+& RAG pipeline that retrieves evidence sentences and gives them, with the
+  claim, to an LLM for classification; few-shot in-context learning;
+  AVeriTeC dataset.
+& AVeriTeC score of 0.33, a 22\% absolute improvement over the baseline.
+& An evidence-based system whose output depends on the evidence being
+  honest. We stress exactly that dependency. \\
+\midrule
+
+\citet{jin2024tugofwar}
+& Evaluation framework for knowledge conflicts: (i) internal memory vs.\
+  external sources; (ii) truthful vs.\ irrelevant vs.\ misleading evidence.
+  Proposed a decoding method (CD2).
+& Models follow a ``majority rule'' (trust evidence that appears more
+  often) and show confirmation bias; stronger models can stick to wrong
+  internal memory.
+& Closest prior result. Our accuracy-vs-poison-ratio curve partly
+  \emph{replicates} the majority-rule finding. We add poison types,
+  meta-prompts and hedging behaviour, on open 4-bit models. \\
+\midrule
+
+\citet{wu2024clasheval}
+& Benchmark of 1{,}200+ questions in six domains; answers in the documents
+  perturbed from subtle to blatant errors; six LLMs tested.
+& Models adopted incorrect retrieved content, overriding a correct prior,
+  over 60\% of the time; the less realistic the error, the less often it
+  was adopted.
+& Poison plausibility matters, which motivates several poison types. Also a
+  warning: blatant poisons would make models look more robust than they
+  are. \\
+
+\end{longtable}
+}
+\section{Positioning of our study}\label{sec:positioning}
+
+We study how open, instruction-tuned language models behave inside a RAG
+pipeline when part of the retrieved evidence is deliberately false.
+That language models can be misled by false context, and that they tend to
+follow the answer supported by most passages, is already established
+\citep{jin2024tugofwar,wu2024clasheval}; we do not claim these findings as new.
+Our contribution is a controlled measurement in a single, fully reproducible
+setting: we vary the share of poisoned passages, the kind of poison, and the
+instructions given to the model, and we measure not only whether the final
+answer is correct but also whether the model notices the conflict, hedges,
+or abstains.
+Two limits frame the results from the start. First, we test small open models
+in 4-bit precision on a single GPU, so the findings may not transfer to larger
+or proprietary models. Second, our poisoned passages are synthetic; real-world
+contradictions are often subtler, so our numbers describe a controlled stress
+test rather than everyday conditions.
+Within these limits, the study asks a practical question: do simple
+prompt-level instructions give a measurable protection against poisoned
+retrieval, at a cost that a student-level compute budget can afford?
+
+
+\chapter{Research Questions and Formal Problem (A2)}\label{ch:rq}
+
+\chapter{Experimental Design (A3)}\label{ch:design}
+
+\chapter{Environment and Repository (A4)}\label{ch:repo}
+
+\chapter{Decision Log}\label{ch:decisions}
+Each decision records what was chosen, why, which alternatives were
+rejected, and a one-sentence justification for the oral discussion.
+
+\section{Block A}\label{sec:decisions-a}
+
+\begin{decisionbox}{D1 --- Repository created at the end of A1}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Create the GitHub repository at the end of A1 with only a
+    README and a \texttt{docs/} folder; A4 builds the full package layout
+    inside the same repository.
+  \item[Why.] Every phase must end with a push, and the commit history then
+    records how the methodology was designed.
+  \item[Alternatives.] Push everything only in A4 (breaks the push-per-phase
+    rule, risks losing work); build the full layout now (does A4's work out
+    of order).
+  \item[Interview line.] ``I versioned the research design from day one, so
+    the repository shows how the methodology was decided.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D2 --- Cite version 1 of the Zhou et al.\ survey}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Cite arXiv:2409.10102 version 1 (September 2024).
+  \item[Why.] It is the version listed in the course specification; a 2026
+    revision changed the author list and added a benchmark.
+  \item[Alternatives.] Cite only the latest version (author list would not
+    match the course reference).
+  \item[Interview line.] ``I cite the version assigned in the course and I am
+    aware of the later revision.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D3 --- Spelling ``Singal''}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Use the spelling ``Singal'' from the ACL Anthology record.
+  \item[Why.] It is the official published record and matches the course
+    specification; the authors' repository spells it ``Singhal''.
+  \item[Alternatives.] Use the repository spelling (not the official record).
+  \item[Interview line.] ``I follow the official proceedings record.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D4 --- Search for related work beyond the course list}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Search for closely related work missing from the plan;
+    five verified papers were identified. \emph{Partly superseded by D7:}
+    only two are kept.
+  \item[Why.] The papers closest to our experiment protect the paper from
+    presenting known results as new.
+  \item[Alternatives.] Rely only on the course list (leaves the closest
+    empirical work uncited).
+  \item[Interview line.] ``I checked for the closest prior studies before
+    defining my research questions.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D5 --- Three-level reading plan}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Read the three course references; know Jin et al.\ and
+    ClashEval from verified summaries; read further papers only if time
+    allows.
+  \item[Why.] The project must be completed in 16 days; the course grades the
+    study and its critical discussion, not the number of papers read.
+  \item[Alternatives.] Read every candidate paper (not feasible in the time
+    available).
+  \item[Interview line.] ``I studied the course references in depth and
+    positioned my work against the closest empirical studies.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D6 --- LaTeX working notes, separate from the paper}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Keep these working notes in the \texttt{report} class; the
+    final 4--8 page paper is written in the Springer template in Block G.
+  \item[Why.] The paper template and page limit are fixed; the notes collect
+    the full design and are condensed into the paper later.
+  \item[Alternatives.] Start the Springer paper now (wrong place for notes,
+    belongs to Block G); Markdown notes (LaTeX was requested).
+  \item[Interview line.] ``I kept a versioned research notebook during design
+    and condensed it into the paper.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D7 --- Five references (Option A)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Cite the three course references plus Jin et al.\ (2024)
+    and ClashEval; the eight candidates from the plan are not cited.
+  \item[Why.] The course PDF lists exactly three references as a starting
+    guideline and requires only a short literature discussion; the two added
+    studies are the closest to our experiment. Every entry was checked
+    against an official source.
+  \item[Alternatives.] Also cite the eight candidates (richer, but costly in
+    time and space in a 4--8 page paper).
+  \item[Interview line.] ``I built on the course references and positioned my
+    results against the two closest empirical studies.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D8 --- ``Relation to our study'' instead of ``Gap''}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The last column of Table~\ref{tab:audit} describes how
+    each work relates to ours, not what it ``missed''.
+  \item[Why.] Claiming a gap requires full knowledge of each paper's setup;
+    an unverified gap claim could be wrong.
+  \item[Alternatives.] A ``Gap'' column (pushes toward inflated claims).
+  \item[Interview line.] ``I described the relation to each work without
+    claiming gaps I could not verify.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D9 --- No novelty claim; limits stated up front}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The positioning (Section~\ref{sec:positioning}) contains no
+    novelty claim and states the two main limits: small 4-bit models and
+    synthetic poisons.
+  \item[Why.] The area is well studied; naming weaknesses before a reviewer
+    does is part of an honest discussion.
+  \item[Alternatives.] Frame the study as novel (easy to attack and untrue).
+  \item[Interview line.] ``My contribution is rigour and honest discussion in
+    a controlled, reproducible setting.''
+\end{description}
+\end{decisionbox}
+
+
+
+\chapter{AI-Usage Log}\label{ch:ailog}
+The course requires a disclaimer stating which AI models were used, for what
+purposes, and to what extent their outputs were modified or verified. This
+chapter is the running record from which that disclaimer will be written.
+
+\begin{notebox}
+Model used in Block A: Claude Opus 5.5 (Anthropic), in a chat interface with
+web search. All research decisions were taken by the student; every
+bibliographic fact was checked against an official source (NeurIPS, AAAI,
+ACL Anthology, arXiv) or the course PDF.
+\end{notebox}
+
+\section{Block A}\label{sec:ailog-a}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{0.6cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.8cm}}
+\caption{AI usage during Block A.}\label{tab:ailog-a}\\
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & Recover the project plan from the organizer chat
+  & Summary of the plan and of Block A
+  & Confirmed by the student against her own chat \\
+2 & Plan phase A1 and the working rules
+  & Step list; rules for explaining details and justifying decisions
+  & Reviewed and accepted by the student; rules added at her request \\
+3 & Verify the three course references
+  & Citations and plain-language summaries
+  & Checked against NeurIPS, arXiv and ACL Anthology records \\
+4 & Check the literature requirement
+  & Answer based on the requirements extracted earlier
+  & Later confirmed directly in the course PDF (entry 8) \\
+5 & Search for closely related work
+  & Five candidate papers with summaries
+  & Each checked against its official record; scope reduced by the student (D7) \\
+6 & Plan the reading load for 16 days
+  & Three-level reading plan
+  & Priority set by the student \\
+7 & Set up the LaTeX working notes
+  & Preamble and chapter skeleton
+  & Test-compiled; one warning found and fixed \\
+8 & Confirm the P5 references
+  & Extract of the P5 reference list
+  & Read directly from the course PDF \\
+9 & Build the bibliography
+  & \texttt{refs.bib} with five entries
+  & Fields copied from official records; test-compiled \\
+10 & Annotated literature table
+  & Chapter~\ref{ch:literature}, Table~\ref{tab:audit}
+  & Content from verified sources only; test-compiled \\
+11 & Positioning of the study
+  & Section~\ref{sec:positioning}
+  & No novelty claim; test-compiled \\
+12 & Decision log
+  & Chapter~\ref{ch:decisions} (D1--D9)
+  & Matches the decisions taken in the chat; test-compiled \\
+13 & AI-usage log
+  & This chapter
+  & Test-compiled \\
+\end{longtable}
+}
+
+% ---------- Bibliography (activated once refs.bib exists) ----------
+ \bibliographystyle{plainnat}
+ \bibliography{refs}
+
+\end{document}
