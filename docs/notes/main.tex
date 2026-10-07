@@ -181,7 +181,263 @@ prompt-level instructions give a measurable protection against poisoned
 retrieval, at a cost that a student-level compute budget can afford?
 
 
-\chapter{Research Questions and Formal Problem (A2)}\label{ch:rq}
+\chapter{Research Questions and Formal Problem 
+(A2)}\label{ch:rq}
+\section{Definitions}\label{sec:definitions}
+
+This section fixes the vocabulary of the study. Every later research
+question, metric and table uses these terms with exactly this meaning.
+Concrete values (datasets, number of passages, which models) are chosen in
+the experimental design (Chapter~\ref{ch:design}).
+
+\begin{definitionbox}{Question and gold answer}
+A \emph{question} $q$ is a factual question taken from a question-answering
+dataset. Each question has one \emph{gold answer} $a^{*}$: the answer the
+dataset marks as correct.
+\end{definitionbox}
+
+\begin{definitionbox}{Passage and context}
+A \emph{passage} $p$ is a short piece of text (a few sentences). The
+\emph{context} of question $q$ is the ordered list of $k$ passages shown to
+the model together with the question:
+\[
+  C(q) = (p_1, p_2, \dots, p_k).
+\]
+The order matters: the same passages in a different order form a different
+context.
+\end{definitionbox}
+
+\begin{definitionbox}{Clean passage}
+A passage is \emph{clean} if it is consistent with the gold answer $a^{*}$.
+\end{definitionbox}
+
+\begin{definitionbox}{Poisoned passage and target answer}
+A passage is \emph{poisoned} if it was written on purpose to support a
+specific false answer $\tilde{a} \neq a^{*}$, called the \emph{target
+answer}. All poisoned passages for the same question support the
+\emph{same} target answer $\tilde{a}$.
+\end{definitionbox}
+
+\begin{definitionbox}{Poison ratio}
+If $m$ of the $k$ passages in $C(q)$ are poisoned, the \emph{poison ratio}
+is
+\[
+  \rho = \frac{m}{k}, \qquad 0 \le \rho \le 1 .
+\]
+$\rho = 0$ is a fully clean context; $\rho = 1$ is a fully poisoned one.
+\end{definitionbox}
+
+\begin{definitionbox}{Poison type}
+The \emph{poison type} $\tau$ is the method used to build the poisoned
+passages (for example, swapping the correct entity for another one, or
+adding a false claim of authority). $\mathcal{T}$ denotes the set of poison
+types studied.
+\end{definitionbox}
+
+\begin{definitionbox}{Prompt condition}
+The \emph{prompt condition} $\pi$ is the instruction given to the model
+together with the question and the context (for example, a plain
+instruction to answer, or an instruction to check the passages for
+consistency first). $\Pi$ denotes the set of prompt conditions studied.
+\end{definitionbox}
+
+\begin{definitionbox}{Model and response}
+A \emph{model} $M$ is a language model used without any training. Given a
+prompt condition, a question and a context, it produces a free-text
+\emph{response}
+\[
+  r = M\big(\pi, q, C(q)\big).
+\]
+From $r$ we extract the model's \emph{final answer} $\hat{a}$; if the model
+gives no answer, $\hat{a} = \varnothing$.
+\end{definitionbox}
+
+\begin{definitionbox}{Outcome}
+Each response receives exactly one \emph{outcome} $o \in
+\{\textsc{Correct}, \textsc{Poisoned}, \textsc{OtherWrong},
+\textsc{Abstain}\}$:
+\begin{itemize}[nosep]
+  \item \textsc{Correct}: $\hat{a}$ matches the gold answer $a^{*}$;
+  \item \textsc{Poisoned}: $\hat{a}$ matches the target answer $\tilde{a}$;
+  \item \textsc{OtherWrong}: $\hat{a}$ is given but matches neither;
+  \item \textsc{Abstain}: no answer is given ($\hat{a} = \varnothing$).
+\end{itemize}
+\end{definitionbox}
+
+\begin{definitionbox}{Conflict flag}
+Independently of the outcome, a response has a \emph{conflict flag}
+$f \in \{0, 1\}$: $f = 1$ if the response explicitly states that the
+passages disagree or that some of them may be unreliable, and $f = 0$
+otherwise.
+\end{definitionbox}
+
+\begin{notebox}
+The outcome and the conflict flag are kept separate on purpose: a model can
+notice the conflict \emph{and still} answer correctly, wrongly, or not at
+all. The exact rules for deciding when two answers ``match'' are fixed in
+Chapter~\ref{ch:design}.
+\end{notebox}
+\section{Formal problem definition}\label{sec:formal}
+
+\paragraph{Data.}
+Let $\mathcal{Q} = \{(q_i, a^{*}_i)\}_{i=1}^{N}$ be a set of $N$ questions
+with their gold answers. For each question $q_i$ we have:
+\begin{itemize}[nosep]
+  \item a pool of clean passages $P^{+}(q_i)$;
+  \item one target answer $\tilde{a}_i \neq a^{*}_i$;
+  \item for each poison type $\tau \in \mathcal{T}$, a pool of poisoned
+        passages $P^{-}_{\tau}(q_i)$, all supporting $\tilde{a}_i$.
+\end{itemize}
+
+\paragraph{Context construction.}
+Given a poison ratio $\rho$ and a poison type $\tau$, the context of $q_i$
+is built by taking $m = \rho k$ passages from $P^{-}_{\tau}(q_i)$ and
+$k - m$ passages from $P^{+}(q_i)$, and placing them in a random order
+$\sigma_i$:
+\[
+  C_{\rho,\tau}(q_i) = \sigma_i\big(p^{-}_{1}, \dots, p^{-}_{m},\;
+                                   p^{+}_{1}, \dots, p^{+}_{k-m}\big).
+\]
+
+\paragraph{Experimental condition.}
+An \emph{experimental condition} is a tuple
+\[
+  \theta = (M, \pi, \tau, \rho) \in
+  \mathcal{M} \times \Pi \times \mathcal{T} \times \mathcal{R},
+\]
+where $\mathcal{M}$ is the set of models and $\mathcal{R}$ the set of
+poison ratios studied. Under condition $\theta$, question $q_i$ produces
+\[
+  r_i(\theta) = M\big(\pi, q_i, C_{\rho,\tau}(q_i)\big),
+\]
+with outcome $o_i(\theta)$ and conflict flag $f_i(\theta)$ as defined in
+Section~\ref{sec:definitions}.
+
+\paragraph{Quantities of interest.}
+For each condition $\theta$ we estimate four rates over the $N$ questions,
+where $\mathbb{1}[\cdot]$ is $1$ if the statement inside is true and $0$
+otherwise:
+\begin{align*}
+  \mathrm{Acc}(\theta)     &= \tfrac{1}{N}\textstyle\sum_{i=1}^{N}
+                              \mathbb{1}\big[o_i(\theta)=\textsc{Correct}\big],\\
+  \mathrm{ASR}(\theta)     &= \tfrac{1}{N}\textstyle\sum_{i=1}^{N}
+                              \mathbb{1}\big[o_i(\theta)=\textsc{Poisoned}\big],\\
+  \mathrm{Abst}(\theta)    &= \tfrac{1}{N}\textstyle\sum_{i=1}^{N}
+                              \mathbb{1}\big[o_i(\theta)=\textsc{Abstain}\big],\\
+  \mathrm{Flag}(\theta)    &= \tfrac{1}{N}\textstyle\sum_{i=1}^{N} f_i(\theta).
+\end{align*}
+$\mathrm{Acc}$ is the accuracy; $\mathrm{ASR}$ is the \emph{attack success
+rate}, the share of answers in which the poison succeeded; $\mathrm{Abst}$
+is the abstention rate; $\mathrm{Flag}$ is the conflict-flag rate.
+
+\paragraph{Problem.}
+The study estimates how these rates change as one factor of $\theta$ varies
+while the others are held fixed: as a function of $\rho$ (robustness
+curve), between prompt conditions $\pi$ (effect of meta-prompts), between
+poison types $\tau$, and between models $M$. Because the same $N$ questions
+are used in every condition, all comparisons are \emph{paired}: each
+question serves as its own control.
+
+\begin{notebox}
+Statistical estimators, confidence intervals, self-consistency and the
+remaining course metrics are defined in Chapter~\ref{ch:design}. The value
+of $k$ and the sets $\mathcal{M}$, $\Pi$, $\mathcal{T}$, $\mathcal{R}$ are
+fixed there; they must make $m = \rho k$ a whole number.
+\end{notebox}
+
+\section{Hypotheses}\label{sec:hypotheses}
+
+The hypotheses below were written \emph{before} any experiment was run.
+Where a hypothesis follows from prior work, the source is cited; where it
+is our own expectation, this is stated. A result that contradicts a
+hypothesis is reported and discussed, not hidden.
+
+\begin{description}[leftmargin=0pt]
+  \item[H1 (for RQ1).] As the poison ratio $\rho$ grows, $\mathrm{Acc}$
+    decreases and $\mathrm{ASR}$ increases. The change is steepest around
+    $\rho = 0.5$, where the poisoned passages become the majority,
+    following the ``majority rule'' reported by \citet{jin2024tugofwar}.
+    At $\rho = 1$, $\mathrm{ASR}$ is high even for questions the model
+    could answer correctly without context, as models often override a
+    correct prior with false context \citep{wu2024clasheval}.
+
+  \item[H2 (for RQ2).] \emph{Our expectation.} Meta-prompts lower
+    $\mathrm{ASR}$ mainly at intermediate ratios ($0 < \rho < 1$), where
+    clean passages are present to compare against; at $\rho = 1$ they
+    help little, because no clean passage contradicts the poison. On clean
+    contexts ($\rho = 0$) they cause a small loss of accuracy and a higher
+    abstention rate.
+
+  \item[H3 (for RQ3).] \emph{Our expectation.} $\mathrm{Flag}$ is low at
+    $\rho = 0$, highest at intermediate ratios, and low again at
+    $\rho = 1$, because only mixed contexts contain passages that disagree
+    with each other. Responses with $f = 1$ show a lower $\mathrm{ASR}$
+    than responses with $f = 0$ under the same condition.
+
+  \item[H4 (for RQ4).] Poison types that look more plausible or more
+    authoritative reach a higher $\mathrm{ASR}$, consistent with the
+    finding that less realistic false content is adopted less often
+    \citep{wu2024clasheval}. Models differ in robustness, but we make no
+    directional prediction about which model is more robust: prior work
+    reports that stronger models can also cling to wrong internal
+    knowledge \citep{jin2024tugofwar}.
+\end{description}
+
+\begin{notebox}
+H3 reveals a property of the design: at $\rho = 1$ there is no conflict
+\emph{between passages}, only between the passages and what the model may
+already know. A low $\mathrm{Flag}$ at $\rho = 1$ is therefore expected and
+does not by itself mean the model is careless.
+\end{notebox}
+
+
+\section{Measurable objectives}\label{sec:objectives}
+
+Each research question is answered by a specific set of numbers. Every
+estimate is reported with a 95\% confidence interval; the estimation and
+testing procedures are fixed in Chapter~\ref{ch:design}.
+
+\begin{description}[leftmargin=0pt]
+  \item[O1 (RQ1).] For every model, prompt condition and poison type,
+    estimate $\mathrm{Acc}$ and $\mathrm{ASR}$ at each poison ratio
+    $\rho \in \mathcal{R}$, giving one robustness curve per setting.
+    Report the smallest ratio at which $\mathrm{ASR}$ exceeds
+    $\mathrm{Acc}$ (the \emph{crossover point}).
+
+  \item[O2 (RQ2).] For each meta-prompt $\pi$ and each $\rho$, estimate
+    the paired difference from the plain prompt $\pi_0$:
+    \[
+      \Delta\mathrm{ASR}_{\pi}(\rho) =
+      \mathrm{ASR}(\pi, \rho) - \mathrm{ASR}(\pi_0, \rho),
+    \]
+    with model and poison type held fixed, and test whether it differs
+    from zero. On clean contexts ($\rho = 0$), estimate the corresponding
+    differences in $\mathrm{Acc}$ and $\mathrm{Abst}$ (the cost of the
+    meta-prompt).
+
+  \item[O3 (RQ3).] Estimate $\mathrm{Flag}$ at each $\rho$. Within each
+    condition, compare the attack success rate of flagged and unflagged
+    responses,
+    \[
+      \mathrm{ASR}(\theta \mid f = 1) \quad\text{vs.}\quad
+      \mathrm{ASR}(\theta \mid f = 0),
+    \]
+    and test whether the difference is non-zero.
+
+  \item[O4 (RQ4).] Compare the quantities of O1--O3 across poison types
+    $\tau$ and models $M$, and test whether the effects of $\rho$ and of
+    the prompt condition depend on $\tau$ or $M$.
+
+  \item[O5 (course metrics).] Report the hallucination rate and the
+    self-consistency of answers, as required by the project
+    specification; both are defined in Chapter~\ref{ch:design}.
+\end{description}
+
+
+
+
+
+
 
 \chapter{Experimental Design (A3)}\label{ch:design}
 
@@ -313,6 +569,240 @@ rejected, and a one-sentence justification for the oral discussion.
 
 
 
+\begin{decisionbox}{D10 --- Develop on GitLab, deliver on GitHub}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Develop in a private GitLab repository; upload the full
+    history to a public GitHub repository for submission.
+  \item[Why.] The course requires a GitHub link; a regional restriction
+    blocks private GitHub repositories.
+  \item[Alternatives.] Public GitHub from the start (unfinished work
+    public); GitLab only (does not meet the written requirement).
+  \item[Interview line.] ``I developed privately and published the complete
+    history on GitHub for submission.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D11 --- VS Code without AI code completion}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Use Visual Studio Code with no built-in AI completion.
+  \item[Why.] Free, native on Apple Silicon, handles Python, notebooks,
+    terminal and git; keeps every AI contribution traceable in the log.
+  \item[Alternatives.] PyCharm (heavier, some features paid); AI-first
+    editors (untraceable AI contributions).
+  \item[Interview line.] ``Every AI contribution to my code is in my usage
+    log, because my editor adds none silently.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D12 --- Git identity}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Commits are signed as Angela Aldaoud with a personal
+    email address, chosen by the student.
+  \item[Why.] One identity for all commits; the address is linked to the
+    hosting accounts.
+  \item[Alternatives.] University address (initially proposed).
+  \item[Interview line.] ``All commits carry one consistent author
+    identity.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D13 --- One target answer per question}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] All poisoned passages for a question support the same
+    false answer $\tilde{a}$.
+  \item[Why.] Makes poison adoption measurable and separable from ordinary
+    errors; $\rho$ then measures the strength of one coherent attack.
+  \item[Alternatives.] A different false answer per passage (models noise,
+    but blurs the measurement).
+  \item[Interview line.] ``One target answer per question lets me tell
+    poison adoption apart from other mistakes.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D14 --- Four outcomes}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Correct, Poisoned, OtherWrong, Abstain.
+  \item[Why.] ``Wrong'' hides two different failures: adopting the poison
+    and failing for other reasons.
+  \item[Alternatives.] Right/wrong only (cannot show whether the poison
+    worked).
+  \item[Interview line.] ``I separate being fooled by the poison from
+    other errors.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D15 --- Conflict flag separate from the outcome}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The conflict flag $f$ is recorded independently of the
+    outcome.
+  \item[Why.] A model can notice a conflict and still answer correctly,
+    wrongly or not at all; merging the two loses that information.
+  \item[Alternatives.] A combined ``abstained/flagged'' category (from the
+    original plan).
+  \item[Interview line.] ``I measure whether the model is right and whether
+    it notices the conflict, as two separate things.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D16 --- Random passage order}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Passages in each context are placed in a random order.
+  \item[Why.] Models use passages differently depending on position; a
+    fixed position would confound position with poison.
+  \item[Alternatives.] Fixed position (biased); position as an extra factor
+    (a separate question).
+  \item[Interview line.] ``I randomised passage order so position effects
+    cannot pass as poison effects.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D17 --- Paired design}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The same questions are used in every condition.
+  \item[Why.] Each question is its own control: comparisons are more
+    precise and paired tests become possible.
+  \item[Alternatives.] Different questions per condition (needs more data,
+    weaker comparisons).
+  \item[Interview line.] ``Each question serves as its own control.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D18 --- Attack success rate as a main metric}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Report ASR next to accuracy.
+  \item[Why.] Accuracy falls for two reasons; ASR isolates the one P5 is
+    about. It is the standard name in the poisoning literature.
+  \item[Alternatives.] Accuracy only.
+  \item[Interview line.] ``ASR tells me how often the poison actually
+    succeeded.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D19 (revised) --- All four research questions run in full}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] RQ1--RQ4 are all answered on the full experimental grid;
+    RQ4 is secondary only in the space it receives in the discussion.
+  \item[Why.] Student's instruction: the grid is sized to the statistical
+    needs of the questions, and compute limits are solved with resources,
+    not by cutting the design. \emph{Replaces the earlier version, in which
+    RQ4 was cuttable.}
+  \item[Alternatives.] Make RQ4 cuttable (rejected by the student).
+  \item[Interview line.] ``I sized the experiment to the questions, then
+    found the compute to run it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D20 --- RQ2 measures the cost of meta-prompts}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] RQ2 includes accuracy on clean contexts and extra
+    abstentions.
+  \item[Why.] A prompt that lowers ASR by refusing to answer is not an
+    improvement.
+  \item[Alternatives.] Measure only the reduction in ASR.
+  \item[Interview line.] ``I measured what a protective prompt costs, not
+    only what it gains.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D21 --- RQ3 is an association}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] RQ3 is stated and analysed as an association, not a
+    causal effect.
+  \item[Why.] The conflict flag is an output of the model, not a variable
+    the experimenter controls.
+  \item[Alternatives.] A causal claim (not supported by the design).
+  \item[Interview line.] ``RQ3 is correlational, because I do not
+    manipulate the flag.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D22 --- Colab Pro for one month}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Subscribe to Colab Pro for one month to run the full grid.
+  \item[Why.] The grid is not reduced; the free T4 alone may not fit it
+    before 15 October. Colab Pro uses compute units, so the A3 budget must
+    check that the grid fits.
+  \item[Alternatives.] University GPU group (granted for the thesis; not
+    used for this project); free T4 only (may not fit).
+  \item[Interview line.] ``I paid for the compute the design needed rather
+    than shrinking the design.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D23 (revised) --- GitHub upload at submission}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Upload to GitHub on submission day; the repository link
+    is already known and can be given in the booking form.
+  \item[Why.] Configuring GitHub access now costs time with no benefit
+    before submission. \emph{Replaces the earlier plan of publishing on
+    GitHub immediately.}
+  \item[Alternatives.] Publish on GitHub now.
+  \item[Interview line.] ``The public repository contains the full
+    development history.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D24 --- Hypotheses declare their source}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Each hypothesis is marked as cited or as our own
+    expectation, and written before any experiment.
+  \item[Why.] Results can then be read honestly against prior work and
+    against our own intuition.
+  \item[Alternatives.] Unsourced hypotheses, or hypotheses written after
+    the results.
+  \item[Interview line.] ``I wrote my hypotheses before running anything
+    and marked which came from prior work.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D25 --- No directional prediction between models}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] H4 predicts that models differ, not which one is more
+    robust.
+  \item[Why.] Prior work gives no clear direction; a guessed direction
+    would not be honest. Leads to two-sided tests.
+  \item[Alternatives.] Predict that the larger model is more robust.
+  \item[Interview line.] ``I had no evidence for a direction, so I tested
+    two-sided.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D26 --- 95\% confidence intervals everywhere}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Every estimate is reported with a 95\% confidence
+    interval.
+  \item[Why.] A rate without its uncertainty cannot support a claim; the
+    sample size is chosen so that the intervals are tight.
+  \item[Alternatives.] Point estimates only.
+  \item[Interview line.] ``Every number in my paper has a confidence
+    interval.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D27 --- Crossover point}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Summarise each robustness curve by the smallest $\rho$
+    at which ASR exceeds accuracy; ``not reached'' if it never does.
+  \item[Why.] One comparable number per setting for tables and slides.
+  \item[Alternatives.] Compare full curves only.
+  \item[Interview line.] ``The crossover point says when the model starts
+    believing the lie more than the truth.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D28 --- Course metrics kept explicitly}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Hallucination rate and self-consistency are reported
+    (objective O5), defined in the experimental design.
+  \item[Why.] The project specification lists them as evaluation metrics.
+  \item[Alternatives.] Leave them out silently.
+  \item[Interview line.] ``I report every metric the specification asks
+    for.''
+\end{description}
+\end{decisionbox}
+
+
+
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
 purposes, and to what extent their outputs were modified or verified. This
@@ -384,6 +874,31 @@ ACL Anthology, arXiv) or the course PDF.
 13 & AI-usage log
   & This chapter
   & Test-compiled \\
+
+14 & Set up git, SSH keys and the GitLab repository on the student's Mac
+  & Terminal commands and troubleshooting steps
+  & Each command run by the student; every output checked before the next step \\
+15 & Choose code hosting and compute
+  & Options with trade-offs (GitLab/GitHub, Colab Pro)
+  & Final choices made by the student \\
+16 & A2 definitions
+  & Section~\ref{sec:definitions}
+  & Test-compiled \\
+17 & Formal problem definition
+  & Section~\ref{sec:formal}
+  & Test-compiled \\
+18 & Research questions
+  & Section~\ref{sec:rqs}
+  & Revised after the student's correction (no reduction of the grid); test-compiled \\
+19 & Hypotheses
+  & Section~\ref{sec:hypotheses}
+  & Cited findings taken only from verified sources; test-compiled \\
+20 & Measurable objectives
+  & Section~\ref{sec:objectives}
+  & Test-compiled \\
+21 & Decision and AI-usage logs for A2
+  & D10--D28 and entries 14--21
+  & Matches the decisions taken in the chat; test-compiled \\
 \end{longtable}
 }
 
