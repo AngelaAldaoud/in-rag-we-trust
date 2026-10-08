@@ -1,1 +1,16 @@
+# macOS
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Large or regenerable data (rebuilt by the code)
+data/raw/
+
+# Secrets
+.env

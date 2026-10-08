@@ -9,14 +9,24 @@ and the effect of reliability-oriented prompts.
 
 ## Status
 
-Block A (foundations) in progress: literature audit completed.
+Block A (foundations) complete: literature audit, research questions,
+experimental design, compute plan, project layout.
 
-## Repository layout (so far)
+## Repository layout
 
-- `docs/notes/` — LaTeX working notes: literature audit, decision log, AI-usage log.
 
-The full package layout (code, configs, tests, results, paper) is added in a later phase.
+## Setup (local, CPU)
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync            # creates .venv and installs the exact locked versions
+uv run pytest      # runs the tests
+```
+
+GPU dependencies (Colab) are installed with the `gpu` extra.
 
 ## AI usage
 
-AI assistance is logged in `docs/notes/` (AI-Usage Log chapter).
+AI assistance is logged in `docs/notes/` (AI-Usage Log chapter) and declared
+in the report's disclaimer.
