@@ -959,6 +959,321 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``I follow the official proceedings record.''
 \end{description}
 \end{decisionbox}
+\begin{decisionbox}{D4 --- Search for related work beyond the course list}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Search for closely related work missing from the plan;
+    five verified papers were identified. \emph{Partly superseded by D7:}
+    only two are kept.
+  \item[Why.] The papers closest to our experiment protect the paper from
+    presenting known results as new.
+  \item[Alternatives.] Rely only on the course list (leaves the closest
+    empirical work uncited).
+  \item[Interview line.] ``I checked for the closest prior studies before
+    defining my research questions.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D5 --- Three-level reading plan}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Read the three course references; know Jin et al.\ and
+    ClashEval from verified summaries; read further papers only if time
+    allows.
+  \item[Why.] The project must be completed in 16 days; the course grades the
+    study and its critical discussion, not the number of papers read.
+  \item[Alternatives.] Read every candidate paper (not feasible in the time
+    available).
+  \item[Interview line.] ``I studied the course references in depth and
+    positioned my work against the closest empirical studies.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D6 --- LaTeX working notes, separate from the paper}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Keep these working notes in the \texttt{report} class; the
+    final 4--8 page paper is written in the Springer template in Block G.
+  \item[Why.] The paper template and page limit are fixed; the notes collect
+    the full design and are condensed into the paper later.
+  \item[Alternatives.] Start the Springer paper now (wrong place for notes,
+    belongs to Block G); Markdown notes (LaTeX was requested).
+  \item[Interview line.] ``I kept a versioned research notebook during design
+    and condensed it into the paper.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D7 --- Five references (Option A)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Cite the three course references plus Jin et al.\ (2024)
+    and ClashEval; the eight candidates from the plan are not cited.
+  \item[Why.] The course PDF lists exactly three references as a starting
+    guideline and requires only a short literature discussion; the two added
+    studies are the closest to our experiment. Every entry was checked
+    against an official source.
+  \item[Alternatives.] Also cite the eight candidates (richer, but costly in
+    time and space in a 4--8 page paper).
+  \item[Interview line.] ``I built on the course references and positioned my
+    results against the two closest empirical studies.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D8 --- ``Relation to our study'' instead of ``Gap''}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The last column of Table~\ref{tab:audit} describes how
+    each work relates to ours, not what it ``missed''.
+  \item[Why.] Claiming a gap requires full knowledge of each paper's setup;
+    an unverified gap claim could be wrong.
+  \item[Alternatives.] A ``Gap'' column (pushes toward inflated claims).
+  \item[Interview line.] ``I described the relation to each work without
+    claiming gaps I could not verify.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D9 --- No novelty claim; limits stated up front}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The positioning (Section~\ref{sec:positioning}) contains no
+    novelty claim and states the two main limits: small 4-bit models and
+    synthetic poisons.
+  \item[Why.] The area is well studied; naming weaknesses before a reviewer
+    does is part of an honest discussion.
+  \item[Alternatives.] Frame the study as novel (easy to attack and untrue).
+  \item[Interview line.] ``My contribution is rigour and honest discussion in
+    a controlled, reproducible setting.''
+\end{description}
+\end{decisionbox}
+
+
+
+\begin{decisionbox}{D10 --- Develop on GitLab, deliver on GitHub}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Develop in a private GitLab repository; upload the full
+    history to a public GitHub repository for submission.
+  \item[Why.] The course requires a GitHub link; a regional restriction
+    blocks private GitHub repositories.
+  \item[Alternatives.] Public GitHub from the start (unfinished work
+    public); GitLab only (does not meet the written requirement).
+  \item[Interview line.] ``I developed privately and published the complete
+    history on GitHub for submission.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D11 --- VS Code without AI code completion}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Use Visual Studio Code with no built-in AI completion.
+  \item[Why.] Free, native on Apple Silicon, handles Python, notebooks,
+    terminal and git; keeps every AI contribution traceable in the log.
+  \item[Alternatives.] PyCharm (heavier, some features paid); AI-first
+    editors (untraceable AI contributions).
+  \item[Interview line.] ``Every AI contribution to my code is in my usage
+    log, because my editor adds none silently.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D12 --- Git identity}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Commits are signed as Angela Aldaoud with a personal
+    email address, chosen by the student.
+  \item[Why.] One identity for all commits; the address is linked to the
+    hosting accounts.
+  \item[Alternatives.] University address (initially proposed).
+  \item[Interview line.] ``All commits carry one consistent author
+    identity.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D13 --- One target answer per question}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] All poisoned passages for a question support the same
+    false answer $\tilde{a}$.
+  \item[Why.] Makes poison adoption measurable and separable from ordinary
+    errors; $\rho$ then measures the strength of one coherent attack.
+  \item[Alternatives.] A different false answer per passage (models noise,
+    but blurs the measurement).
+  \item[Interview line.] ``One target answer per question lets me tell
+    poison adoption apart from other mistakes.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D14 --- Four outcomes}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Correct, Poisoned, OtherWrong, Abstain.
+  \item[Why.] ``Wrong'' hides two different failures: adopting the poison
+    and failing for other reasons.
+  \item[Alternatives.] Right/wrong only (cannot show whether the poison
+    worked).
+  \item[Interview line.] ``I separate being fooled by the poison from
+    other errors.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D15 --- Conflict flag separate from the outcome}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The conflict flag $f$ is recorded independently of the
+    outcome.
+  \item[Why.] A model can notice a conflict and still answer correctly,
+    wrongly or not at all; merging the two loses that information.
+  \item[Alternatives.] A combined ``abstained/flagged'' category (from the
+    original plan).
+  \item[Interview line.] ``I measure whether the model is right and whether
+    it notices the conflict, as two separate things.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D16 --- Random passage order}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Passages in each context are placed in a random order.
+  \item[Why.] Models use passages differently depending on position; a
+    fixed position would confound position with poison.
+  \item[Alternatives.] Fixed position (biased); position as an extra factor
+    (a separate question).
+  \item[Interview line.] ``I randomised passage order so position effects
+    cannot pass as poison effects.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D17 --- Paired design}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The same questions are used in every condition.
+  \item[Why.] Each question is its own control: comparisons are more
+    precise and paired tests become possible.
+  \item[Alternatives.] Different questions per condition (needs more data,
+    weaker comparisons).
+  \item[Interview line.] ``Each question serves as its own control.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D18 --- Attack success rate as a main metric}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Report ASR next to accuracy.
+  \item[Why.] Accuracy falls for two reasons; ASR isolates the one P5 is
+    about. It is the standard name in the poisoning literature.
+  \item[Alternatives.] Accuracy only.
+  \item[Interview line.] ``ASR tells me how often the poison actually
+    succeeded.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D19 (revised) --- All four research questions run in full}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] RQ1--RQ4 are all answered on the full experimental grid;
+    RQ4 is secondary only in the space it receives in the discussion.
+  \item[Why.] Student's instruction: the grid is sized to the statistical
+    needs of the questions, and compute limits are solved with resources,
+    not by cutting the design. \emph{Replaces the earlier version, in which
+    RQ4 was cuttable.}
+  \item[Alternatives.] Make RQ4 cuttable (rejected by the student).
+  \item[Interview line.] ``I sized the experiment to the questions, then
+    found the compute to run it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D20 --- RQ2 measures the cost of meta-prompts}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] RQ2 includes accuracy on clean contexts and extra
+    abstentions.
+  \item[Why.] A prompt that lowers ASR by refusing to answer is not an
+    improvement.
+  \item[Alternatives.] Measure only the reduction in ASR.
+  \item[Interview line.] ``I measured what a protective prompt costs, not
+    only what it gains.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D21 --- RQ3 is an association}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] RQ3 is stated and analysed as an association, not a
+    causal effect.
+  \item[Why.] The conflict flag is an output of the model, not a variable
+    the experimenter controls.
+  \item[Alternatives.] A causal claim (not supported by the design).
+  \item[Interview line.] ``RQ3 is correlational, because I do not
+    manipulate the flag.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D22 --- Colab Pro for one month}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Subscribe to Colab Pro for one month to run the full grid.
+  \item[Why.] The grid is not reduced; the free T4 alone may not fit it
+    before 15 October. Colab Pro uses compute units, so the A3 budget must
+    check that the grid fits.
+  \item[Alternatives.] University GPU group (granted for the thesis; not
+    used for this project); free T4 only (may not fit).
+  \item[Interview line.] ``I paid for the compute the design needed rather
+    than shrinking the design.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D23 (revised) --- GitHub upload at submission}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Upload to GitHub on submission day; the repository link
+    is already known and can be given in the booking form.
+  \item[Why.] Configuring GitHub access now costs time with no benefit
+    before submission. \emph{Replaces the earlier plan of publishing on
+    GitHub immediately.}
+  \item[Alternatives.] Publish on GitHub now.
+  \item[Interview line.] ``The public repository contains the full
+    development history.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D24 --- Hypotheses declare their source}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Each hypothesis is marked as cited or as our own
+    expectation, and written before any experiment.
+  \item[Why.] Results can then be read honestly against prior work and
+    against our own intuition.
+  \item[Alternatives.] Unsourced hypotheses, or hypotheses written after
+    the results.
+  \item[Interview line.] ``I wrote my hypotheses before running anything
+    and marked which came from prior work.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D25 --- No directional prediction between models}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] H4 predicts that models differ, not which one is more
+    robust.
+  \item[Why.] Prior work gives no clear direction; a guessed direction
+    would not be honest. Leads to two-sided tests.
+  \item[Alternatives.] Predict that the larger model is more robust.
+  \item[Interview line.] ``I had no evidence for a direction, so I tested
+    two-sided.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D26 --- 95\% confidence intervals everywhere}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Every estimate is reported with a 95\% confidence
+    interval.
+  \item[Why.] A rate without its uncertainty cannot support a claim; the
+    sample size is chosen so that the intervals are tight.
+  \item[Alternatives.] Point estimates only.
+  \item[Interview line.] ``Every number in my paper has a confidence
+    interval.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D27 --- Crossover point}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Summarise each robustness curve by the smallest $\rho$
+    at which ASR exceeds accuracy; ``not reached'' if it never does.
+  \item[Why.] One comparable number per setting for tables and slides.
+  \item[Alternatives.] Compare full curves only.
+  \item[Interview line.] ``The crossover point says when the model starts
+    believing the lie more than the truth.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D28 --- Course metrics kept explicitly}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Hallucination rate and self-consistency are reported
+    (objective O5), defined in the experimental design.
+  \item[Why.] The project specification lists them as evaluation metrics.
+  \item[Alternatives.] Leave them out silently.
+  \item[Interview line.] ``I report every metric the specification asks
+    for.''
+\end{description}
+\end{decisionbox}
+
 \begin{decisionbox}{D29 --- HotpotQA without yes/no questions}
 \begin{description}[nosep, leftmargin=0pt]
   \item[Decision.] Use HotpotQA (distractor, dev) and exclude yes/no answers.
@@ -1319,321 +1634,6 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
-
-\begin{decisionbox}{D4 --- Search for related work beyond the course list}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Search for closely related work missing from the plan;
-    five verified papers were identified. \emph{Partly superseded by D7:}
-    only two are kept.
-  \item[Why.] The papers closest to our experiment protect the paper from
-    presenting known results as new.
-  \item[Alternatives.] Rely only on the course list (leaves the closest
-    empirical work uncited).
-  \item[Interview line.] ``I checked for the closest prior studies before
-    defining my research questions.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D5 --- Three-level reading plan}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Read the three course references; know Jin et al.\ and
-    ClashEval from verified summaries; read further papers only if time
-    allows.
-  \item[Why.] The project must be completed in 16 days; the course grades the
-    study and its critical discussion, not the number of papers read.
-  \item[Alternatives.] Read every candidate paper (not feasible in the time
-    available).
-  \item[Interview line.] ``I studied the course references in depth and
-    positioned my work against the closest empirical studies.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D6 --- LaTeX working notes, separate from the paper}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Keep these working notes in the \texttt{report} class; the
-    final 4--8 page paper is written in the Springer template in Block G.
-  \item[Why.] The paper template and page limit are fixed; the notes collect
-    the full design and are condensed into the paper later.
-  \item[Alternatives.] Start the Springer paper now (wrong place for notes,
-    belongs to Block G); Markdown notes (LaTeX was requested).
-  \item[Interview line.] ``I kept a versioned research notebook during design
-    and condensed it into the paper.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D7 --- Five references (Option A)}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Cite the three course references plus Jin et al.\ (2024)
-    and ClashEval; the eight candidates from the plan are not cited.
-  \item[Why.] The course PDF lists exactly three references as a starting
-    guideline and requires only a short literature discussion; the two added
-    studies are the closest to our experiment. Every entry was checked
-    against an official source.
-  \item[Alternatives.] Also cite the eight candidates (richer, but costly in
-    time and space in a 4--8 page paper).
-  \item[Interview line.] ``I built on the course references and positioned my
-    results against the two closest empirical studies.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D8 --- ``Relation to our study'' instead of ``Gap''}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] The last column of Table~\ref{tab:audit} describes how
-    each work relates to ours, not what it ``missed''.
-  \item[Why.] Claiming a gap requires full knowledge of each paper's setup;
-    an unverified gap claim could be wrong.
-  \item[Alternatives.] A ``Gap'' column (pushes toward inflated claims).
-  \item[Interview line.] ``I described the relation to each work without
-    claiming gaps I could not verify.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D9 --- No novelty claim; limits stated up front}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] The positioning (Section~\ref{sec:positioning}) contains no
-    novelty claim and states the two main limits: small 4-bit models and
-    synthetic poisons.
-  \item[Why.] The area is well studied; naming weaknesses before a reviewer
-    does is part of an honest discussion.
-  \item[Alternatives.] Frame the study as novel (easy to attack and untrue).
-  \item[Interview line.] ``My contribution is rigour and honest discussion in
-    a controlled, reproducible setting.''
-\end{description}
-\end{decisionbox}
-
-
-
-\begin{decisionbox}{D10 --- Develop on GitLab, deliver on GitHub}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Develop in a private GitLab repository; upload the full
-    history to a public GitHub repository for submission.
-  \item[Why.] The course requires a GitHub link; a regional restriction
-    blocks private GitHub repositories.
-  \item[Alternatives.] Public GitHub from the start (unfinished work
-    public); GitLab only (does not meet the written requirement).
-  \item[Interview line.] ``I developed privately and published the complete
-    history on GitHub for submission.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D11 --- VS Code without AI code completion}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Use Visual Studio Code with no built-in AI completion.
-  \item[Why.] Free, native on Apple Silicon, handles Python, notebooks,
-    terminal and git; keeps every AI contribution traceable in the log.
-  \item[Alternatives.] PyCharm (heavier, some features paid); AI-first
-    editors (untraceable AI contributions).
-  \item[Interview line.] ``Every AI contribution to my code is in my usage
-    log, because my editor adds none silently.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D12 --- Git identity}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Commits are signed as Angela Aldaoud with a personal
-    email address, chosen by the student.
-  \item[Why.] One identity for all commits; the address is linked to the
-    hosting accounts.
-  \item[Alternatives.] University address (initially proposed).
-  \item[Interview line.] ``All commits carry one consistent author
-    identity.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D13 --- One target answer per question}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] All poisoned passages for a question support the same
-    false answer $\tilde{a}$.
-  \item[Why.] Makes poison adoption measurable and separable from ordinary
-    errors; $\rho$ then measures the strength of one coherent attack.
-  \item[Alternatives.] A different false answer per passage (models noise,
-    but blurs the measurement).
-  \item[Interview line.] ``One target answer per question lets me tell
-    poison adoption apart from other mistakes.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D14 --- Four outcomes}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Correct, Poisoned, OtherWrong, Abstain.
-  \item[Why.] ``Wrong'' hides two different failures: adopting the poison
-    and failing for other reasons.
-  \item[Alternatives.] Right/wrong only (cannot show whether the poison
-    worked).
-  \item[Interview line.] ``I separate being fooled by the poison from
-    other errors.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D15 --- Conflict flag separate from the outcome}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] The conflict flag $f$ is recorded independently of the
-    outcome.
-  \item[Why.] A model can notice a conflict and still answer correctly,
-    wrongly or not at all; merging the two loses that information.
-  \item[Alternatives.] A combined ``abstained/flagged'' category (from the
-    original plan).
-  \item[Interview line.] ``I measure whether the model is right and whether
-    it notices the conflict, as two separate things.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D16 --- Random passage order}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Passages in each context are placed in a random order.
-  \item[Why.] Models use passages differently depending on position; a
-    fixed position would confound position with poison.
-  \item[Alternatives.] Fixed position (biased); position as an extra factor
-    (a separate question).
-  \item[Interview line.] ``I randomised passage order so position effects
-    cannot pass as poison effects.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D17 --- Paired design}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] The same questions are used in every condition.
-  \item[Why.] Each question is its own control: comparisons are more
-    precise and paired tests become possible.
-  \item[Alternatives.] Different questions per condition (needs more data,
-    weaker comparisons).
-  \item[Interview line.] ``Each question serves as its own control.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D18 --- Attack success rate as a main metric}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Report ASR next to accuracy.
-  \item[Why.] Accuracy falls for two reasons; ASR isolates the one P5 is
-    about. It is the standard name in the poisoning literature.
-  \item[Alternatives.] Accuracy only.
-  \item[Interview line.] ``ASR tells me how often the poison actually
-    succeeded.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D19 (revised) --- All four research questions run in full}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] RQ1--RQ4 are all answered on the full experimental grid;
-    RQ4 is secondary only in the space it receives in the discussion.
-  \item[Why.] Student's instruction: the grid is sized to the statistical
-    needs of the questions, and compute limits are solved with resources,
-    not by cutting the design. \emph{Replaces the earlier version, in which
-    RQ4 was cuttable.}
-  \item[Alternatives.] Make RQ4 cuttable (rejected by the student).
-  \item[Interview line.] ``I sized the experiment to the questions, then
-    found the compute to run it.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D20 --- RQ2 measures the cost of meta-prompts}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] RQ2 includes accuracy on clean contexts and extra
-    abstentions.
-  \item[Why.] A prompt that lowers ASR by refusing to answer is not an
-    improvement.
-  \item[Alternatives.] Measure only the reduction in ASR.
-  \item[Interview line.] ``I measured what a protective prompt costs, not
-    only what it gains.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D21 --- RQ3 is an association}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] RQ3 is stated and analysed as an association, not a
-    causal effect.
-  \item[Why.] The conflict flag is an output of the model, not a variable
-    the experimenter controls.
-  \item[Alternatives.] A causal claim (not supported by the design).
-  \item[Interview line.] ``RQ3 is correlational, because I do not
-    manipulate the flag.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D22 --- Colab Pro for one month}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Subscribe to Colab Pro for one month to run the full grid.
-  \item[Why.] The grid is not reduced; the free T4 alone may not fit it
-    before 15 October. Colab Pro uses compute units, so the A3 budget must
-    check that the grid fits.
-  \item[Alternatives.] University GPU group (granted for the thesis; not
-    used for this project); free T4 only (may not fit).
-  \item[Interview line.] ``I paid for the compute the design needed rather
-    than shrinking the design.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D23 (revised) --- GitHub upload at submission}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Upload to GitHub on submission day; the repository link
-    is already known and can be given in the booking form.
-  \item[Why.] Configuring GitHub access now costs time with no benefit
-    before submission. \emph{Replaces the earlier plan of publishing on
-    GitHub immediately.}
-  \item[Alternatives.] Publish on GitHub now.
-  \item[Interview line.] ``The public repository contains the full
-    development history.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D24 --- Hypotheses declare their source}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Each hypothesis is marked as cited or as our own
-    expectation, and written before any experiment.
-  \item[Why.] Results can then be read honestly against prior work and
-    against our own intuition.
-  \item[Alternatives.] Unsourced hypotheses, or hypotheses written after
-    the results.
-  \item[Interview line.] ``I wrote my hypotheses before running anything
-    and marked which came from prior work.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D25 --- No directional prediction between models}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] H4 predicts that models differ, not which one is more
-    robust.
-  \item[Why.] Prior work gives no clear direction; a guessed direction
-    would not be honest. Leads to two-sided tests.
-  \item[Alternatives.] Predict that the larger model is more robust.
-  \item[Interview line.] ``I had no evidence for a direction, so I tested
-    two-sided.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D26 --- 95\% confidence intervals everywhere}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Every estimate is reported with a 95\% confidence
-    interval.
-  \item[Why.] A rate without its uncertainty cannot support a claim; the
-    sample size is chosen so that the intervals are tight.
-  \item[Alternatives.] Point estimates only.
-  \item[Interview line.] ``Every number in my paper has a confidence
-    interval.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D27 --- Crossover point}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Summarise each robustness curve by the smallest $\rho$
-    at which ASR exceeds accuracy; ``not reached'' if it never does.
-  \item[Why.] One comparable number per setting for tables and slides.
-  \item[Alternatives.] Compare full curves only.
-  \item[Interview line.] ``The crossover point says when the model starts
-    believing the lie more than the truth.''
-\end{description}
-\end{decisionbox}
-
-\begin{decisionbox}{D28 --- Course metrics kept explicitly}
-\begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Hallucination rate and self-consistency are reported
-    (objective O5), defined in the experimental design.
-  \item[Why.] The project specification lists them as evaluation metrics.
-  \item[Alternatives.] Leave them out silently.
-  \item[Interview line.] ``I report every metric the specification asks
-    for.''
-\end{description}
-\end{decisionbox}
 
 \begin{decisionbox}{D11 (revised) --- AI features in VS Code allowed}
 \begin{description}[nosep, leftmargin=0pt]
