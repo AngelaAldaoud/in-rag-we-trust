@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "seed": 20261009,
+  "files": {
+    "questions.jsonl.gz": {
+      "records": 4672,
+      "sha256": "42412070d2290c1a32f4ba2ba91f32fc68157dcb1a89ff7266f77e08c82ec885"
+    }
+  },
+  "source": {
+    "dataset": "hotpotqa/hotpot_qa (distractor, validation)",
+    "hf_revision": "1908d6afbbead072334abe2965f91bd2709910ab",
+    "sha256": "c20b638ca82b21d04fe12e14ff417ad05153d4d215a65de54497fca4e972f7c6"
+  },
+  "spacy": {
+    "version": "3.8.11",
+    "model": "en_core_web_sm",
+    "model_version": "3.8.0"
+  },
+  "funnel": {
+    "all": 7405,
+    "not_yes_no": 6947,
+    "answer_in_exactly_one": 5567,
+    "bridge_type": 4674,
+    "has_target_candidate": 4672
+  },
+  "split_sizes": {
+    "pilot": 50,
+    "main": 500,
+    "reserve": 4122
+  },
+  "answer_types_by_split": {
+    "pilot": {
+      "organisation": 6,
+      "person": 11,
+      "other": 19,
+      "place": 6,
+      "number": 3,
+      "date": 5
+    },
+    "main": {
+      "organisation": 79,
+      "date": 71,
+      "person": 92,
+      "number": 28,
+      "place": 56,
+      "other": 174
+    },
+    "reserve": {
+      "number": 254,
+      "other": 1378,
+      "organisation": 571,
+      "date": 531,
+      "person": 927,
+      "place": 461
+    }
+  }
+}

@@ -1,0 +1,31 @@
+id,answer,sentence,spacy_label,type,correct (y/n),true type if wrong
+5a7e19e655429965cec5ea58,Ribble,"Ribchester is a village and civil parish within the Ribble Valley district of Lancashire, England.",LOC,place,y,
+5aba7c7155429955dce3ee58,about four billion won,The show has the second-largest budget of all shows produced by Mnet at about four billion won (approximately $3.4 million).,MONEY,number,y,
+5ab7ccf455429928e1fe3910,"5,042","The population was 5,042 at the 2010 census.",CARDINAL,number,y,
+5ade79335542997c77adee38,Ohio River,The Galt House is the city's only hotel on the Ohio River.,LOC,place,y,
+5ae22ede554299234fd0441b,9Lives,"Morris the Cat (voiced by John Erwin) is the advertising mascot for 9Lives brand cat food, appearing on its packaging and in many of its television commercials.",CARDINAL,number,n,other
+5a77ba6c55429967ab10524c,"June 11, 1986","Shia Saide LaBeouf ( ; born June 11, 1986) is an American actor, performance artist, and filmmaker.",DATE,date,y,
+5a771de05542993569682cc8,Sadar Bazaar,Sadar Bazaar is one of the most popular shopping destinations for the tourist visiting Agra.,PERSON,person,n,place
+5a8842435542994846c1ce6d,"2,627","As of the 2010 census, the city population was 2,627.",CARDINAL,number,y,
+5ab7d6ec5542995dae37e9b4,1988,"Founded in 1988, Ayala Malls own a chain of large shopping malls, all located in the Philippines.",DATE,date,y,
+5a8832d355429938390d3f03,Prince of Cambodia Norodom Sihanouk,"Following the election, the newly elected Assembly convened on 11 April, electing a new administration with General Secretary Pol Pot as Prime Minister and his interim predecessor Khieu Samphan as President of the State Presidium, ousting Prince of Cambodia Norodom Sihanouk.",ORG,organisation,n,person
+5a8e08ab5542995085b37393,Duchess Eleanor of Aquitaine,He was the third of five sons of King Henry II of England and Duchess Eleanor of Aquitaine.,NONE,other,n,person
+5ab959905542996be2020497,1964 to 1974,"The Pontiac GTO is an automobile that was built by Pontiac in generations from 1964 to 1974 model years, and by GM's subsidiary Holden in Australia from 2004 to 2006.",DATE,date,y,
+5ab9df1f554299232ef4a239,George A. Romero,"Land of the Dead (also known as George A. Romero's Land of the Dead) is a 2005 post-apocalyptic horror film written and directed by George A. Romero; the fourth of Romero's six ""Living Dead"" movies, it is preceded by ""Night of the Living Dead"", ""Dawn of the Dead"" and ""Day of the Dead"", and succeeded by ""Diary of the Dead"" and ""Survival of the Dead"".",PERSON,person,y,
+5a8ee3a755429917b4a5be02,"Harry Lillis ""Bing"" Crosby Jr.","Harry Lillis ""Bing"" Crosby Jr. ( ; May 3, 1903 – October 14, 1977) was an American singer and actor.",PERSON,person,y,
+5ae45adc55429970de88d93f,The Stereophonics and The Fabulous Counts,"He first began recording after winning a contest at the Apollo Theater in New York, recording some solo sides and singing backup for groups called The Stereophonics and The Fabulous Counts.",NONE,other,n,organisation
+5a89e20a5542992e4fca8438,2010,"""Love the Way You Lie"" is a song recorded by the American rapper Eminem, featuring the Barbadian singer Rihanna, from Eminem's seventh studio album ""Recovery"" (2010).",DATE,date,y,
+5adfd30c55429906c02daa53,Revolution Studios,It is produced by Revolution Studios and Happy Madison Productions and is distributed by Columbia Pictures.,ORG,organisation,y,
+5ac26ac15542992f1f2b38bc,Sam Phillips,The film is dedicated to Sun Records founder Sam Phillips.,PERSON,person,y,
+5a88f0d455429946c8d6e8dc,Macomb County,Warren is a city in Macomb County in the U.S. state of Michigan.,GPE,place,y,
+5a8662b955429960ec39b687,Biola University,"He currently serves as a Distinguished Professor of Philosophy at Talbot School of Theology at Biola University in La Mirada, California.",ORG,organisation,y,
+5a88a4245542997e5c09a668,Hudson Bay Mining and Smelting Company,"The two formed the Hudson Bay Mining and Smelting Company in Flin Flon, Saskatchewan, Canada, and Channing served as the company's President.",NONE,other,n,organisation
+5ae47fe255429913cc204482,sedan and station wagon,Its range includes the sedan and station wagon variants that sell under the luxury Holden Calais (VF) nameplate.,NONE,other,y,
+5a8ba3ff55429971feec4744,Mayor of the City of New York,Archibald Gracie Mansion (commonly called Gracie Mansion) is the official residence of the Mayor of the City of New York.,GPE,place,y,
+5ac42c6d5542997ea680ca1a,Borgo San Donnino,"The town was renamed Fidenza in 1927, recalling its Roman name of ""Fidentia""; before, it was called Borgo San Donnino.",FAC,place,y,
+5ab9339f554299131ca422bb,Nidal Hasan,"Nidal Hasan, a U.S. Army major and psychiatrist, fatally shot 13 people and injured more than 30 others.",PERSON,person,y,
+5a82edae55429966c78a6a9f,1986,"In addition to containing updated versions of two of the band's earlier singles (""Woman of the World"" and ""Rangoon Moon""), the album included the international smash hit, ""The Captain of Her Heart"", a plaintive, atmospheric, piano-led ballad which was an immediate success throughout Europe upon its 1986 single release.",DATE,date,y,
+5ae328f45542991a06ce993c,KBS2,"It aired on KBS2 from January 15 to April 3, 2014 on Wednesdays and Thursdays at 21:55 for 24 episodes.",ORG,organisation,y,
+5addc7e35542997545bbbdbe,"American Samoa, but not on all Native American tribal lands","In the United States, same-sex marriage is legal in all states, Washington, D.C., as well as all U.S. territories except American Samoa, but not on all Native American tribal lands, since June 26, 2015, when the United States Supreme Court ruled in ""Obergefell v. Hodges"" that state-level bans on same-sex marriage are unconstitutional.",NONE,other,y,
+5a8459aa5542996488c2e51e,34th,"Dwight David ""Ike"" Eisenhower ( ; October 14, 1890 – March 28, 1969) was an American politician and Army general who served as the 34th President of the United States from 1953 until 1961.",ORDINAL,number,y,
+5ae5cf625542996de7b71a22,University of Texas Longhorns,"Casey Burl ""Case"" McCoy (born February 12, 1990) is a former American football quarterback for the University of Texas Longhorns football team.",ORG,organisation,y,
