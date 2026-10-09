@@ -917,6 +917,99 @@ still finishes on 13 October.
 
 \chapter{Environment and Repository (A4)}\label{ch:repo}
 
+\chapter{Data Construction (B1)}\label{ch:b1}
+
+\section{Source}\label{sec:b1-source}
+The study uses the development set of HotpotQA \citep{yang2018hotpotqa},
+distractor setting (7{,}405 questions). The authors' download server did not
+respond on 9 October 2026 from two different networks, so the split was taken
+from the \texttt{hotpotqa/hotpot\_qa} repository on HuggingFace, pinned to
+commit \texttt{1908d6a} and verified by its SHA-256 checksum on every load.
+The copy has the same 7{,}405 questions, fields and licence (CC BY-SA 4.0);
+it is a format conversion (Parquet), not the authors' original JSON file.
+
+\section{Eligibility filters}\label{sec:b1-filters}
+A question is eligible if
+(i) its gold answer $a^{*}$ is not \emph{yes} or \emph{no};
+(ii) $a^{*}$ occurs as a whole-word, case-insensitive span in exactly one of
+the two supporting paragraphs (the answer passage $p^{\mathrm{ans}}$), and
+the other paragraph (the bridge passage $p^{\mathrm{br}}$) does not contain
+$a^{*}$ even after the normalisation used in evaluation; and
+(iii) it is a \emph{bridge} question. Filter (iii) was added after inspecting
+the data: comparison questions name their two candidate answers, so a target
+answer outside that pair would be implausible. One further question is lost
+when no valid target answer exists (Section~\ref{sec:b1-targets}).
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Stage & Questions & Removed \\
+\midrule
+HotpotQA dev, distractor & 7{,}405 & -- \\
+(i) answer not yes/no & 6{,}947 & 458 \\
+(ii) answer in exactly one supporting paragraph & 5{,}567 & 1{,}380 \\
+(iii) bridge question & 4{,}674 & 893 \\
+target candidate available & 4{,}672 & 2 \\
+\bottomrule
+\end{tabular}
+\caption{Eligibility funnel.}
+\label{tab:funnel}
+\end{table}
+
+\paragraph{One matching module.}
+All stages of the project (filtering, poison construction, evaluation) use the
+same functions to decide whether a text contains an answer: a whole-word span
+search, used to locate and replace $a^{*}$, and the standard QA normalisation
+(lower case, no punctuation, no articles), used by the evaluator.
+
+\section{Entity types}\label{sec:b1-types}
+Each gold answer is typed with spaCy 3.8.11 and the \texttt{en\_core\_web\_sm}
+3.8.0 model, as required by the course. The answer passage is processed and
+the answer takes the label of the entity that overlaps it most, provided this
+entity covers at least half of the answer's characters; answers without such an
+entity are processed once more on their own text. Fine labels are mapped to six
+coarse types: person, place, date, number, organisation and other.
+
+\paragraph{Manual check.}
+Thirty answers (five per coarse type, drawn with the project seed) were labelled
+by the student. 24 of 30 tags were correct before the second look at untyped
+answers and 25 of 30 after it; weighting each type by its share of the pool
+gives an estimated accuracy of about 78\%. The remaining errors are titled
+persons tagged as organisations or left untyped, a list of two band names, a
+brand name starting with a digit, and a market district tagged as a person.
+The re-measurement used the same 30 labels and is therefore slightly
+optimistic; with five examples per type, per-type rates are rough.
+
+\section{Target answer candidates}\label{sec:b1-targets}
+For each question, up to 30 candidate target answers $\tilde{a}$ are drawn, in
+an order fixed by the project seed and the question identifier, from the gold
+answers of other eligible questions with the same fine label (and, for untyped
+answers, the same length in words). A candidate is valid only if it differs
+from $a^{*}$, neither contains the other, and it occurs neither in the
+question nor in either passage. The final target is chosen among the
+candidates in B2 by the helper model, as the most plausible wrong answer to the
+question; if its choice is not a candidate, the first candidate is used.
+
+\section{Samples and output}\label{sec:b1-output}
+The 4{,}672 eligible questions are shuffled once with seed 20261009: the first
+50 form the pilot set, the next 500 the main set and the rest an ordered
+reserve, from which failed questions are replaced in rank order. The coarse
+type mix of the main set is close to that of the pool. The output is a
+compressed JSON Lines file with one record per question (identifier, split,
+rank, question, gold answer, entity label and type, target candidates,
+passages and distractors), written byte-for-byte reproducibly, and a metadata
+file with the source revision, checksums, software versions, funnel and set
+statistics. Two independent builds produced identical checksums.
+
+\paragraph{Limitations.}
+About one answer in five has a wrong type, so its target candidates may be
+less plausible; untyped answers form a heterogeneous group; and results apply
+to bridge questions only.
+
+
+
+
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
 rejected, and a one-sentence justification for the oral discussion.
@@ -1741,12 +1834,198 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Alternatives.] Colab Pro+ (about five times the price).
   \item[Interview line.] ``I planned the runs around the limits of the plan I used.''
 \end{description}
+
+
+
 \end{decisionbox}
 
 
 
 
 
+
+
+\section{Block B}\label{sec:decisions-b}
+
+\begin{decisionbox}{D79 (revised) --- HuggingFace copy of HotpotQA, pinned}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Dev-distractor split from \texttt{hotpotqa/hotpot\_qa} at commit \texttt{1908d6a}, with SHA-256 checksum. \emph{Replaces the authors' JSON file.}
+  \item[Why.] The authors' server did not respond from two networks; the copy has the same 7{,}405 questions, fields and licence.
+  \item[Alternatives.] Wait for the server; an unofficial copy; a VPN (the server itself was down).
+  \item[Interview line.] ``The original server was down, so I used the HuggingFace copy under the HotpotQA name, pinned to an exact commit and checksum.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D80 --- Frozen dataclasses for the data}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Questions and paragraphs are immutable typed objects.
+  \item[Why.] Named fields; no later step can alter the data by accident.
+  \item[Alternatives.] Plain dictionaries; pandas tables.
+  \item[Interview line.] ``Each question is an immutable typed object.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D81 --- Checksum verified on every load}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The raw file's checksum is checked each time it is loaded.
+  \item[Why.] Catches files replaced or corrupted after download.
+  \item[Alternatives.] Check only after downloading.
+  \item[Interview line.] ``Every run proves it reads exactly the same dataset.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D82 --- Toy-row tests plus real-data tests}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Logic is tested on hand-made examples with the tricky cases; real data is tested when present.
+  \item[Why.] Fast, portable tests and checks on the actual data.
+  \item[Alternatives.] Only one of the two.
+  \item[Interview line.] ``My tests cover the tricky cases and the real dataset.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D83 --- Matching rule for filter (ii)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] $a^{*}$ is a whole-word, case-insensitive span of the answer passage; the bridge passage does not contain $a^{*}$ even after normalisation.
+  \item[Why.] The swap replaces whole words only, and the true answer can never leak through the unpoisoned bridge.
+  \item[Alternatives.] Exact substring (matches inside words); span rule alone (53 leaking questions).
+  \item[Interview line.] ``The answer is a span I can replace, and the bridge never reveals it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D84 --- Bridge questions only (design addition)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Filter (iii) keeps only bridge questions; 893 comparison questions are removed. \emph{Adds a filter to the A3 Data section.}
+  \item[Why.] Comparison questions name their two candidates, so an outside target answer would be implausible and would overstate robustness.
+  \item[Alternatives.] Keep comparison questions with the same targets.
+  \item[Interview line.] ``Comparison questions cannot have believable false answers in my design, so I kept bridge questions.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D85 --- One shared matching module}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Filtering, poisoning and evaluation use the same matching functions.
+  \item[Why.] A poison that passes its checks can never be scored as correct by a looser evaluator.
+  \item[Alternatives.] Separate copies per stage.
+  \item[Interview line.] ``Data, poisons and evaluation share one definition of `contains the answer'.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D86 --- Filter order and funnel}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Filters (i), (ii), (iii) in this order; the count after each is reported.
+  \item[Why.] The planned filters first; the cost of the added filter stays visible.
+  \item[Alternatives.] Type filter first (hides its cost).
+  \item[Interview line.] ``The funnel shows what each filter cost.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D87 --- Entity types by spaCy NER in context}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] spaCy \texttt{en\_core\_web\_sm} on the answer passage; six coarse types; fine label stored; accuracy measured by hand.
+  \item[Why.] Required by the course; deterministic; context resolves ambiguous answers.
+  \item[Alternatives.] NER on the bare answer; transformer model (needs PyTorch on the Mac); NLTK (not spaCy).
+  \item[Interview line.] ``Each answer was typed by spaCy reading it in its passage, and I measured the accuracy.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D88 --- Python 3.13 declared}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{requires-python = ">=3.13,<3.14"}. \emph{Replaces ``>=3.11'' from A4.}
+  \item[Why.] Declares the version tested on both machines (D70) and narrows dependency resolution. It did not by itself fix the spaCy installation.
+  \item[Alternatives.] Keep the wider range.
+  \item[Interview line.] ``The project declares exactly the Python version it was tested on.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D89 --- Exact spaCy and thinc versions}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] spaCy 3.8.11, thinc 8.3.10, model 3.8.0.
+  \item[Why.] Unpinned resolution chose thinc 8.3.4, which has no Python 3.13 wheels for macOS and failed to compile; this pair installs from wheels.
+  \item[Alternatives.] Unpinned versions; spaCy on Colab only.
+  \item[Interview line.] ``I pinned the spaCy versions that install cleanly on Python 3.13.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D90 (revised) --- GPU libraries outside the lock file}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The lock file covers macOS arm64 and Linux x86\_64 only; vLLM, bitsandbytes, transformers and accelerate are installed in the Colab setup notebook, pinned to Colab's PyTorch, with versions recorded in every result. \emph{Revises D72.}
+  \item[Why.] vLLM's pins made a lock shared with the Mac unsatisfiable and blocked spaCy.
+  \item[Alternatives.] Platform markers only (still unsatisfiable); a separate Colab lock file.
+  \item[Interview line.] ``The CPU environment is locked; the GPU stack is pinned on Colab and recorded with every result.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D91 --- Entity must cover half of the answer}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The answer takes the label of the entity overlapping it most, if it covers at least half of it.
+  \item[Why.] Tolerates small boundary differences; rejects answers that only contain an entity.
+  \item[Alternatives.] Exact match; any overlap.
+  \item[Interview line.] ``An answer takes the label of the entity covering most of it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D92 --- One project seed: 20261009}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] All random steps use seed 20261009, fixed before any result existed.
+  \item[Why.] Cannot have been chosen to favour results; one value to report.
+  \item[Alternatives.] 42; one seed per step.
+  \item[Interview line.] ``All randomness uses one seed, fixed in advance.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D93 --- Second look for untyped answers}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Answers without an entity in context are tagged once more on their own text.
+  \item[Why.] Targets the dominant error in the manual check; 24/30 to 25/30 on the same labels, no correct tag lost.
+  \item[Alternatives.] Accept the first result; an LLM tagger.
+  \item[Interview line.] ``Untyped answers got a second look, and I measured the effect.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D94 --- Target-answer safety rules}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Same fine label (and word-length bucket for untyped answers); distinct candidates; $\tilde{a}$ and $a^{*}$ do not contain each other; $\tilde{a}$ absent from the question and both passages; per-question seeded order.
+  \item[Why.] Plausible targets, and $a^{*}$ can never survive inside a poison.
+  \item[Alternatives.] Coarse type only; global shuffle; frequency-weighted draw.
+  \item[Interview line.] ``Every false answer can never contain the true one and is drawn reproducibly.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D95 --- Helper model chooses among 30 safe candidates}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Up to 30 valid candidates are stored; in B2 Gemma picks the most plausible wrong answer to the question; fallback: the first candidate.
+  \item[Why.] A random draw gave only about 4 plausible targets in 10, because of tagging errors and coarse types; the question itself defines what is plausible.
+  \item[Alternatives.] Random draw; LLM-invented targets (not reproducible, possibly true).
+  \item[Interview line.] ``Rules make every candidate safe; the helper model picks the one that fits the question.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D96 --- One seeded shuffle, three consecutive slices}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] 50 pilot, 500 main, ordered reserve.
+  \item[Why.] No overlap is possible; replacements are reproducible.
+  \item[Alternatives.] Separate draws; stratified sampling.
+  \item[Interview line.] ``Pilot, main and reserve are slices of one seeded shuffle.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D97 --- B1 output format}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] One JSON Lines record per question (schema version 1) and a metadata file with provenance, funnel and set statistics.
+  \item[Why.] Later blocks read one self-contained file; documentation is copied from recorded facts.
+  \item[Alternatives.] CSV; Parquet; one file per set.
+  \item[Interview line.] ``All later stages read one versioned file that records how it was built.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D98 --- Compressed, reproducible, written once}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{questions.jsonl.gz} with no timestamp, checksum in the metadata; later phases write their own files keyed by question id.
+  \item[Why.] 40\,MB uncompressed; two builds give identical bytes; the file enters git history once.
+  \item[Alternatives.] Rebuild on Colab; Git LFS.
+  \item[Interview line.] ``The question set is a byte-reproducible file with its checksum recorded.''
+\end{description}
+\end{decisionbox}
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -1890,6 +2169,53 @@ ACL Anthology, arXiv) or the course PDF.
   & Matches the decisions taken in the chat; test-compiled \\
 
 \end{longtable}
+\section{Block B}\label{sec:ailog-b}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{0.6cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.8cm}}
+\caption{AI usage during Block B.}\label{tab:ailog-b}\\
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+36 & Recover the plan and the state of Block A
+  & Summary; review of the notes (unclosed decision box, missing RQ section)
+  & Confirmed by the student; both notes problems fixed \\
+37 & Gemma licence options
+  & Assessment of Kaggle, Ollama and third-party copies
+  & Kaggle access confirmed by the student \\
+38 & Data download failure
+  & Diagnosis (proxy and server time-outs) and alternative source
+  & Verified on the HotpotQA and HuggingFace pages; count and checksum checked \\
+39 & Loader and tests & \texttt{hotpotqa.py}, tests & Run by the student; tests pass \\
+40 & Filter design & Measurement script; rules C and bridge-only & Numbers inspected; decisions taken by the student \\
+41 & Matching and pool modules & \texttt{textmatch.py}, \texttt{pool.py}, tests & Tests pass; funnel matches the measurement \\
+42 & spaCy installation
+  & Troubleshooting; several diagnoses were wrong (Python range) before the working solution (version pins, GPU libraries out of the lock)
+  & Each step run by the student; versions checked on the official release pages \\
+43 & Entity typing & \texttt{entity\_types.py}, tests, labelling sheet & 30 tags labelled by the student \\
+44 & Processing the labels
+  & A script by Claude overwrote the annotation file before validating it
+  & Labels recovered from the surviving rows and the student's screenshot, cross-checked against each other; all checks passed \\
+45 & Typing fix (second look) & Code change and before/after comparison & Measured on the student's labels (same sample) \\
+46 & Target answers & \texttt{targets.py}, tests; plausibility review & Pairs inspected; candidate approach accepted by the student \\
+47 & Sampling, output, data contract
+  & \texttt{sampling.py}, \texttt{build.py}, tests
+  & 49 tests pass; two builds give identical checksums \\
+48 & B1 notes and logs & This chapter's B1 content, D79--D98, entries 36--48 & Reviewed by the student \\
+\end{longtable}
+}
 }
 
 % ---------- Bibliography (activated once refs.bib exists) ----------
