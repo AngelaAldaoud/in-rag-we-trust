@@ -345,6 +345,48 @@ of $k$ and the sets $\mathcal{M}$, $\Pi$, $\mathcal{T}$, $\mathcal{R}$ are
 fixed there; they must make $m = \rho k$ a whole number.
 \end{notebox}
 
+\section{Research questions}\label{sec:rqs}
+
+\paragraph{Main question.}
+\emph{How reliably do open, instruction-tuned language models answer
+questions when part of the retrieved evidence is deliberately false, and
+can simple prompt-level instructions make them more reliable?}
+
+The main question is broken into four research questions. All four are
+answered on the full experimental grid; RQ1--RQ3 are the focus of the
+discussion, while RQ4 compares the same results across poison types and
+models.
+
+\begin{description}[leftmargin=0pt]
+  \item[RQ1 --- Robustness to poison.] How do the accuracy
+    $\mathrm{Acc}$ and the attack success rate $\mathrm{ASR}$ change as
+    the poison ratio $\rho$ increases from a fully clean to a fully
+    poisoned context?
+
+  \item[RQ2 --- Effect of meta-prompts.] Compared with a plain
+    instruction to answer, do prompts that ask the model to check the
+    passages for consistency or to judge their reliability reduce
+    $\mathrm{ASR}$, and what do they cost in accuracy on fully clean
+    contexts ($\rho = 0$) and in extra abstentions?
+
+  \item[RQ3 --- Conflict awareness.] How often do models explicitly
+    flag a conflict between passages ($\mathrm{Flag}$), and when they do,
+    are they less likely to adopt the target answer than when they do
+    not?
+
+  \item[RQ4 --- Poison types and models.] \emph{(Secondary.)} Do the
+    answers to RQ1--RQ3 differ between poison types $\tau$ and between
+    models $M$?
+\end{description}
+
+\begin{notebox}
+RQ3 compares responses that differ in the conflict flag, which the
+experimenter does not control. Its answer is therefore an association,
+not a causal effect: flagging a conflict may go together with resisting
+the poison without causing it.
+\end{notebox}
+
+
 \section{Hypotheses}\label{sec:hypotheses}
 
 The hypotheses below were written \emph{before} any experiment was run.
@@ -916,7 +958,7 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Alternatives.] Use the repository spelling (not the official record).
   \item[Interview line.] ``I follow the official proceedings record.''
 \end{description}
-
+\end{decisionbox}
 \begin{decisionbox}{D29 --- HotpotQA without yes/no questions}
 \begin{description}[nosep, leftmargin=0pt]
   \item[Decision.] Use HotpotQA (distractor, dev) and exclude yes/no answers.
@@ -1276,7 +1318,7 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``A disconnection never cost more than a few minutes of work.''
 \end{description}
 \end{decisionbox}
-\end{decisionbox}
+
 
 \begin{decisionbox}{D4 --- Search for related work beyond the course list}
 \begin{description}[nosep, leftmargin=0pt]
