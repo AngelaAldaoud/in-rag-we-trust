@@ -1593,6 +1593,115 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D11 (revised) --- AI features in VS Code allowed}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The student may use the editor's AI assistant. \emph{Replaces the earlier version without AI completion.}
+  \item[Why.] The course allows AI tools if declared; the assistant helps the student learn.
+  \item[Alternatives.] Disable AI features (rejected by the student).
+  \item[Interview line.] ``AI assistance in the editor is declared in my disclaimer, and I accepted no suggestion I could not explain.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D22/D62 (final) --- Compute purchased}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Colab Pro, 100 compute units for 11.28 EUR, bought on 9 October; measured T4 rate 1.07 CU per hour. Cancel after the discussion.
+  \item[Why.] Units last 90 days, so buying early loses nothing; a second pack only if the pilot shows it is needed.
+  \item[Alternatives.] Free tier only (not enough).
+  \item[Interview line.] ``I bought the compute the design needed and measured its real cost.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D69 --- uv for Python and libraries}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] uv installs Python, creates the environment and installs libraries.
+  \item[Why.] One fast tool instead of three; fewer steps for a beginner.
+  \item[Alternatives.] python.org installer with pip; Homebrew; Anaconda.
+  \item[Interview line.] ``One tool manages my whole environment.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D70 (revised) --- Python 3.13 on both machines}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The Mac uses Python 3.13, the version Colab runs. \emph{Replaces 3.12.}
+  \item[Why.] The experiments run on Colab, so the Mac copies Colab.
+  \item[Alternatives.] Keep 3.12 on the Mac.
+  \item[Interview line.] ``My Mac and Colab run the same Python version.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D71 --- src layout, one sub-package per layer}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] data, poisoning, retrieval, models, evaluation, analysis.
+  \item[Why.] Mirrors the course's required layers; each part is testable on its own.
+  \item[Alternatives.] One flat folder of scripts, or one large notebook (forbidden).
+  \item[Interview line.] ``Each pipeline stage is its own package.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D72 --- GPU libraries as an optional group}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{torch}, \texttt{transformers}, \texttt{bitsandbytes}, \texttt{vllm} installed only on Colab.
+  \item[Why.] They do not install on a Mac without an NVIDIA GPU.
+  \item[Alternatives.] One dependency list for both machines.
+  \item[Interview line.] ``The Mac tests everything except the GPU parts.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D73 --- Raw data not committed}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{data/raw/} is ignored; processed data and results are committed.
+  \item[Why.] The code re-downloads raw data, which is more reproducible than a copy.
+  \item[Alternatives.] Commit everything.
+  \item[Interview line.] ``The repository holds the exact inputs and outputs of the experiment.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D74 --- Smoke test from day one}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Seven tests check the Python version and that every sub-package imports.
+  \item[Why.] Proves the environment works on both machines before any real code.
+  \item[Alternatives.] No tests until later.
+  \item[Interview line.] ``The same tests pass on my Mac and on Colab.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D75 --- Two-command setup}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{uv sync} and \texttt{uv run pytest}, documented in the README; exact versions in \texttt{uv.lock}.
+  \item[Why.] The course requires reproducible results.
+  \item[Alternatives.] Undocumented setup.
+  \item[Interview line.] ``Anyone can rebuild my environment in two commands.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D76 --- Fine-grained GitLab token}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Token limited to this project and the Code: Download permission, expiring 31 October 2026, stored in Colab Secrets.
+  \item[Why.] Colab only needs to read the code; the narrowest permission limits any leak.
+  \item[Alternatives.] A token with write access.
+  \item[Interview line.] ``Colab can only download this one repository.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D77 --- GPU libraries installed in Block C}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The setup check installs only the package; vLLM is tested with the model code.
+  \item[Why.] vLLM is large and must be checked against Colab's PyTorch.
+  \item[Alternatives.] Install everything now.
+  \item[Interview line.] ``GPU libraries were tested where the GPU code is written.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D78 --- Colab Pro without background execution}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Keep the Colab tab open and the Mac awake during runs; checkpointing protects the work.
+  \item[Why.] Verified: background execution is a Pro+ feature only.
+  \item[Alternatives.] Colab Pro+ (about five times the price).
+  \item[Interview line.] ``I planned the runs around the limits of the plan I used.''
+\end{description}
+\end{decisionbox}
+
+
 
 
 
@@ -1724,6 +1833,20 @@ ACL Anthology, arXiv) or the course PDF.
 31 & Decision and AI-usage logs for A3
   & D29--D68 and entries 22--31
   & Matches the decisions taken in the chat; test-compiled \\
+
+32 & Mac set-up: VS Code, uv, Python
+  & Installation commands and troubleshooting
+  & Each command run by the student; outputs checked \\
+33 & Project layout, dependencies, smoke test
+  & \texttt{pyproject.toml}, \texttt{.gitignore}, tests, README
+  & Tested in a scratch copy before use; 7/7 tests pass on the Mac \\
+34 & Colab set-up and GitLab token
+  & Notebook cells and token steps
+  & 7/7 tests pass on Colab; Colab plan features checked on Google's pricing page \\
+35 & A4 logs and BLOCK\_A handoff
+  & D69--D78, revisions, entries 32--35
+  & Matches the decisions taken in the chat; test-compiled \\
+
 \end{longtable}
 }
 
