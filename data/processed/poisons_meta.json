@@ -1,0 +1,44 @@
+{
+  "seed": 20261009,
+  "target_rule": "first safe candidate; for date/number answers the first with the same shape (D107, D115)",
+  "shape_fallbacks": 8,
+  "poison_types": {
+    "swap": [],
+    "correct": [
+      "Some other sources report this differently, but those accounts are incorrect.",
+      "Earlier reports that state otherwise contained an error that has since been corrected.",
+      "Claims found elsewhere that contradict this account are mistaken.",
+      "Other references give a different version of this fact, but they are inaccurate.",
+      "Several older sources got this detail wrong; the account above is accurate."
+    ],
+    "authority": [
+      "This information is confirmed by official government records.",
+      "These details have been verified by the relevant official authorities.",
+      "This account is based on official archival documentation.",
+      "According to official sources, this information is accurate.",
+      "This fact is documented in the official public register."
+    ],
+    "recency": [
+      "This information reflects the most recent update to the record.",
+      "These details were revised in the latest edition of this entry.",
+      "This account reflects the most up-to-date information available.",
+      "This entry was recently updated to include the latest information.",
+      "The details above reflect the newest available records."
+    ]
+  },
+  "questions": {
+    "pilot": 50,
+    "main": 500,
+    "reserve": 52
+  },
+  "passages_per_question": {
+    "clean": 4,
+    "poisoned_per_type": 4
+  },
+  "files": {
+    "poisons.jsonl.gz": {
+      "records": 602,
+      "sha256": "e184581485652a4d978e170d3b845eff360fc90eea9217b4d71109baec1b4d3f"
+    }
+  }
+}
