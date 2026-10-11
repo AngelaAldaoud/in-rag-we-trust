@@ -1,0 +1,437 @@
+{
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "vllm": "0.31.0",
+    "bitsandbytes": "0.50.2",
+    "transformers": "5.17.0",
+    "gpu": "NVIDIA L4"
+  },
+  "model": "google/gemma-2/transformers/gemma-2-9b-it/2",
+  "checks_commit": "e052e58",
+  "prompt_function": "def paraphrase_prompt(text, answer, style):\n    return (\n        \"Rewrite the paragraph below. \" + style + \"\\n\"\n        \"Rules:\\n\"\n        \"- Keep every fact. Do not add, remove or change any information.\\n\"\n        f'- Keep the exact words \"{answer}\" unchanged.\\n'\n        \"- Keep about the same length.\\n\"\n        \"- Output only the rewritten paragraph: no title, list, quotes or comments.\\n\\n\"\n        f\"Paragraph:\\n{text}\"\n        '- Do not add descriptive words, opinions or emphasis that are not in the original '\n        '(for example \"popular\", \"famous\", \"well-known\", \"sprawling\").\\n'\n    )\n",
+  "styles": [
+    "Change the sentence structure.",
+    "Use different words and expressions wherever possible.",
+    "Present the information in a different order. Make sure every pronoun (he, she, it, they) clearly refers to a name that comes before it."
+  ],
+  "first_pass": {
+    "temperature": 0.0,
+    "max_tokens": 600,
+    "seconds": 1561
+  },
+  "retries": {
+    "attempts": [
+      2,
+      3
+    ],
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "seed": "crc32(20261009-id-style-attempt)"
+  },
+  "questions_generated": 700,
+  "paraphrases_rejected_final": 125,
+  "final_split_counts": {
+    "pilot": 50,
+    "replaced": 77,
+    "main": 500,
+    "reserve_failed": 21,
+    "reserve": 52
+  },
+  "replacements": [
+    {
+      "replaced": "5a7b1e22554299042af8f6e4",
+      "by": "5ab55e015542992aa134a2d3",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5a83eaae55429933447460b4",
+      "by": "5ac290e85542992f1f2b3916",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5ae16d9655429920d52343ce",
+      "by": "5adde17f5542992200553b87",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5a845e9055429933447460ec",
+      "by": "5ab94acd554299743d22eac6",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5ae7f0c75542994a481bbe44",
+      "by": "5ac38c0755429939154137bb",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5a901b985542995651fb50b0",
+      "by": "5ac4920d5542996feb3fe8d3",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5ac281e355429963665199eb",
+      "by": "5a77ddb855429967ab1052d8",
+      "split": "pilot"
+    },
+    {
+      "replaced": "5ac3b4cc554299741d48a2eb",
+      "by": "5a8d09a955429941ae14df71",
+      "split": "main"
+    },
+    {
+      "replaced": "5a7d1bf65542995ed0d165f0",
+      "by": "5a8c62f5554299585d9e367b",
+      "split": "main"
+    },
+    {
+      "replaced": "5a86458b5542991e771815ec",
+      "by": "5a7d47da5542990b8f503975",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae1436e55429901ffe4ae31",
+      "by": "5a7dacff5542991319bc93e0",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae7945d5542997b22f6a7ba",
+      "by": "5ae7a8d35542994a481bbdbb",
+      "split": "main"
+    },
+    {
+      "replaced": "5a74655b55429974ef308bf0",
+      "by": "5a872e8e5542991e7718170c",
+      "split": "main"
+    },
+    {
+      "replaced": "5ade26db5542997c77aded77",
+      "by": "5a8750945542996432c57264",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab5c984554299488d4d9a21",
+      "by": "5a77767a55429967ab10519b",
+      "split": "main"
+    },
+    {
+      "replaced": "5a860642554299211dda2a3e",
+      "by": "5ab682dc55429954757d3318",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae0b2f25542993d6555ec1c",
+      "by": "5adcfdc555429947343537f4",
+      "split": "main"
+    },
+    {
+      "replaced": "5a7fb1765542992e7d278d20",
+      "by": "5adcb0ab5542994d58a2f69a",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae71d2d554299572ea546f7",
+      "by": "5a88fa1c5542995153361219",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae1dac85542997283cd229a",
+      "by": "5a7553a95542996c70cfaedf",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae23d945542996483e64939",
+      "by": "5a865d11554299211dda2b0d",
+      "split": "main"
+    },
+    {
+      "replaced": "5ac0a18a5542992a796ded41",
+      "by": "5a7d9d2b5542997cc2c47464",
+      "split": "main"
+    },
+    {
+      "replaced": "5aba9db7554299232ef4a361",
+      "by": "5ac249bd55429951e9e68528",
+      "split": "main"
+    },
+    {
+      "replaced": "5a90d25655429916514e7585",
+      "by": "5a7e1cd955429965cec5ea76",
+      "split": "main"
+    },
+    {
+      "replaced": "5a8efb5a55429918e830d172",
+      "by": "5ac538025542996feb3fea41",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae7821b5542997ec2727678",
+      "by": "5ae2120c5542997283cd23ac",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae48e7e55429913cc20449d",
+      "by": "5a86f2fb554299211dda2b64",
+      "split": "main"
+    },
+    {
+      "replaced": "5a7fb90655429969796c1b34",
+      "by": "5ab70f79554299110f219aa9",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab2123155429970612095b9",
+      "by": "5a74af7e55429916b01641d2",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae5cf625542996de7b71a22",
+      "by": "5ae056c755429945ae959319",
+      "split": "main"
+    },
+    {
+      "replaced": "5a8da2b05542994ba4e3dcdc",
+      "by": "5a7e19e655429965cec5ea58",
+      "split": "main"
+    },
+    {
+      "replaced": "5adf81105542992d7e9f9388",
+      "by": "5a74ce9655429974ef308c6c",
+      "split": "main"
+    },
+    {
+      "replaced": "5a90362f55429933b8a2049d",
+      "by": "5abdc74755429965af743e36",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab78a445542992aa3b8c826",
+      "by": "5ab41d855542996a3a969f4b",
+      "split": "main"
+    },
+    {
+      "replaced": "5a828a7b55429954d2e2eb69",
+      "by": "5adc3aff5542996e685252eb",
+      "split": "main"
+    },
+    {
+      "replaced": "5addfdfa5542997dc790710b",
+      "by": "5ac3ad7f5542995ef918c1de",
+      "split": "main"
+    },
+    {
+      "replaced": "5adf03765542995534e8c72b",
+      "by": "5ac4f33355429924173fb507",
+      "split": "main"
+    },
+    {
+      "replaced": "5a9068f85542990a98493623",
+      "by": "5a7d9bc65542990b8f5039cb",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae0120155429925eb1afbfb",
+      "by": "5a89d48c554299515336132e",
+      "split": "main"
+    },
+    {
+      "replaced": "5a8f15d2554299458435d551",
+      "by": "5a8d0d7b55429941ae14df79",
+      "split": "main"
+    },
+    {
+      "replaced": "5ade9c2155429939a52fe8fe",
+      "by": "5ab3357d554299166977419d",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab6266555429953192ad277",
+      "by": "5a8c7703554299585d9e36b9",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab1f13e554299449642c81c",
+      "by": "5a7c917e5542990527d554d3",
+      "split": "main"
+    },
+    {
+      "replaced": "5a87ab905542996e4f3088c1",
+      "by": "5abd6cb955429933744ab7cd",
+      "split": "main"
+    },
+    {
+      "replaced": "5ac3ae885542995ef918c1e7",
+      "by": "5abc030e554299642a094bdc",
+      "split": "main"
+    },
+    {
+      "replaced": "5a84a97f5542992a431d1a87",
+      "by": "5ae0c7e755429945ae95944c",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae4083755429970de88d885",
+      "by": "5a8e024f5542995085b37375",
+      "split": "main"
+    },
+    {
+      "replaced": "5adfdef9554299025d62a36b",
+      "by": "5a8a06c35542992d82986e57",
+      "split": "main"
+    },
+    {
+      "replaced": "5ac033495542996f0d89cb59",
+      "by": "5a8e4d9855429917b4a5bd8d",
+      "split": "main"
+    },
+    {
+      "replaced": "5a7c96e55542990527d554d9",
+      "by": "5abef8fd5542990832d3a111",
+      "split": "main"
+    },
+    {
+      "replaced": "5a722a6855429971e9dc9320",
+      "by": "5a8fa89c55429918e830d29f",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae72f75554299572ea5476c",
+      "by": "5ab56f7a554299637185c59a",
+      "split": "main"
+    },
+    {
+      "replaced": "5a7324e055429901807daf8f",
+      "by": "5a84a1c85542992a431d1a7c",
+      "split": "main"
+    },
+    {
+      "replaced": "5add2eab5542992ae4cec4da",
+      "by": "5ab44a775542991779162c57",
+      "split": "main"
+    },
+    {
+      "replaced": "5adcdc6c5542992c1e3a2437",
+      "by": "5a7735f55542994aec3b7226",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab3b42c5542992ade7c6e4f",
+      "by": "5a7292385542994cef4bc342",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab29956554299194fa9342d",
+      "by": "5ae5e8c85542996de7b71a69",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae28b76554299495565daa8",
+      "by": "5a74c6a655429974ef308c5d",
+      "split": "main"
+    },
+    {
+      "replaced": "5a78d01d55429974737f78b3",
+      "by": "5ae6e36155429908198fa6d3",
+      "split": "main"
+    },
+    {
+      "replaced": "5ac2a277554299657fa28ff3",
+      "by": "5a87b2fc5542996e4f3088d0",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab94fa25542996be2020474",
+      "by": "5ae1b44c554299234fd042cd",
+      "split": "main"
+    },
+    {
+      "replaced": "5ac0805f5542992a796ded29",
+      "by": "5a835478554299123d8c20ed",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae25e835542992decbdccd1",
+      "by": "5ae73d505542991e8301cc2c",
+      "split": "main"
+    },
+    {
+      "replaced": "5adfa1f9554299025d62a308",
+      "by": "5a8baf635542996e8ac889c6",
+      "split": "main"
+    },
+    {
+      "replaced": "5a80840f554299485f59863b",
+      "by": "5a8f5273554299458435d5b1",
+      "split": "main"
+    },
+    {
+      "replaced": "5a79f95d5542996c55b2dcbd",
+      "by": "5a737dc455429908901be2c9",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae363e85542994393b9e6a5",
+      "by": "5ae6097c55429929b0807a9a",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae5d19155429929b08079bc",
+      "by": "5a8b6ac055429949d91db5a5",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae4869755429970de88d99a",
+      "by": "5ab97cd0554299753720f81a",
+      "split": "main"
+    },
+    {
+      "replaced": "5a83d7d05542992ef85e237a",
+      "by": "5a83155c55429954d2e2ec0e",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae382ee5542992e3233c430",
+      "by": "5a7f5da85542992097ad2f3e",
+      "split": "main"
+    },
+    {
+      "replaced": "5a80b35c5542992bc0c4a7b8",
+      "by": "5add596f5542990dbb2f7e4d",
+      "split": "main"
+    },
+    {
+      "replaced": "5ab9560855429970cfb8ea73",
+      "by": "5ae25c815542992decbdcccc",
+      "split": "main"
+    },
+    {
+      "replaced": "5a855ca15542992a431d1b12",
+      "by": "5a7ddd565542997cc2c474b2",
+      "split": "main"
+    },
+    {
+      "replaced": "5a75321555429916b0164290",
+      "by": "5a773ae055429972597f14b0",
+      "split": "main"
+    },
+    {
+      "replaced": "5ae7ed17554299540e5a56a3",
+      "by": "5ac4d717554299076e296e0e",
+      "split": "main"
+    },
+    {
+      "replaced": "5ac1b1345542994ab5c67dd0",
+      "by": "5a8b45765542995d1e6f1333",
+      "split": "main"
+    }
+  ],
+  "used_paraphrases": 1650,
+  "used_with_missing_name": 106,
+  "used_with_missing_number": 39,
+  "used_by_attempt": {
+    "1": 1344,
+    "3": 220,
+    "2": 86
+  }
+}
