@@ -60,3 +60,9 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** same 30 questions, paired; 15 improved and 1 got worse (McNemar p ≈ 0.0005).
 - **What it means:** with mostly absurd lies, every model would look robust — a floor effect hiding all comparisons. Context-fitting false answers make the attack realistic; every one still passes the same safety rules, so none can contain the truth.
 - **Its limitation:** about a third remain implausible to someone with world knowledge, and in about 30% the passage's context still points to the true answer (e.g. "007" → James Bond).
+
+### Claim: the data is reproducible byte for byte (B4)
+- **What it shows:** one command rebuilds every CPU-generated file of the dataset and prints OK for each checksum; "ALL DATA VERIFIED".
+- **How to read it:** each file is compared with the fingerprint recorded when it was first built.
+- **What it means:** anyone can reconstruct exactly my 550 questions, their passages, poisons and retrieval collections.
+- **Its limitation:** the two GPU outputs (paraphrases, false answers) are stored files, not regenerated, because sampled GPU generation isn't guaranteed identical across software versions.

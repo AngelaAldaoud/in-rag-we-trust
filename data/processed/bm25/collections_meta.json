@@ -1,0 +1,45 @@
+{
+  "questions": 550,
+  "collections": {
+    "swap": {
+      "documents": 9301,
+      "by_role": {
+        "clean": 2200,
+        "bridge": 550,
+        "distractor": 4351,
+        "poison": 2200
+      },
+      "sha256": "156dd59d8ed4ea345821e914c2018a0f56528d53ac32d3004069f4f25e192fcc"
+    },
+    "correct": {
+      "documents": 9301,
+      "by_role": {
+        "clean": 2200,
+        "bridge": 550,
+        "distractor": 4351,
+        "poison": 2200
+      },
+      "sha256": "33930d70613124c5152405f0c7acf1c8a0a56ac31e2353256308253f510ed4ec"
+    },
+    "authority": {
+      "documents": 9301,
+      "by_role": {
+        "clean": 2200,
+        "bridge": 550,
+        "distractor": 4351,
+        "poison": 2200
+      },
+      "sha256": "03803c2b892d2c3bc90c5b9ca6c01c6693ce210f35a417bfec9774c84c96d0da"
+    },
+    "recency": {
+      "documents": 9301,
+      "by_role": {
+        "clean": 2200,
+        "bridge": 550,
+        "distractor": 4351,
+        "poison": 2200
+      },
+      "sha256": "a53f74a0c79907e33cae661114f2fc3d723f08419f6ceadb246ff9e01914b903"
+    }
+  }
+}

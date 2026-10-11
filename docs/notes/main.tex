@@ -1288,7 +1288,85 @@ in the latest edition of this entry.''
 
 
 
+\chapter{Validation (B4)}\label{ch:b4}
 
+\section{Automatic poison checks}\label{sec:b4-checks}
+Every poisoned passage is checked automatically. Three checks are blocking:
+the target answer must occur as a whole-word span; the gold answer must not
+occur even under the normalisation used by the evaluator; and a framed poison
+must equal the swapped passage followed by exactly one template of its own
+type. Two partial leaks are measured: a number of $a^{*}$ that survives
+elsewhere in the passage, and the last capitalised word of $a^{*}$ surviving
+elsewhere; tokens shared with $\tilde{a}$ are not counted. A first version of
+the word-leak measure counted shared words such as ``Award'' in ``Hugo Award''
+and ``Nebula Award''; it was corrected and covered by a test.
+
+Four questions had blocking failures, all caused by spelling variants of the
+gold answer in the passage (quotation marks, ``1,500'' against ``1500'', a
+missing apostrophe); the three in the main set were replaced by clean reserve
+questions in rank order. The final sample of 50 pilot and 500 main questions is
+frozen in \texttt{sample.json}. In the final sample no blocking failure
+remains; 70 questions (12.7\%) have a surviving proper-name word of $a^{*}$ and
+12 (2.2\%) a surviving number. The swapped passages are 0.75--1.12 times the
+length of their clean passages (median 1.0).
+
+\section{Plausibility of the false answers: a finding}\label{sec:b4-plausibility}
+The student judged the \textsc{Swap} poisons of 30 random main questions for
+plausibility of $\tilde{a}$, grammaticality and visibility of the true answer.
+With false answers drawn from gold answers of the same entity type, only 5 of
+30 were plausible: same-type answers were often of the wrong kind or absurd in
+context (a racing driver as a country singer), and their form often broke the
+sentence. Such poisons would be rejected by models for being absurd rather than
+false, producing a floor effect in which no comparison between conditions
+could show.
+
+The helper model was therefore asked to write, from the question, the correct
+answer and the answer passage, one false answer of the same kind and form
+(greedy decoding). Each generated answer must pass the same safety rules as
+before; 574 of 602 passed at once, 15 after seeded retries, and 13 kept the
+earlier candidate. The same 30 questions were judged again.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& Type-matched targets & Generated targets \\
+\midrule
+Plausible & 5 / 30 & 19 / 30 \\
+Grammatical & 15 / 30 & 26 / 30 \\
+True answer visible & 10 / 30 & 9 / 30 \\
+\bottomrule
+\end{tabular}
+\caption{Manual check of 30 \textsc{Swap} poisons before and after D118
+(same questions).}
+\label{tab:b4-plausibility}
+\end{table}
+
+Plausibility improved for 15 questions and worsened for one (McNemar's exact
+test, $p \approx 0.0005$). The remaining implausible answers are of the right
+kind but contradicted by world knowledge (a Naples theatre placed in Milan, a
+film with the wrong release year). Visibility of the true answer did not change:
+it comes from the context of the passage (``007'' identifying James Bond), not
+from the target, and is reported as a limitation.
+\section{Retrieval collections}\label{sec:b4-bm25}
+For the realistic-retrieval check, one document collection per poison type
+was built over the 550 final questions: for each question its four clean
+passages, its four poisoned passages of that type and its bridge passage,
+plus the HotpotQA distractor paragraphs of all questions, deduplicated. Each
+collection holds 9{,}301 documents (2{,}200 clean, 2{,}200 poisoned, 550
+bridge, 4{,}351 distractors), each labelled with its question and role, so
+that retrieval outcomes can be measured per question. Indexing and retrieval
+with BM25 follow in Block C, with the tokenisation fixed here.
+
+\section{Reproduction and dataset card}\label{sec:b4-repro}
+A single command regenerates every CPU-produced file of Block B (questions,
+poisons, final sample, collections) and compares each with its recorded
+checksum; all files were reproduced byte for byte. The two GPU outputs
+(paraphrases and generated false answers) are versioned in the repository
+with their checksums, because sampled generation is not guaranteed to be
+byte-identical across software versions. A dataset card
+(\texttt{docs/dataset\_card.md}) summarises sources, construction, files,
+quality checks and limitations.
 
 
 
@@ -2464,6 +2542,59 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{decisionbox}
 
 
+\begin{decisionbox}{D116 --- Poison checks}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Blocking: target present, gold answer absent under the evaluator's normalisation, exact framing. Measured: surviving numbers and proper-name words of $a^{*}$ not shared with $\tilde{a}$; length ratio.
+  \item[Why.] A full leak or malformed poison invalidates a condition; partial leaks are a property of single-span swaps and are reported.
+  \item[Alternatives.] Blocking partial leaks (biases the sample); editing other mentions (breaks D30).
+  \item[Interview line.] ``No poison contains the true answer in any form my evaluator accepts; residual hints are measured.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D117 --- Frozen sample}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Blocked pilot/main questions replaced by clean reserve questions in rank order; final IDs, replacements and check report in \texttt{sample.json}.
+  \item[Why.] One definitive list for all later blocks.
+  \item[Alternatives.] Manual fixes; dropping questions.
+  \item[Interview line.] ``The final 550 questions are frozen after every check, with each replacement recorded.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D118 --- Generated false answers}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] $\tilde{a}$ is written by the helper model from the question, $a^{*}$ and the answer passage (greedy), filtered by the D94 safety rules, with two seeded retries and the D115 candidate as fallback. \emph{Revises D31, D107 and D115.}
+  \item[Why.] Type-matched targets were plausible in 5 of 30 manual checks, risking a floor effect; generated targets reached 19 of 30 on the same questions ($p \approx 0.0005$).
+  \item[Alternatives.] Keep type-matched targets; hand-written targets.
+  \item[Interview line.] ``My first false answers were plausible only 17\% of the time; context-fitting generated answers reached 63\% on the same questions.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D119 --- Engine start-up settings in Colab}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] vLLM is started with the original system streams and 95\% of GPU memory for the 16-bit helper model.
+  \item[Why.] In a long Colab session the notebook's output stream had no file handle, and CUDA-graph memory accounting left too little room at 92\%.
+  \item[Alternatives.] Restarting until it works; a shorter maximum length.
+  \item[Interview line.] ``Two small engine settings made model loading reliable in Colab.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D120 --- BM25 collections}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] One collection per poison type over the 550 final questions: 4 clean, 4 poisoned, 1 bridge passage per question, plus deduplicated HotpotQA distractors; documents labelled with question and role.
+  \item[Why.] Poison types stay separate (D43); other questions' passages act as realistic noise; roles make retrieval outcomes measurable.
+  \item[Alternatives.] One collection for all types; one per question; full Wikipedia.
+  \item[Interview line.] ``A standard search engine chooses passages from a shared collection where truth, lies and real Wikipedia noise compete.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D121 --- One-command verified rebuild}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{python -m inragwetrust.data.rebuild} regenerates all CPU outputs and verifies their checksums; GPU outputs are versioned.
+  \item[Why.] Reproducibility is required by the course; a checksum comparison proves it.
+  \item[Alternatives.] Written instructions only; regenerating GPU outputs.
+  \item[Interview line.] ``One command rebuilds my data and proves it matches byte for byte.''
+\end{description}
+\end{decisionbox}
 
 
 \chapter{AI-Usage Log}\label{ch:ailog}
@@ -2678,7 +2809,21 @@ ACL Anthology, arXiv) or the course PDF.
   & \texttt{poisoning/build.py}; diagnosis of the date example; D115
   & Examples inspected by the student; two builds give identical checksums \\
 
-
+57 & Poison checks, leak measure and frozen sample
+  & \texttt{checks.py}, \texttt{freeze.py}, tests; diagnosis of the inflated leak count
+  & 83 tests pass; examples inspected by the student \\
+58 & Generated false answers
+  & Diagnosis of the 5/30 plausibility; prompt, generation and safety cells; rebuilt poisons
+  & Five test targets judged by the student; decision D118 taken by the student \\
+59 & Manual checks of the poisons
+  & Sheets and summary scripts
+  & All 60 labels written by the student \\
+60 & BM25 collections and rebuild script
+  & \texttt{collection.py}, \texttt{rebuild.py}, tests
+  & Run by the student; all checksums verified \\
+61 & Dataset card and Block B logs
+  & \texttt{dataset\_card.md}; B4 notes; D116--D121; entries 57--61
+  & Numbers checked against the metadata files; reviewed by the student \\
   
 \end{longtable}
 }
