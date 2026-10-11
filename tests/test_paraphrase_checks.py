@@ -48,3 +48,23 @@ def test_elision_and_united_states_forms():
     orig = "It was recorded at the Château d'Hérouville by a U.S. band."
     para = "An American band recorded it at the Château d'Hérouville."
     assert check_paraphrase(orig, para, "Château d'Hérouville") == []
+
+
+from inragwetrust.data.paraphrase_checks import accepted
+
+
+def test_omission_is_recorded_but_not_blocking():
+    para = "Brian Kirk is an Irish director. He directed My Boy Jack, a film starring Daniel Radcliffe."
+    failed = check_paraphrase(ORIG, para, GOLD, title="Brian Kirk")
+    assert "missing_number" in failed and accepted(failed)
+
+
+def test_title_missing_blocks():
+    para = "The director, born in 1968, is Irish. He directed My Boy Jack, a film starring Daniel Radcliffe."
+    failed = check_paraphrase(ORIG, para, GOLD, title="Brian Kirk")
+    assert "title_missing" in failed and not accepted(failed)
+
+
+def test_title_word_absent_from_original_is_ignored():
+    assert check_paraphrase(ORIG, GOOD, GOLD, title="Brian Kirk (Irish director, Belfast)") == []
+

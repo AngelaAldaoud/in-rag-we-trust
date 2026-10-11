@@ -17,6 +17,7 @@ WORD = re.compile(r"[\w'’\-]+")
 CHATTER_STARTS = ("here is", "here's", "here are", "sure", "rewritten", "paraphrase")
 MIN_RATIO, MAX_RATIO = 0.7, 1.4
 PREFIX = 5
+NON_BLOCKING = {"missing_name", "missing_number"}   # recorded, not rejecting (D111)
 
 
 def _prep(text: str) -> str:
@@ -55,8 +56,21 @@ def _known(token: str, vocabulary: set[str]) -> bool:
     return len(token) >= PREFIX and any(v[:PREFIX] == token[:PREFIX] for v in vocabulary)
 
 
+def title_words(title: str, original: str) -> list[str]:
+    """Capitalised words of the title (no brackets) that occur in the original passage."""
+    core = re.sub(r"\s*\(.*?\)", "", title)
+    vocabulary = words(original)
+    keys = [_key(t) for t in WORD.findall(_prep(core)) if t[0].isupper()]
+    return [k for k in keys if len(k) >= 2 and _known(k, vocabulary)]
+
+
+def accepted(failed: list[str]) -> bool:
+    """A paraphrase is accepted when none of its failures is blocking (D111)."""
+    return all(f in NON_BLOCKING for f in failed)
+
+
 def check_paraphrase(original: str, paraphrase: str, gold_answer: str,
-                     finish_reason: str = "stop") -> list[str]:
+                     finish_reason: str = "stop", title: str | None = None) -> list[str]:
     """Return the names of the failed checks (empty list = accepted)."""
     failed = []
     if finish_reason != "stop":
@@ -80,4 +94,6 @@ def check_paraphrase(original: str, paraphrase: str, gold_answer: str,
         failed.append("new_name")
     if any(not _known(n, w_para) for n in names(original)):
         failed.append("missing_name")
+    if title is not None and any(not _known(t, w_para) for t in title_words(title, original)):
+        failed.append("title_missing")
     return failed
