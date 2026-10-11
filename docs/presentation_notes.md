@@ -32,3 +32,12 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Its limitation:** both changes came after seeing the data; 14% of questions were still replaced, slightly favouring simpler passages; and accepted paraphrases can be less detailed than the original.
 
 
+### Result: quality of the clean paraphrases (B2)
+- **What it shows:** 40 paraphrases I judged blind: 30 that the checks accepted, 10 they rejected.
+- **How to read it:** 27 of 30 accepted ones are faithful; the 3 errors change a side fact, never the answer. 6 of 10 rejected ones were actually fine.
+- **What it means:** clean passages always support the true answer; about 1 in 10 carries a small side error. The automatic checks are strict: they waste some good paraphrases but let few bad ones through.
+- **Its limitation:** 30 examples give a wide range (about 3–26%) for the error rate.
+
+### Fact: cost of generating the data (B2)
+- 2,100 paraphrases in 26 minutes on an L4 GPU, at about 1.5 compute units per hour; generation, retries and checks cost about 3.2 units.
+- At 16-bit precision the helper model leaves little memory for parallel work, so generation was slower than planned; the A100 for the main runs has much more memory.
