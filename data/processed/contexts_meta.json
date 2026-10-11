@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "seed": 20261009,
+  "questions": {
+    "pilot": 50,
+    "main": 500
+  },
+  "contexts_per_question": 18,
+  "context_ids": [
+    "closedbook",
+    "clean-0.00",
+    "swap-0.25",
+    "swap-0.50",
+    "swap-0.75",
+    "swap-1.00",
+    "correct-0.25",
+    "correct-0.50",
+    "correct-0.75",
+    "correct-1.00",
+    "authority-0.25",
+    "authority-0.50",
+    "authority-0.75",
+    "authority-1.00",
+    "recency-0.25",
+    "recency-0.50",
+    "recency-0.75",
+    "recency-1.00"
+  ],
+  "bm25_contexts": "built in C4, separate file",
+  "conditions": {
+    "total": 192,
+    "closed_book": 3,
+    "baseline": 9,
+    "poisoned": 144,
+    "retrieval": 36
+  },
+  "inputs": {
+    "sample.json": "f1186e54dc33d415e98b0743dc0ce4eab04591f2dcdefb5f0651382bbf05f202",
+    "poisons.jsonl.gz": "c0e004846d4cdd245bfe6e4f6a5316910deddbfbbd57ecaf047ac6c410988375"
+  },
+  "outputs": {
+    "contexts.jsonl.gz": "8cf20c1eebbf43e8f7b0c887855733294bfa1add0719481014f0e04dc325316d",
+    "conditions.csv": "0569b09dacc20b927bec9a056ab09895df584cafe2b3ddbb01079cc36ce289fd"
+  }
+}
