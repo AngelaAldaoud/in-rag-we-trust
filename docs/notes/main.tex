@@ -1444,6 +1444,76 @@ some questions the question text or clean context still points to the true
 answer (Section~\ref{sec:b4-checks}).
 
 
+\section{Prompt construction (C2)}\label{sec:c2-prompts}
+
+\paragraph{Message structure.}
+Each prompt is a single user message; no system message is sent. The three
+chat templates treat a system message differently: Qwen inserts a default
+system message when none is given, Llama always opens with a system header
+containing a knowledge-cutoff and a fixed date (26 July 2024), and Mistral has
+no system role and prepends system text to the user message. Placing the whole
+prompt in the user message puts the instruction under study in the same place
+for every model, while each model keeps its default wrapper.
+
+\paragraph{Prompt text.}
+The three prompt conditions differ by exactly one sentence:
+
+\begin{quote}\small
+\texttt{Answer the question using the passages below.}
+[$\pi_{\mathrm{cons}}$: \texttt{First check whether the passages agree with
+each other, then answer.}]
+[$\pi_{\mathrm{rel}}$: \texttt{First judge how reliable each passage is, then
+answer.}]\\[2pt]
+\texttt{Passages:} \texttt{[1]} \dots\ \texttt{[5]} \dots\\[2pt]
+\texttt{Question:} \dots\\[2pt]
+\texttt{Keep your reasoning brief. Finish with one final line in the form
+"Answer: <answer>", where <answer> is only a short name, date, number or
+phrase. If the question cannot be answered reliably, finish with
+"Answer: unknown".}
+\end{quote}
+
+The closed-book prompt starts with \texttt{Answer the question.} and has no
+passages. All prompts share the output instruction and allow brief reasoning,
+so response format does not differ by prompt and conflict flags (RQ3) can
+appear under every prompt. Models are never told that passages may be false.
+Passages are numbered in context order, without titles or sources.
+
+\paragraph{Rendering.}
+Models and tokenizers are loaded at fixed HuggingFace commits. The chat
+template renders the text, which is tokenised once without adding special
+tokens; the resulting token identifiers are sent to the inference engine.
+This avoids a duplicated start-of-text token for Llama and Mistral, whose
+templates already contain it; a check refuses any prompt starting with two
+such tokens. Each prompt is identified by the SHA-256 hash of its text. All
+85{,}800 controlled and closed-book prompts (550 questions $\times$ 52 prompts
+$\times$ 3 models) were rendered with the pinned tokenizers; none failed the
+check. Twelve fully rendered examples are given in
+\texttt{docs/prompt\_examples.md}.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Model & Mean & Max & Total (M) & Closed-book mean \\
+\midrule
+Qwen2.5-7B-Instruct & 697 & 1{,}630 & 19.6 & 107 \\
+Llama-3.1-8B-Instruct & 673 & 1{,}576 & 18.9 & 113 \\
+Mistral-7B-Instruct-v0.3 & 746 & 1{,}783 & 20.9 & 91 \\
+\bottomrule
+\end{tabular}
+\caption{Prompt length in tokens over the 28{,}050 controlled prompts per
+model (550 questions). Totals refer to one greedy pass.}
+\label{tab:c2-lengths}
+\end{table}
+
+\paragraph{Limitations.}
+Llama's template gives it a fixed current date that the other models do not
+receive; it is constant within Llama, but could interact with the Recency
+poison. Qwen's default system message is likewise model-specific. Some
+passages carry spacing errors from the HotpotQA source text, identical across
+conditions, and some bridge passages contain partial cues to the true answer.
+
+
 
 
 \chapter{Decision Log}\label{ch:decisions}
@@ -2727,6 +2797,61 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``One balance check came out a little low by chance; I reported it instead of re-rolling the seed.''
 \end{description}
 \end{decisionbox}
+\begin{decisionbox}{D128 --- One user message, no system message}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The whole prompt is one user message; each model keeps its default chat wrapper.
+  \item[Why.] The system role differs across templates (Qwen default text, Llama date header, Mistral none); the instruction under study must sit in the same place for every model.
+  \item[Alternatives.] Instructions in the system message; one shared neutral system message; editing Llama's date.
+  \item[Interview line.] ``The instruction I test is in the same place for every model; otherwise each runs its default format.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D129 --- Token identifiers to the engine, one tokenisation}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The template renders text, which is tokenised once without special tokens; the identifiers go to vLLM; a guard refuses duplicated start tokens.
+  \item[Why.] Llama and Mistral templates contain the start token; tokenising the text again would add a second one. One function does it for all prompts; the identical result does not depend on library defaults.
+  \item[Alternatives.] Text to vLLM (duplicated token); \texttt{tokenize=True} (return type varies with version); \texttt{llm.chat} (hides the exact tokens).
+  \item[Interview line.] ``Models receive exactly the token sequence their template produces, checked on all 85,800 prompts.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D130 --- Pinned model revisions}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Models and tokenizers load at fixed commits (Qwen \texttt{a09a354}, Llama \texttt{0e9e39f}, Mistral \texttt{c170c70}); transformers 5.18.0.
+  \item[Why.] A change of files or templates during the runs would mix two versions.
+  \item[Alternatives.] Latest version.
+  \item[Interview line.] ``Every model is loaded at a fixed commit, recorded with the results.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D131 --- Prompt conditions differ by one sentence}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Consistency and reliability prompts are the plain prompt plus one sentence (Block A wording); all share one output instruction allowing brief reasoning and ``Answer: unknown''; short answers requested; no warning that passages may be false.
+  \item[Why.] Prompt effects (RQ2) are attributable to one sentence; flags (RQ3) can appear under every prompt; short answers suit the matching rule (D46); a warning would be a stronger, different intervention.
+  \item[Alternatives.] Answer-only output for the plain prompt; free-form answers; telling models some passages are false.
+  \item[Interview line.] ``My prompts differ by exactly one sentence, so any prompt effect comes from that sentence.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D132 --- Passage format and order}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Passages numbered [1]--[5] in context order, no titles or sources; question after the passages, output instruction last.
+  \item[Why.] Numbers let models refer to passages; titles would add uncontrolled cues; reading order evidence, question, format.
+  \item[Alternatives.] Titles or invented sources; question first.
+  \item[Interview line.] ``Passages are numbered and anonymous, so the only source claims are inside the poisons.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D133 --- Prompt checks on the CPU, examples in the repository}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Tokenizers run on the Mac with transformers added for one command (\texttt{uv run --with}), leaving the lock file unchanged; rendered examples and lengths are generated by a module into \texttt{docs/}.
+  \item[Why.] No GPU is needed; D90 stays intact; examples are reproducible from code.
+  \item[Alternatives.] A Colab CPU runtime (files must be copied back); hand-written examples.
+  \item[Interview line.] ``The prompt examples in my repository are generated by code from the real tokenizers.''
+\end{description}
+\end{decisionbox}
+
+
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -2991,6 +3116,20 @@ ACL Anthology, arXiv) or the course PDF.
 65 & Balance check and C1 notes
   & Chi-square and $z$ checks; this section, D122--D127, entries 62--65
   & Reviewed by the student; decision D127 taken by the student \\
+
+66 & Chat-template inspection
+  & Rendering cell; analysis of system-role handling and of the duplicated start token
+  & Run by the student on Colab; decisions D128--D130 confirmed by the student \\
+67 & Prompt texts and rendering
+  & \texttt{prompts.py}, \texttt{chat.py}, 12 tests
+  & 134 tests pass; wording kept by the student \\
+68 & Rendered examples and lengths
+  & \texttt{render\_examples.py}; diagnosis of a 400 error (malformed token from pasted input), fixed by the HuggingFace login
+  & 85,800 prompts rendered by the student with no guard failure \\
+69 & C2 notes & This section, D128--D133, entries 66--69 & Reviewed by the student \\
+
+
+
 \end{longtable}
 }
 }

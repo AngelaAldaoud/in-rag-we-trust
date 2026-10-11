@@ -85,3 +85,14 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **What it means:** no condition is helped or hurt by "Lost in the Middle" position effects on average.
 - **Its limitation:** the original passage is poisoned first in 102 questions instead of about 125 (p ≈ 0.02); a chance result I reported rather than re-rolling the seed.
 
+### Design: the three prompts (C2)
+- **What it shows:** plain, consistency and reliability prompts; the last two add one sentence each, everything else is identical.
+- **How to read it:** the passages, question and "Answer:" format are the same text in all three, and the whole prompt is one user message for every model.
+- **What it means:** any difference in attack success between prompts comes from that one sentence (RQ2).
+- **Its limitation:** each model keeps its own wrapper — Qwen's default system line, Llama's fixed date header — constant within a model, but different between models.
+
+### Table: prompt lengths (C2)
+- **What it shows:** mean 673–746 tokens, maximum 1,783, across 28,050 prompts per model.
+- **How to read it:** same text, different counts, because each model splits words into its own pieces (Mistral's vocabulary is smallest).
+- **What it means:** all prompts fit easily; reading the prompts dominates the compute cost, which is why the 5 samples share one prompt reading.
+- **Its limitation:** the BM25 prompts (C4) are measured separately and may be longer.
