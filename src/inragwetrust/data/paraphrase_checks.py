@@ -10,7 +10,8 @@ import re
 from inragwetrust.textmatch import contains_span, normalize
 
 NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
-NAME = re.compile(r"[A-Z][\w'’\-]*")
+NAME = re.compile(r"(?<![\w'’])[A-Z][\w'’\-]*")
+US_FORMS = {"us", "usa", "america", "american", "americans", "united", "states"}
 SENTENCE_START = re.compile(r"(?:^|[.!?]\s+)([A-Z][\w'’\-]*)")
 WORD = re.compile(r"[\w'’\-]+")
 CHATTER_STARTS = ("here is", "here's", "here are", "sure", "rewritten", "paraphrase")
@@ -18,9 +19,16 @@ MIN_RATIO, MAX_RATIO = 0.7, 1.4
 PREFIX = 5
 
 
+def _prep(text: str) -> str:
+    """Write U.S. / U.S.A. as US before tokenising (D110)."""
+    return re.sub(r"\bU\.\s?S\.(?:\s?A\.)?", "US", text)
+
+
 def _key(token: str) -> str:
-    """Lower case, without a possessive 's and surrounding quote marks or dashes."""
-    return re.sub(r"['’]s$", "", token.lower()).strip("'’-")
+    """Lower case, no possessive 's, no d'/l' elision, one form for the United States."""
+    t = re.sub(r"['’]s$", "", token.lower()).strip("'’-")
+    t = re.sub(r"^[dl]['’]", "", t)
+    return "united-states" if t in US_FORMS else t
 
 
 def numbers(text: str) -> set[str]:
@@ -29,13 +37,15 @@ def numbers(text: str) -> set[str]:
 
 
 def names(text: str) -> set[str]:
-    """Capitalised words that are not at the start of a sentence."""
+    """Capitalised words (at least two letters) that are not at the start of a sentence."""
+    text = _prep(text)
     starts = {m.start(1) for m in SENTENCE_START.finditer(text)}
-    return {_key(m.group()) for m in NAME.finditer(text) if m.start() not in starts}
+    keys = {_key(m.group()) for m in NAME.finditer(text) if m.start() not in starts}
+    return {k for k in keys if len(k) >= 2}
 
 
 def words(text: str) -> set[str]:
-    return {_key(w) for w in WORD.findall(text)}
+    return {_key(w) for w in WORD.findall(_prep(text))}
 
 
 def _known(token: str, vocabulary: set[str]) -> bool:

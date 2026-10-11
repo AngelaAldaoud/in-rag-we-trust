@@ -36,3 +36,15 @@ def test_chatter_and_truncation():
 def test_length_and_identical():
     assert "length" in check_paraphrase(ORIG, "Brian Kirk directed My Boy Jack with Daniel Radcliffe in 1968.", GOLD)
     assert "identical" in check_paraphrase(ORIG, ORIG, GOLD)
+
+
+def test_capitals_inside_words_are_not_names():
+    orig = "The album was sold on iTunes in 2010 by Apple."
+    para = "In 2010, Apple sold the album on iTunes."
+    assert check_paraphrase(orig, para, "Apple") == []
+
+
+def test_elision_and_united_states_forms():
+    orig = "It was recorded at the Château d'Hérouville by a U.S. band."
+    para = "An American band recorded it at the Château d'Hérouville."
+    assert check_paraphrase(orig, para, "Château d'Hérouville") == []
