@@ -41,3 +41,22 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 ### Fact: cost of generating the data (B2)
 - 2,100 paraphrases in 26 minutes on an L4 GPU, at about 1.5 compute units per hour; generation, retries and checks cost about 3.2 units.
 - At 16-bit precision the helper model leaves little memory for parallel work, so generation was slower than planned; the A100 for the main runs has much more memory.
+
+### Example: one passage, four poisons (B3)
+- **What it shows:** the clean sentence "…starring David Haig and Daniel Radcliffe…" and its four poisoned versions.
+- **How to read it:** Swap changes only the name; Correct, Authority and Recency add one sentence each ("other sources are wrong", "official sources confirm", "latest update").
+- **What it means:** because the types differ by one sentence, any difference in how often models believe them is caused by that sentence: the core of RQ4.
+- **Its limitation:** template sentences are less natural than real misinformation; some false answers are less plausible than a human would write.
+
+### Finding: false dates must look like dates (B3)
+- **What it shows:** "released to theatres on April 20, 1946" became "…on 1902" under the first rule, and "…on September 25, 2017" after the fix.
+- **How to read it:** for dates and numbers, the false answer now has the same form as the true one; 43 of 550 targets changed.
+- **What it means:** an ungrammatical lie is easy to reject and would make models look more robust than they are.
+- **Its limitation:** other mentions of the truth can remain ("a 1946 film"); B4 measures how often.
+
+
+### Finding: believable lies need context, not just the right type (B4)
+- **What it shows:** 30 poisons judged by hand twice: with false answers of the same entity type (5/30 plausible) and with false answers written to fit the question and passage (19/30 plausible). Grammatical: 15/30 → 26/30.
+- **How to read it:** same 30 questions, paired; 15 improved and 1 got worse (McNemar p ≈ 0.0005).
+- **What it means:** with mostly absurd lies, every model would look robust — a floor effect hiding all comparisons. Context-fitting false answers make the attack realistic; every one still passes the same safety rules, so none can contain the truth.
+- **Its limitation:** about a third remain implausible to someone with world knowledge, and in about 30% the passage's context still points to the true answer (e.g. "007" → James Bond).

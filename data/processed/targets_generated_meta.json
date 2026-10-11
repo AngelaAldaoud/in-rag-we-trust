@@ -1,0 +1,26 @@
+{
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "vllm": "0.31.0",
+    "bitsandbytes": "0.50.2",
+    "transformers": "5.17.0",
+    "gpu": "NVIDIA L4"
+  },
+  "model": "google/gemma-2/transformers/gemma-2-9b-it/2",
+  "prompt_function": "def target_gen_prompt(q):\n    passage = \"\".join(q[\"answer_passage\"][\"sentences\"])\n    return (\n        f\"Question: {q['question']}\\n\"\n        f\"Correct answer: {q['gold_answer']}\\n\"\n        f\"Passage: {passage}\\n\\n\"\n        \"Write one false answer to the question that a reader could believe. It must be:\\n\"\n        \"- the same kind of thing as the correct answer (a person for a person, a city for a city, \"\n        \"a date in the same format for a date);\\n\"\n        \"- in the same form, so that it can replace the correct answer in the passage \"\n        \"without changing anything else;\\n\"\n        \"- clearly wrong: not the correct answer, not another name for it, and not mentioned \"\n        \"in the passage.\\n\"\n        \"Reply with the false answer only.\"\n    )\n",
+  "clean_function": "def clean_target(text, gold):\n    t = text.strip().splitlines()[0].strip() if text.strip() else \"\"\n    if t.endswith(\".\") and not gold.endswith(\".\"):\n        t = t[:-1].strip()\n    if len(t) >= 2 and t[0] == t[-1] == '\"' and not gold.startswith('\"'):\n        t = t[1:-1].strip()\n    return t\n",
+  "safety_function": "def safe_target(q, t):\n    n_t, n_g = normalize(t), normalize(q[\"gold_answer\"])\n    if not n_t or n_t == n_g or has(n_t, n_g) or has(n_g, n_t):\n        return False\n    texts = [q[\"question\"], \"\".join(q[\"answer_passage\"][\"sentences\"]),\n             \"\".join(q[\"bridge_passage\"][\"sentences\"])]\n    return not any(has(n_t, normalize(x)) for x in texts)\n",
+  "decoding": {
+    "attempt_1": "greedy, max_tokens 30",
+    "attempts_2_3": "temperature 0.7, top_p 0.95, seed crc32(20261009-target-id-attempt)"
+  },
+  "questions": 602,
+  "safe_by_attempt": {
+    "1": 574,
+    "3": 3,
+    "2": 12
+  },
+  "unsafe_after_3": 13
+}

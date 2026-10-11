@@ -6,6 +6,12 @@ from inragwetrust.poisoning.poisons import Correct
 CLEAN = "Ann Lee was born in Paris."
 SWAPPED = "Ann Lee was born in Rome."
 
+from inragwetrust.poisoning.checks import leak_tokens
+
+
+def test_word_shared_with_target_is_not_a_leak():
+    assert leak_tokens("Love Streams", "Rainbow Streams") == (set(), None)
+    assert leak_tokens("February 9, 1994", "February 9, 1984") == ({"1994"}, None)
 
 def test_good_swap():
     res = check_poison(CLEAN, SWAPPED, SWAPPED, "Paris", "Rome", "swap", ())
@@ -45,3 +51,15 @@ def test_generic_last_word_is_not_a_leak():
     poisoned = "It was arrested by French and English forces; military service followed."
     res = check_poison("x", poisoned, poisoned, "the British military", "French and English", "swap", ())
     assert "word_leak" not in res["partial"]
+
+
+from inragwetrust.poisoning.build import select_target
+
+
+def test_select_target_prefers_safe_generated():
+    q = {"id": "q1", "answer_type": "person", "gold_answer": "Daniel Radcliffe",
+         "target_candidates": [{"answer": "Gareth"}]}
+    assert select_target(q, {"q1": {"target": "Rupert Grint", "safe": True}}) == ("Rupert Grint", "generated")
+    assert select_target(q, {"q1": {"target": "Daniel", "safe": False}}) == ("Gareth", "fallback_candidate")
+    assert select_target(q, {}) == ("Gareth", "fallback_candidate")
+    

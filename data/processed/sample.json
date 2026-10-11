@@ -585,30 +585,30 @@
     "questions_with_blocking_failures": {},
     "partial_leaks_per_type": {
       "swap": {
-        "word_leak": 318,
-        "number_leak": 52
+        "word_leak": 259,
+        "number_leak": 46
       },
       "correct": {
-        "word_leak": 318,
-        "number_leak": 52
+        "word_leak": 259,
+        "number_leak": 46
       },
       "authority": {
-        "word_leak": 318,
-        "number_leak": 52
+        "word_leak": 259,
+        "number_leak": 46
       },
       "recency": {
-        "word_leak": 318,
-        "number_leak": 52
+        "word_leak": 259,
+        "number_leak": 46
       }
     },
     "questions_with_partial_leak": {
-      "word_leak": 85,
-      "number_leak": 14
+      "word_leak": 70,
+      "number_leak": 12
     },
     "swap_length_ratio": {
-      "min": 0.8,
+      "min": 0.75,
       "median": 1.0,
-      "max": 1.43
+      "max": 1.12
     }
   }
 }

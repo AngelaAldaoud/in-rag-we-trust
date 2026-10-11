@@ -13,15 +13,19 @@ from collections import Counter, defaultdict
 
 from inragwetrust.textmatch import contains_normalized, contains_span
 
+
 DIGITS = re.compile(r"\d+")
 LETTERS = re.compile(r"[A-Za-z]+")
 
 
+
 def leak_tokens(gold: str, target: str) -> tuple[set[str], str | None]:
-    """Numbers of gold, and its last word (4+ letters), that do not also occur in target."""
+    """Numbers of gold, and its last capitalised word (4+ letters), that do not also occur in target."""
     numbers = set(DIGITS.findall(gold)) - set(DIGITS.findall(target))
     words = [w for w in LETTERS.findall(gold) if len(w) >= 4 and w[0].isupper()]
-    last = words[-1] if words else None 
+    last = words[-1] if words else None
+    if last and re.search(rf"\b{re.escape(last)}\b", target, re.IGNORECASE):
+        last = None
     return numbers, last
 
 
