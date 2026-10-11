@@ -171,8 +171,7 @@ setting: we vary the share of poisoned passages, the kind of poison, and the
 instructions given to the model, and we measure not only whether the final
 answer is correct but also whether the model notices the conflict, hedges,
 or abstains.
-Two limits frame the results from the start. First, we test small open models
-in 4-bit precision on a single GPU, so the findings may not transfer to larger
+Two limits frame the results from the start. First, we test small open models (7--9B parameters) at 16-bit precision on a single GPU, so the findings may not transfer to larger
 or proprietary models. Second, our poisoned passages are synthetic; real-world
 contradictions are often subtler, so our numbers describe a controlled stress
 test rather than everyday conditions.
@@ -591,7 +590,7 @@ answer on a line starting with \texttt{Answer:}, or write
 
 \paragraph{Models.}
 $\mathcal{M}$ contains three open instruction-tuned models from different
-families, of similar size, run in 4-bit precision:
+families, of similar size, run at 16-bit (bfloat16) precision:
 Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3.
 The paraphrases are written by a fourth model, Gemma-2-9B-it, which is not
 evaluated.
@@ -862,9 +861,7 @@ is planned as a reserve.
   \item \emph{Engine.} A batched inference engine (vLLM) is used, so that
         many prompts are processed together; a plain HuggingFace loop is
         the fallback.
-  \item \emph{Quantisation.} All models are quantised in the same way
-        (4-bit NF4 with bitsandbytes) from their official weights, so that
-        no model is favoured by a different quantisation method.
+  \item \emph{Precision.} All models run unquantised at bfloat16 precision (Decision D101; the planned 4-bit set-up was not supported by the installed vLLM).
   \item \emph{Shared input.} For each prompt, the greedy response and the
         $S = 5$ samples are requested together, so the input is read once.
   \item \emph{Output cap.} Every response is limited to 256 new tokens, the
@@ -987,9 +984,7 @@ an order fixed by the project seed and the question identifier, from the gold
 answers of other eligible questions with the same fine label (and, for untyped
 answers, the same length in words). A candidate is valid only if it differs
 from $a^{*}$, neither contains the other, and it occurs neither in the
-question nor in either passage. The final target is chosen among the
-candidates in B2 by the helper model, as the most plausible wrong answer to the
-question; if its choice is not a candidate, the first candidate is used.
+question nor in either passage. The target answer is the first candidate, i.e.\ a seeded random draw among the valid candidates; a model-based choice was tested and rejected (Section~\ref{sec:b2-target}).
 
 \section{Samples and output}\label{sec:b1-output}
 The 4{,}672 eligible questions are shuffled once with seed 20261009: the first
@@ -1006,6 +1001,167 @@ statistics. Two independent builds produced identical checksums.
 About one answer in five has a wrong type, so its target candidates may be
 less plausible; untyped answers form a heterogeneous group; and results apply
 to bridge questions only.
+
+
+\chapter{Clean Paraphrases (B2)}\label{ch:b2}
+
+\section{Early environment check on the GPU machine}\label{sec:b2-envcheck}
+Before generating any data, the GPU software stack was installed on Colab and
+tested on a single prompt. This check was planned deliberately as the first
+step of B2, so that incompatibilities would surface before the full
+experimental runs depend on the same stack.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Component & Version \\
+\midrule
+GPU & NVIDIA L4, 24\,GB, compute capability 8.9 \\
+Python & 3.13.15 \\
+PyTorch & 2.13.0 (CUDA 13.0) \\
+vLLM & 0.31.0 \\
+transformers & 5.17.0 \\
+bitsandbytes & 0.50.2 (installed, not usable with vLLM) \\
+Helper model & Gemma-2-9B-it, Kaggle \texttt{google/gemma-2/transformers/gemma-2-9b-it}, version 2 \\
+\bottomrule
+\end{tabular}
+\caption{Software stack verified on Colab (11 October 2026).}
+\label{tab:b2-env}
+\end{table}
+
+\paragraph{Finding.}
+Loading the helper model with bitsandbytes 4-bit quantisation failed: the
+installed vLLM no longer supports bitsandbytes, which is absent from its list
+of quantisation methods. The planned set-up (all models in 4-bit NF4 through
+vLLM) was therefore not available in the current software.
+
+\paragraph{Consequence.}
+All models (the three evaluated models and the helper model) run unquantised
+at bfloat16 precision (Decision D101). The A100 planned for the full runs holds
+7--8B models at full precision, one precision for all models keeps the
+comparison fair, and quantisation is removed as a possible confounder. The
+check cost one test prompt and was completed two days before the full runs.
+
+\paragraph{Practical notes.}
+The GPU libraries are installed at fixed versions before any import; if a
+library is imported before installation, the session must be restarted, since
+mixing two PyTorch versions in memory fails. A browser that blocks third-party
+cookies prevents Colab from displaying outputs and can drop the connection;
+Chrome was used for all GPU work.
+
+\section{Paraphrase prompt}\label{sec:b2-prompt}
+Each answer passage is rewritten three times by the helper model with greedy
+decoding, using one fixed prompt with three different rewriting instructions:
+change the sentence structure; use different words; present the information
+in a different order. The prompt requires that every fact is kept, nothing is
+added or removed, the gold answer is kept verbatim, the length stays similar,
+and only the rewritten paragraph is returned.
+
+The prompt was developed on five pilot questions (never on main questions).
+In the first version, the model added evaluative words that are not in the
+original (``popular'', ``well-established'', ``sprawling''); an explicit rule
+against added descriptive words, opinions or emphasis removed them. In the
+second version, the reordering instruction placed pronouns before the names
+they refer to (for example, a paragraph opening with ``He also directed''); the
+instruction now requires every pronoun to refer to a name that comes before
+it, which fixed four of five cases. The prompt was then frozen. Remaining
+errors (occasional omissions, one garbled structure, one ambiguous pronoun)
+are handled by the automatic checks and measured by the manual check.
+Paraphrases produced by unchanged instructions were identical across runs,
+confirming that generation is deterministic.
+
+\section{Choice of the target answer: a negative result}\label{sec:b2-target}
+Because a seeded random draw among same-type candidates gave only about four
+plausible targets in ten (Section~\ref{sec:b1-targets}), we tested letting the
+helper model choose, among the 30 safe candidates of a question, the most
+believable wrong answer, given the question and the correct answer. Two
+variants were tried on six questions: replying with the candidate's number,
+and copying the candidate's text.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Correct answer & Random draw & Choice (number) & Choice (copy) \\
+\midrule
+Chief of Protocol & 2nd Armored Division & Taoiseach of Ireland & Rivaldo of Milan \\
+the British military & French and English & Archbishop of Canterbury & Marshal Pietro Badoglio \\
+Daniel Radcliffe & Gareth & The Rebirth & Bill Paxton \\
+Ant-Man & Tom Jones & Nick Cassavetes & Nick Cassavetes \\
+orange juice & University Farm & Atlantic & Rivington Moor \\
+Merchant Taylors' School (MTS) & German Type IXC U-boat & Premier League club \ldots & racehorse breeder and owner \\
+\bottomrule
+\end{tabular}
+\caption{Target-answer choice by the helper model on six test questions.}
+\label{tab:b2-target}
+\end{table}
+
+\paragraph{Result.}
+Neither variant was reliably better than the random draw: copying produced
+one clear improvement in six, and the choice for the same question changed
+between variants. The main limit is upstream: when an answer is mistyped or
+untyped, its candidate list contains no plausible option, and no choice
+procedure can create one.
+
+\paragraph{Decision.}
+The target answer is the first candidate, i.e.\ the seeded random draw
+(D107). Because each question has the same target answer in every
+experimental condition, an implausible target lowers the attack success rate
+of that question equally in all conditions: comparisons between ratios,
+poison types, prompts and models remain valid under the paired design, while
+the absolute attack success rate may be underestimated. The share of
+plausible targets is measured in the manual check (B4).
+
+
+\section{Checking paraphrases: a selection-bias trade-off}\label{sec:b2-checks}
+Every paraphrase is checked automatically: it must keep $a^{*}$ as a
+whole-word span, must not be cut off, must not contain commentary, must not be
+identical to the original, must stay within 0.7--1.4 times the original's
+length, and must not add numbers or capitalised names. Failed paraphrases were
+regenerated up to twice by seeded sampling; a question whose three paraphrases
+did not all pass was replaced by the next complete reserve question in rank
+order.
+
+\paragraph{Finding.}
+The first, strict version of the checks also rejected any paraphrase that
+dropped a number or a name of the original. After the first full run, the
+surviving failures were inspected. Some were tokenisation errors of the checks
+(capitals inside words such as ``iTunes'', elisions such as
+``d'H\'erouville'', the forms ``U.S.'', ``United States'' and ``American''),
+which were corrected. More importantly, the strict standard failed
+systematically on detail-rich passages (many names, dates and alternative
+spellings), and also rejected correct rewordings such as ``11'' written as
+``eleven''. Under that standard, about a third of the sample would have been
+replaced, and the replacements would have favoured short, simple passages:
+a selection bias introduced by a quality filter.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Version of the checks & Rejected & Main complete & Replacements \\
+\midrule
+Strict (D108) & 327 & 341 / 500 & 174 (32\%) \\
+Tokenisation fixed (D110) & 279 & 357 / 500 & 156 (28\%) \\
+Omissions recorded, not blocking (D111) & 125 & 430 / 500 & 77 (14\%) \\
+\bottomrule
+\end{tabular}
+\caption{Effect of the paraphrase checks on 2{,}100 paraphrases of 700
+questions (after two retries). Replacements are counted over the 550 pilot and
+main questions.}
+\label{tab:b2-checks}
+\end{table}
+
+\paragraph{Decision.}
+A clean passage must be consistent with $a^{*}$ (Section~\ref{sec:definitions});
+omitting a side detail does not make it false, whereas adding one can.
+Omissions of names and numbers are therefore recorded but do not reject a
+paraphrase, provided that the answer and the passage's main entity (the
+capitalised title words that occur in the original) are kept. Additions,
+answer loss, length, commentary and truncation still reject. Both changes were
+made after inspecting the full-run results; they concern the data filter, not
+any experimental outcome, and their effect is verified by the manual check.
 
 
 
@@ -1991,7 +2147,7 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
-\begin{decisionbox}{D95 --- Helper model chooses among 30 safe candidates}
+\begin{decisionbox}{D95 --- Helper model chooses among 30 safe candidates (\emph{withdrawn, see D107})}
 \begin{description}[nosep, leftmargin=0pt]
   \item[Decision.] Up to 30 valid candidates are stored; in B2 Gemma picks the most plausible wrong answer to the question; fallback: the first candidate.
   \item[Why.] A random draw gave only about 4 plausible targets in 10, because of tagging errors and coarse types; the question itself defines what is plausible.
@@ -2026,6 +2182,126 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``The question set is a byte-reproducible file with its checksum recorded.''
 \end{description}
 \end{decisionbox}
+
+
+\begin{decisionbox}{D99 --- Package installed without dependencies on Colab}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{pip install -e . --no-deps}; the GPU stack is left exactly as installed.
+  \item[Why.] The package's general dependencies could overwrite versions vLLM needs.
+  \item[Alternatives.] A normal install; copying files by hand.
+  \item[Interview line.] ``My code was installed without touching the GPU libraries.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D100 --- vLLM engine settings for the helper model}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Planned: in-flight bitsandbytes NF4, bfloat16, 4{,}096-token context, 85\% GPU memory, project seed. \emph{Quantisation superseded by D101.}
+  \item[Why.] Same quantisation as the evaluated models; memory for batching.
+  \item[Alternatives.] Pre-quantised checkpoints; HuggingFace generation.
+  \item[Interview line.] ``See D101.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D101 --- All models at bfloat16 precision}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The evaluated models and the helper model run unquantised in bfloat16. \emph{Revises D65 and D100.}
+  \item[Why.] vLLM 0.31.0 no longer supports bitsandbytes (verified in its list of quantisation methods); the A100 holds 7--8B models at full precision; one precision for all models keeps the comparison fair and removes quantisation as a confounder.
+  \item[Alternatives.] vLLM's FP8 quantisation (a second variable); an older vLLM (dependency conflicts on Python 3.13); HuggingFace with bitsandbytes (too slow for the compute plan).
+  \item[Interview line.] ``An early check showed vLLM had dropped bitsandbytes, so I ran every model at native 16-bit precision, which is fairer and removes a confounder.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D102 --- vLLM engine in the notebook process}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{VLLM\_ENABLE\_V1\_MULTIPROCESSING=0}.
+  \item[Why.] With a separate engine process, start-up failed after the GPU had been initialised in the notebook; in-process it loads reliably and errors are visible.
+  \item[Alternatives.] Avoid touching the GPU before vLLM; debug the separate process.
+  \item[Interview line.] ``Running the engine in the notebook process made start-up reliable and errors visible.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D103 --- Three instructed rewrites, greedy}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Three different rewriting instructions, each decoded greedily.
+  \item[Why.] Reproducible; diversity comes from the instructions, not from randomness.
+  \item[Alternatives.] Sampling three times; three rewrites in one answer.
+  \item[Interview line.] ``Each passage was rewritten three times with three instructions, deterministically.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D104 --- No added descriptive words; whitespace normalised}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The prompt forbids added descriptive words, opinions or emphasis; whitespace is collapsed.
+  \item[Why.] The first test added words such as ``popular'' and ``well-established'', which are new claims.
+  \item[Alternatives.] Rely on automatic checks (they cannot see such words).
+  \item[Interview line.] ``The model added praise words, so I forbade them and measured what remained.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D105 --- Clear pronoun references when reordering}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The reordering instruction requires every pronoun to refer to a name that comes before it.
+  \item[Why.] Reordering placed pronouns before their names in three of five test passages; fixed in four of five after the change.
+  \item[Alternatives.] Drop the reordering style.
+  \item[Interview line.] ``Reordering broke pronoun references, so the instruction now forbids that.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D106 --- Model-based target choice (tested, not adopted)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The helper model chose a target among safe candidates, by number and then by copying the text; tested on six questions.
+  \item[Why.] To improve the plausibility of random targets.
+  \item[Alternatives.] Keep the random draw (adopted, D107).
+  \item[Interview line.] ``I tested a model-based choice and measured it before adopting anything.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D107 --- Target answer: first candidate (seeded random draw)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] $\tilde{a}$ is the first valid candidate of D94. \emph{Replaces D95.}
+  \item[Why.] The model-based choice was not reliably better and was unstable; the draw is reproducible and needs no GPU; the same $\tilde{a}$ in every condition keeps comparisons valid.
+  \item[Alternatives.] Further prompt tuning; candidate lists built from the question wording.
+  \item[Interview line.] ``Implausible false answers affect the level of attack success, not the comparisons, because each question keeps the same false answer everywhere.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D108 --- Automatic paraphrase checks}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Answer kept, no truncation, no commentary, not identical, length 0.7--1.4, no added or removed numbers and names. \emph{Revised by D110 and D111.}
+  \item[Why.] Each targets a failure seen in the prompt tests or required by the design.
+  \item[Alternatives.] A model judging faithfulness; similarity scores.
+  \item[Interview line.] ``Rules check what can be checked; the rest is measured by hand.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D109 --- Two seeded retries, then replacement}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Failed paraphrases are regenerated twice by sampling (temperature 0.7, top-p 0.95, seed per paraphrase and attempt); incomplete questions are replaced by the next complete reserve question in rank order.
+  \item[Why.] Greedy decoding would repeat the failure; seeds keep retries reproducible; rank order keeps replacement unbiased by choice.
+  \item[Alternatives.] Accept failures; drop questions; unlimited retries.
+  \item[Interview line.] ``Failed paraphrases got two seeded retries; the rest were replaced in a fixed order, and I report how many.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D110 --- Tokenisation fixes in the name check}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Names start at a word boundary; d'/l' elisions removed; one-letter tokens ignored; U.S./United States/American treated as one name. \emph{Made after the first full run.}
+  \item[Why.] These patterns were the most frequent false failures among the surviving rejections.
+  \item[Alternatives.] Drop the name check; more retries.
+  \item[Interview line.] ``The check misfired on iTunes and U.S., so I fixed four tokenisation rules and said so.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D111 --- Omissions recorded, not blocking; main entity required}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Missing names and numbers are recorded but do not reject; the title words occurring in the original must stay. \emph{Made after the first full run.}
+  \item[Why.] Consistent with the definition of a clean passage; the strict version would have replaced about a third of the sample, systematically the detail-rich passages.
+  \item[Alternatives.] Keep the strict standard; over-generation alone.
+  \item[Interview line.] ``A strict quality filter would have biased my sample toward easy questions, so I kept only the rules that protect the answer and the facts.''
+\end{description}
+\end{decisionbox}
+
+
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -2214,6 +2490,24 @@ ACL Anthology, arXiv) or the course PDF.
   & \texttt{sampling.py}, \texttt{build.py}, tests
   & 49 tests pass; two builds give identical checksums \\
 48 & B1 notes and logs & This chapter's B1 content, D79--D98, entries 36--48 & Reviewed by the student \\
+
+
+50 & Paraphrase prompt development
+  & Prompt, three styles, two revisions
+  & Outputs read and judged by the student on five pilot questions; prompt frozen after two targeted fixes \\
+51 & Target-answer choice by the helper model
+  & Two prompt variants; analysis of the six results; recommendation to withdraw D95
+  & Results inspected by the student; decision D107 taken by the student \\
+52 & Paraphrase checks and regeneration
+  & \texttt{paraphrase\_checks.py}, tests, retry and diagnosis cells
+  & 60 tests pass; failure lists inspected by the student \\
+53 & Revisions of the checks after the full run
+  & Diagnosis of misfires; options A and B; measurement of option B
+  & Examples judged by the student; decision D111 taken by the student \\
+
+
+
+  
 \end{longtable}
 }
 }
