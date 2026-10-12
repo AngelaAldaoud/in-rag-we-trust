@@ -1,0 +1,33 @@
+{
+  "model": "llama",
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "vllm": "0.31.0",
+    "transformers": "5.17.0",
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "gpu_memory_gb": 42.4,
+    "commit": "2265ae8d0aaf6ce245d6e90ba3a5c8f6f7312796"
+  },
+  "greedy": {
+    "conditions": 11,
+    "requests": 550,
+    "completions": 550,
+    "prompt_tokens": 344763,
+    "output_tokens": 79871,
+    "seconds": 38.2,
+    "requests_per_s": 14.41,
+    "output_tokens_per_s": 2092.1
+  },
+  "samples": {
+    "conditions": 10,
+    "requests": 500,
+    "completions": 2500,
+    "prompt_tokens": 340028,
+    "output_tokens": 368406,
+    "seconds": 108.5,
+    "requests_per_s": 4.61,
+    "output_tokens_per_s": 3393.9
+  }
+}

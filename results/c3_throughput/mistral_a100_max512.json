@@ -1,0 +1,33 @@
+{
+  "model": "mistral",
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "vllm": "0.31.0",
+    "transformers": "5.17.0",
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "gpu_memory_gb": 42.4,
+    "commit": "6727b777627112387cb0aebb7b8d0b7dcd1e7301"
+  },
+  "greedy": {
+    "conditions": 11,
+    "requests": 550,
+    "completions": 550,
+    "prompt_tokens": 381728,
+    "output_tokens": 24429,
+    "seconds": 26.0,
+    "requests_per_s": 21.15,
+    "output_tokens_per_s": 939.6
+  },
+  "samples": {
+    "conditions": 10,
+    "requests": 500,
+    "completions": 2500,
+    "prompt_tokens": 378098,
+    "output_tokens": 105685,
+    "seconds": 51.0,
+    "requests_per_s": 9.81,
+    "output_tokens_per_s": 2073.1
+  }
+}

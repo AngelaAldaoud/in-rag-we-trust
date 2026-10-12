@@ -1,0 +1,33 @@
+{
+  "model": "qwen",
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0",
+    "vllm": "0.31.0",
+    "transformers": "5.17.0",
+    "gpu": "NVIDIA L4",
+    "gpu_memory_gb": 23.7,
+    "commit": "d066e195cbbe13b2920170f381983a26f06f4bdc"
+  },
+  "greedy": {
+    "conditions": 11,
+    "requests": 550,
+    "completions": 550,
+    "prompt_tokens": 357794,
+    "output_tokens": 36445,
+    "seconds": 116.6,
+    "requests_per_s": 4.72,
+    "output_tokens_per_s": 312.7
+  },
+  "samples": {
+    "conditions": 10,
+    "requests": 500,
+    "completions": 2500,
+    "prompt_tokens": 353328,
+    "output_tokens": 167841,
+    "seconds": 225.0,
+    "requests_per_s": 2.22,
+    "output_tokens_per_s": 746.1
+  }
+}
