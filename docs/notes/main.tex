@@ -2084,6 +2084,151 @@ others; whether this is genuine or a residual effect of its longer answers is
 tested on fresh hand labels in D3.
 
 
+\section{D3: Judge validation and the hallucination rule}
+
+\subsection{Scope of the judge}
+Gemma-2-9B-it (Kaggle, version 2; bfloat16, 2{,}048 tokens, seed 20261009,
+as in Block B) judges only greedy responses, because all main metrics are
+defined on greedy answers; the five samples serve self-consistency only.
+Closed-book responses receive no conflict flag, since ``the passages
+disagree'' has no meaning without passages (D162). Each judgement is one
+greedy word; the raw reply is stored next to the parsed label, and each prompt
+is identified by a fingerprint (first 12 characters of its SHA-256).
+
+\subsection{Validation sample}
+300 greedy pilot responses were drawn with the project seed: five from each
+of the 54 cells model $\times$ prompt $\times$ context level ($\rho=0$, 0.25,
+0.5, 0.75, 1, BM25), plus 30 at random (D163). The student labelled every
+response for the conflict flag (yes/no), the 95 responses the rules called
+\textsc{OtherWrong} for the answer verdict (gold / target / neither), and 30
+answers flagged by the hallucination rule, following written procedures in the
+sheet header. The sheet showed no judge output, and the labels were committed
+(\texttt{2d9cd18}) before the final judge run (\texttt{ee4c4d5}). A check of
+the labels showed the expected gradient of flags across prompts (plain 15\%,
+consistency 26\%, reliability 37\%) and no sign of block-filling.
+
+\subsection{Conflict flag}
+The flag prompt contains Block A's question verbatim and the same criteria as
+the labelling sheet (fingerprint \texttt{324e2f1c735e}).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\hline
+$n$ & 300 \\
+Cohen's $\kappa$ (95\% bootstrap CI, 10{,}000 resamples) & 0.735 (0.649--0.814) \\
+Raw agreement & 88.7\% \\
+Flag rate: student / judge & 25.7\% / 35.0\% \\
+Disagreements: student no, judge yes / student yes, judge no & 31 / 3 \\
+$\kappa$ by prompt (plain / consistency / reliability) & 0.74 / 0.74 / 0.69 \\
+$\kappa$ by model (Qwen / Mistral / Llama) & 0.57 / 0.76 / 0.74 \\
+\hline
+\end{tabular}
+\caption{Validation of the conflict-flag judge against blind hand labels.}
+\end{table}
+
+The whole interval lies above the acceptance threshold 0.6 (D48), so the flag
+judge is accepted without revision (D168). It over-flags: it says yes on 14\%
+of responses the student judged no, and misses 4\% of the student's yes. Flag
+prevalence is therefore overestimated by about nine points, and for RQ3 this
+misclassification dilutes differences between flagged and unflagged responses,
+a conservative bias. Agreement is weakest for Qwen ($\kappa = 0.57$ on 100
+items), which is reported as a limitation of per-model RQ3 results. Two runs
+of the same flag prompt differed on 4 of 9{,}450 responses (GPU
+non-determinism, cf.\ D139); $\kappa$ was identical on both.
+
+\subsection{Answer verdict: a failed first prompt and its revision}
+The first verdict prompt named the references ``gold answer'' and ``other
+answer''. Checked against the rule outcomes that the D2 audit had found
+exact, it almost never recognised the target: of 1{,}710 answers the rules
+called \textsc{Poisoned}, it judged 408 gold, 446 other and 856 neither, and it
+judged 84\% of \textsc{OtherWrong} answers gold. Read on cases outside the
+validation sample, ``other'' acted as a vague third option (an answer
+identical to the target, \emph{Atlanta}, was judged ``neither''), and ``gold''
+as a default. The prompt was revised once, before any comparison with the hand
+labels (D165): the two references are called A and B, their order is decided
+per item by a seeded coin flip and recorded, and the judge is told not to judge
+truth (fingerprint \texttt{87293ce31bb3}). A format check on 20 answers that
+literally equal the gold or the target answer passed 20/20 before the full
+run.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\hline
+$\kappa$ vs 95 hand labels (95\% CI) & 0.836 (0.716--0.936) \\
+Raw agreement & 91.6\% \\
+Disagreements & 8, all ``neither'' judged ``gold'' \\
+Rule-\textsc{Correct} judged gold (2{,}921 answers) & 98.8\% \\
+Rule-\textsc{Poisoned} judged target (1{,}660 answers) & 92.8\% \\
+\hline
+\end{tabular}
+\caption{Validation of the revised verdict judge. Internal checks use answers
+outside the validation sample.}
+\end{table}
+
+The acceptance rule fixed in advance required $\kappa \ge 0.6$ and both
+internal checks at least 95\%. The second check failed, and every disagreement
+with the hand labels went the same way: the judge over-credits the gold. The
+re-check of \textsc{OtherWrong} answers (D160) is therefore not used for the
+primary outcomes, which stay rule-based. Because the rules underestimate
+accuracy (they miss aliases, D2 audit) and the judge overestimates it, the
+judge-rechecked outcomes are reported as an exploratory upper bound, so the two
+bracket the true value (D170).
+
+\subsection{Hallucination rule}
+The fact-based rule of D2 (D161) was checked on the 30 answers it flagged: the
+student judged only 2 truly invented. All 28 others were matching artefacts:
+hyphens deleted by normalisation (\emph{1241-1250} became one token, 14
+cases), possessives (\emph{Sturgess's}, 7), digits taken from ordinals and
+decades (\emph{6th}, \emph{1920s}, 4), and facts whose words were all present
+but not contiguous (3). Facts are now compared word by word on both sides,
+with hyphens and apostrophes splitting words, ordinals and decades reduced to
+digits, and possessive \emph{s}, single letters and stop words dropped (D166).
+On those 30 answers the revised rule flags exactly the two the student judged
+invented; this was a development check. It was then validated on fresh,
+distinct answers (D169):
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\hline
+ & Result & Wilson 95\% \\
+\hline
+Precision (flagged answers truly invented) & 9/13 & 42--87\% \\
+Miss rate (unflagged answers with an invented fact) & 0/18 & 0--18\% \\
+\hline
+\end{tabular}
+\caption{Validation of the revised hallucination rule.}
+\end{table}
+
+With the revised rule, 0.4\% (Qwen), 2.5\% (Mistral) and 0.9\% (Llama) of
+pilot \textsc{OtherWrong} answers with passages are flagged. Models given
+passages rarely invent facts; their wrong answers mostly reuse facts from the
+context. Rates are always reported with the precision and miss rate above.
+
+\subsection{Effect on D2}
+D161's matching is replaced by D166, and the judge re-check of D160 is not
+used for the primary outcomes (D170). The rule-based outcomes of D2 are
+unchanged.
+
+\subsection{Implementation and cost}
+\texttt{evaluation.judge} (prompts, seeded reference order, known-answer
+check), \texttt{evaluation.validation} (sample, sheets),
+\texttt{evaluation.agreement} ($\kappa$, bootstrap and Wilson intervals,
+internal checks); notebook \texttt{05\_d3\_judge}. 279 tests. Two judge runs
+on the A100 (18{,}713 tasks each, about 3 minutes of judging after about
+1 minute of loading). Compute: 70.54 units before the v2 session started at
+69.65; the balance after it was not recorded.
+
+\subsection{Limitations}
+The verdict validation has 95 items and the hallucination validation 31;
+intervals are wide. The flag judge over-flags and is weakest for Qwen. The
+hallucination rule cannot flag a wrong answer without a name or number, and
+its word-by-word comparison could miss an invented fact whose words all occur
+somewhere in the passages (none was found in 18 checks).
+
+
 
 
 
@@ -3678,6 +3823,88 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D162 --- What the judge reads}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The judge reads greedy responses only; closed-book responses get no conflict flag.
+  \item[Why.] All main metrics, including the flag for RQ3, use greedy answers (D50); samples serve self-consistency only. Without passages, ``the passages disagree'' is meaningless.
+  \item[Alternatives.] Judging samples too (five times the cost for a quantity no RQ uses); flagging closed-book responses.
+  \item[Interview line.] ``The judge reads exactly the responses my research questions are measured on.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D163 --- Validation sample}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] 300 greedy pilot responses, five per model $\times$ prompt $\times$ context-level cell plus 30 random, seeded; a blind plain-text sheet with written procedures; labels committed before the judge's final outputs existed.
+  \item[Why.] D48 requires a stratified 300; even cells give every condition a voice; the commit order proves independence.
+  \item[Alternatives.] A simple random sample (some cells nearly empty); a spreadsheet (the encoding problem of Block B).
+  \item[Interview line.] ``My labels were made blind and committed before the judge's answers existed.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D164 --- Judge design}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Gemma-2-9B-it with Block B's settings, one-word greedy replies, raw reply stored with the parsed label, prompts identified by fingerprints, one process per run; verdicts for every greedy response with an answer, of which only \textsc{OtherWrong} would be used.
+  \item[Why.] Reuses validated weights and settings; every judgement is inspectable; verdicts independent of the rules allow cross-checks on the rule-exact outcomes.
+  \item[Alternatives.] A different judge model (new weights to validate); free-text judgements (harder to parse).
+  \item[Interview line.] ``Every judgement is one word, stored with the exact prompt version that produced it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D165 (revision) --- Symmetric verdict prompt}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] References are called A and B, their order is a seeded coin flip per item and is recorded, and the judge is told not to judge truth. Before a full run, a check on 20 answers literally equal to the gold or target must reach 19/20. \emph{Revises the first verdict prompt of D164.}
+  \item[Why.] The first prompt (``gold'', ``other'') almost never recognised the target, even exact matches, and defaulted to ``gold''; a random format check could not reveal this.
+  \item[Alternatives.] Keeping the names with more instructions (``other'' stays ambiguous); dropping the verdict.
+  \item[Interview line.] ``My first judge prompt had an ambiguous label; I found it with a consistency check and fixed it once, before comparing with my labels.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D166 (revision) --- Facts compared word by word}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] A fact counts as found if each of its words occurs in the passages, after splitting at hyphens and apostrophes, reducing ordinals and decades to digits, and dropping possessive \emph{s}, single letters and stop words. \emph{Revises the matching of D161.}
+  \item[Why.] D161's string matching produced 28 false flags in 30, all from these four artefacts.
+  \item[Alternatives.] Exact strings (the failure); the judge reading passages (an hour of passage reading to validate).
+  \item[Interview line.] ``The fact rule was right in principle and wrong in its matching; I fixed the matching and validated it on fresh answers.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D167 --- Agreement statistics}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Cohen's $\kappa$ with a 95\% bootstrap interval (10{,}000 resamples of items, project seed); Wilson intervals for proportions; ``?'' labels excluded and counted; $\kappa$ by prompt and model reported as descriptive only.
+  \item[Why.] $\kappa$ corrects for chance agreement, which matters when one label dominates; the bootstrap needs no formula for $\kappa$'s variance; D52's interval choices.
+  \item[Alternatives.] Raw agreement (inflated by the majority label); analytic standard errors.
+  \item[Interview line.] ``I report agreement beyond chance, with an interval, and I count what I excluded.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D168 --- Flag judge accepted}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The flag prompt \texttt{324e2f1c735e} is accepted without revision: $\kappa = 0.735$ (0.649--0.814).
+  \item[Why.] The whole interval exceeds 0.6 (D48). Its over-flagging and weaker agreement for Qwen are reported as limitations.
+  \item[Alternatives.] A revision (not needed; it would cost a fresh 300 labels).
+  \item[Interview line.] ``The conflict judge agrees with me well beyond chance; I report where it errs.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D169 --- Hallucination rule accepted with its measured error}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] D166 is the final rule; hallucination rates are always reported with its precision 9/13 (42--87\%) and miss rate 0/18 (0--18\%).
+  \item[Why.] Validated on fresh, distinct answers after two failed versions; no acceptance threshold had been set, so the measured error travels with the number.
+  \item[Alternatives.] Dropping the metric (required by the course); a further revision (no evidence it is needed).
+  \item[Interview line.] ``Models with passages rarely invent facts, and I can say how reliable that measurement is.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D170 --- Rules primary, judge as exploratory upper bound}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The verdict re-check (D160) is not used for primary outcomes; judge-rechecked outcomes are reported as an exploratory upper bound next to the rule-based ones.
+  \item[Why.] The rule fixed in advance required $\kappa \ge 0.6$ and both internal checks $\ge 95\%$; $\kappa$ was 0.836 but rule-\textsc{Poisoned} answers were judged target only 92.8\% of the time, and all 8 disagreements with the hand labels credited the gold. Rules underestimate accuracy and the judge overestimates it, so together they bracket it.
+  \item[Alternatives.] Lowering the threshold after seeing the result (post-hoc tuning, D55); rules only (discards an informative bound).
+  \item[Interview line.] ``My judge passed one test and failed another that I had fixed in advance, so I kept it out of the main results and used it to bound them.''
+\end{description}
+\end{decisionbox}
+
+
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -4040,6 +4267,32 @@ ACL Anthology, arXiv) or the course PDF.
   & Analysis showing Claude's hallucination rule (D157) measured style (4/20) and that OtherWrong was half wrong; options with trade-offs; fact-based flag (D161)
   & Decisions D160--D161 taken by the student; re-score compared before and after \\
 
+88 & Validation sample and sheet
+  & \texttt{validation.py}, tests; a sheet of about 4{,}000 lines given without stating its size, shortening repetition loops or offering batches
+  & 425 labels written by the student; size now stated before every sheet \\
+89 & Judge, first version
+  & \texttt{judge.py}, tests; verdict prompt with the ambiguous label ``other''; a random format check that could not reveal it
+  & Bias found by a cross-check against rule outcomes after a full run; diagnosed on items outside the validation sample \\
+90 & Label check
+  & Consistency checks of the student's flag labels; Claude questioned the labelling speed before looking at evidence
+  & The checks supported the labels; the doubt was withdrawn \\
+91 & Hallucination rule, second failure
+  & Diagnosis of D161's 28 false flags; D166; Claude had not raised the student's 2/30 labels when first reported; one test case built with wrong data (H3)
+  & Causes confirmed item by item; test data corrected; development check matched the student's labels \\
+92 & Fresh hallucination sheet
+  & Sheet tool for precision and miss rate; piecemeal edits to \texttt{validation.py} were misapplied
+  & Rewritten as a whole file from the student's pasted version; 31 items labelled by the student \\
+93 & Verdict prompt v2 and known-answer check
+  & D165, check with a pass/fail rule
+  & Check passed 20/20; full run on the A100 \\
+94 & Agreement statistics and decisions
+  & \texttt{agreement.py}, tests; $\kappa$, bootstrap and Wilson intervals; analysis leading to D168--D170
+  & Decision D170 taken by Claude at the student's request, following the rule fixed in advance \\
+95 & Process errors during D3
+  & Colab steps requested before pushes were confirmed; a cost estimate of 130{,}000 verdict prompts (actually about 26{,}000); a notebook check script that crashed on an empty cell; edits written without the current file; a stale header comment in notebook~05
+  & Operating rules adopted (push before run, whole files, current version first, cost and size stated in advance); a state report and continuation handoff written \\
+
+  
 \end{longtable}
 }
 }

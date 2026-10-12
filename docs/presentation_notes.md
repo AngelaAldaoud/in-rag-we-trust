@@ -166,3 +166,22 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** rules apply top to bottom; the first that fits decides. Bracketed side remarks are ignored, so the model is scored on what it committed to.
 - **What it means:** rules were written after reading all 57,600 pilot answers — e.g. 22% of Mistral's answers put "Answer:" mid-line, and Llama skips the answer line 9% of the time, so the parser handles both and NoAnswer is reported separately (a format failure is not caution).
 - **Its limitation:** text rules cannot see aliases ("IWC" = "International Watch Co."); the audit measured this, which is why OtherWrong is re-checked by the judge.
+
+
+### Result: can a model judge be trusted? Validated against my blind labels (D3)
+- **What it shows:** Gemma flags "the passages disagree" in agreement with my 300 blind labels at kappa 0.735 (95% CI 0.649–0.814), above the 0.6 bar; raw agreement 89%.
+- **How to read it:** kappa removes agreement that would happen by chance; 0 = chance, 1 = perfect; 0.6+ = substantial.
+- **What it means:** the conflict flag for RQ3 is a validated measurement, not an assumption. It errs in one direction — it says "yes" on 14% of responses I judged "no" — so flag rates are a bit high and flagged/unflagged differences are, if anything, understated.
+- **Its limitation:** weaker for Qwen (kappa 0.57 on 100 items); one judge model, one annotator.
+
+### Finding: my first judge prompt was biased — and the second one I kept out of the main results
+- **What it shows:** asked "gold, other or neither?", the judge almost never said "other", even when the answer was exactly the target. With neutral labels A/B, it passed 20/20 known answers and agreed with my labels at kappa 0.84 — but it still credited the gold too often (92.8% < 95% on poisoned answers).
+- **How to read it:** the acceptance rule was fixed before the result; one check failed, so the judge does not change my main outcomes.
+- **What it means:** main results use transparent rules (which slightly undercount correct answers); the judge gives an upper bound; the truth lies between.
+- **Its limitation:** the bracket can be wide where models write long, alias-heavy answers.
+
+### Finding: models given passages rarely invent facts
+- **What it shows:** with a validated rule (precision 9/13, no misses in 18 checks), only 0.4–2.5% of wrong answers contain a name, number or date absent from the passages.
+- **How to read it:** a "hallucination" here means a fact the model could not have read in its context.
+- **What it means:** wrong answers mostly reuse context facts in the wrong way rather than inventing — which is exactly what poisoning exploits.
+- **Its limitation:** small validation samples (13 and 18); wrong answers without names or numbers are not counted.
