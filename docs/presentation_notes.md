@@ -96,3 +96,17 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** same text, different counts, because each model splits words into its own pieces (Mistral's vocabulary is smallest).
 - **What it means:** all prompts fit easily; reading the prompts dominates the compute cost, which is why the 5 samples share one prompt reading.
 - **Its limitation:** the BM25 prompts (C4) are measured separately and may be longer.
+
+### Table: smoke test across the three models (C3)
+- **What it shows:** 3 pilot questions × 52 conditions per model: how often answers end with a proper "Answer:" line, how often they say "unknown", how often they are cut off, and how long they are.
+- **How to read it:** Qwen abstains more as poison grows (2/9 at ρ=0, 18/36 at ρ=1); Llama writes long reasoning; Mistral is brief but writes "Answer:" inside sentences.
+- **What it means:** the pipeline works end to end for all models, and the smoke test exposed issues *before* the main run — a cut-off problem (fixed) and two parsing cases for the evaluator.
+- **Its limitation:** only 3 questions; rates are illustrations, not estimates — the pilot (50 questions) gives the real figures.
+
+### Finding: the output cap was cutting off the model's reasoning (C3)
+- **What it shows:** with a 256-token cap, 17% of Llama's answers were cut off before the final answer — 35% under the consistency prompt. At 512 tokens: 5%.
+- **How to read it:** same 3 questions, same prompts, same seeds; only the cap changed.
+- **What it means:** the cap is part of the measuring instrument. If it censors answers mainly under one prompt, the prompt comparison measures the cap. I fixed the instrument and left the prompts (the treatment) untouched; making prompts stricter or putting the answer first would have changed what I study.
+- **Its limitation:** the remaining 5% are repetition loops and endless comparisons under conflict, which no cap fixes; they are reported as answers without a final answer.
+
+

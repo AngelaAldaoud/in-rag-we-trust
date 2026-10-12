@@ -1513,6 +1513,80 @@ poison. Qwen's default system message is likewise model-specific. Some
 passages carry spacing errors from the HotpotQA source text, identical across
 conditions, and some bridge passages contain partial cues to the true answer.
 
+\section{Generator and smoke test (C3)}\label{sec:c3}
+
+\paragraph{Generator.}
+Each evaluated model runs in vLLM 0.31.0 at bfloat16, loaded at its pinned
+revision, with prompts passed as token identifiers. Greedy decoding
+(temperature 0) gives one answer per prompt; self-consistency uses five samples
+at temperature 0.7, requested together so that they share one reading of the
+prompt. Every request receives a seed derived from the project seed, the
+condition, the question and the decoding mode. Outputs are written in shards
+(one file per question set, mode, model and condition) to Google Drive; a shard
+is written under a temporary name and renamed when complete, and a restarted
+run skips every completed shard. Each record stores the condition factors,
+decoding settings and seed, the prompt hash and length, the completions with
+their length and stop reason, the batch time and the software and hardware
+versions. Batched GPU inference is not guaranteed to be bit-identical across
+batch compositions, so exact reproducibility of model outputs is not claimed.
+
+\paragraph{Smoke test.}
+Three pilot questions were run in all 52 non-retrieval conditions of each
+model, greedy and sampled (Table~\ref{tab:c3-smoke}). Prompt hashes computed on
+Colab matched those rendered on the development machine for every model, and a
+second run skipped all completed shards.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+ & & \multicolumn{2}{c}{Answer line (\%)} & & \multicolumn{2}{c}{Unknown} & \\
+\cmidrule(lr){3-4}\cmidrule(lr){6-7}
+Model & Cap & strict & any & Trunc.\ (\%) & $\rho{=}0$ & $\rho{=}1$ & Out tok. \\
+\midrule
+Qwen    & 256 & 99 & 100 & 0 / 0  & 2/9 & 18/36 & 65 \\
+Llama   & 256 & 84 & 84  & 17 / 14 & 1/9 & 7/36 & 153 \\
+Llama   & 512 & 94 & 94  & 5 / 1  & 1/9 & 7/36 & 176 \\
+Mistral & 512 & 91 & 100 & 0 / 0  & 0/9 & 3/36 & 49 \\
+\bottomrule
+\end{tabular}
+\caption{Smoke test (3 pilot questions $\times$ 52 conditions). Answer-line
+rates and mean output tokens refer to greedy answers; truncation is given for
+greedy / sampled answers. ``Strict'': a line starting with \texttt{Answer:};
+``any'': \texttt{Answer:} anywhere.}
+\label{tab:c3-smoke}
+\end{table}
+
+\paragraph{Observations.}
+Qwen abstains increasingly often as $\rho$ grows (from 2 of 9 answers at
+$\rho = 0$ to 18 of 36 at $\rho = 1$). Llama reasons at length, particularly
+under the consistency prompt. Mistral answers briefly but often writes
+\texttt{Answer:} inside a sentence rather than on its own line, and sometimes
+gives a full sentence instead of a short answer, which may contain both the
+gold and the target answer. Two models answered ``Orange Julius'' (the drink's
+name) where the gold answer is ``orange juice'' (its ingredient), an ambiguity
+of the HotpotQA question that lowers accuracy in every condition equally.
+Without passages, Llama answered the same question with an unrelated brand.
+
+\paragraph{Finding: the output cap was cutting off the model's reasoning.}
+With the planned cap of 256 output tokens, 17\% of Llama's greedy answers were
+truncated before their final line; under the consistency prompt only 65\% of
+its answers contained an answer line. The missing answers were therefore
+concentrated in one prompt condition, and among the answers in which the
+model was checking the passages most carefully, so RQ2 would have measured the
+cap rather than the prompt. Three remedies were considered: a higher cap, a
+stricter length instruction, and placing the answer before the reasoning. The
+last two change the prompt, which is the treatment under study: a length
+instruction conflicts with the instruction to check the passages, and an
+answer written before the reasoning cannot be influenced by it. The cap, an
+instrument setting, was raised to 512 tokens for all models (D138). Llama's
+truncation fell to 5\% (greedy) and 1\% (sampled), and its answer-line rate
+under the consistency prompt rose to 88\%, at a cost of about 10\% in speed.
+Qwen was unaffected (no answer exceeded 243 tokens). The remaining truncated
+answers are repetition loops and non-converging comparisons of passages,
+mostly in poisoned contexts, which no cap would end; they are reported as
+answers without a final answer.
+
 
 
 
@@ -2852,6 +2926,51 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{decisionbox}
 
 
+\begin{decisionbox}{D134 --- Generator settings}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] vLLM 0.31.0, bfloat16, pinned revisions, token-identifier prompts, maximum length 4096, 90\% of GPU memory, in-process engine with the original system streams at start-up (D102, D119); greedy (temperature 0) and five samples at temperature 0.7 in one request.
+  \item[Why.] The settings of D101 and D129--D130 in one place; 4096 covers the longest prompt with the output cap and costs nothing (memory follows actual length); one request lets the samples share the prompt.
+  \item[Alternatives.] Separate requests per sample (prompt read five times); the 95\% memory share needed for the 9B helper on the L4.
+  \item[Interview line.] ``One generator class runs every model with the same pinned settings.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D135 --- One seed per request}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Each request's seed is derived by SHA-256 from the project seed, condition, question and mode.
+  \item[Why.] Independent of batch composition and run order; recorded in every output.
+  \item[Alternatives.] One engine seed only (depends on order); random seeds (not reproducible).
+  \item[Interview line.] ``Every answer has its own recorded seed, fixed by what it is, not when it ran.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D136 --- Shards with atomic write and resume}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] One file per question set, mode, model and condition on Google Drive; written under a temporary name, then renamed; existing final files are skipped on restart.
+  \item[Why.] A disconnection loses at most one shard; a final file always holds a complete shard; one batch per shard keeps the GPU busy.
+  \item[Alternatives.] One file per model (a disconnection loses hours); one file per question (thousands of small writes).
+  \item[Interview line.] ``Colab can disconnect at any time; the run just continues from the last complete file.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D137 --- Raw-output record}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] One record per request: condition factors, decoding settings, seed, prompt hash and length, completions with length and stop reason, batch time, versions and commit. Prompt texts are not stored.
+  \item[Why.] Every answer is self-describing; prompts are rebuilt exactly from the stored contexts, and the hash proves it.
+  \item[Alternatives.] Storing prompt texts (about 3\,KB per request, redundant); provenance in a separate file (can be separated from the data).
+  \item[Interview line.] ``Each answer records exactly how it was produced.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D138 (revision) --- Output cap 512 tokens}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The output cap is raised from 256 to 512 tokens for all models. \emph{Revises the cap of A3.}
+  \item[Why.] In the smoke test the 256 cap truncated 17\% of Llama's greedy answers before the answer line (35\% missing under the consistency prompt), confounding the prompt comparison; at 512, truncation fell to 5\% and the remainder are repetition loops. Prompts are unchanged.
+  \item[Alternatives.] A stricter length instruction (changes the treatment, conflicts with the consistency instruction); answer before reasoning (reasoning can no longer affect the answer); a repetition penalty (changes every answer of every model).
+  \item[Interview line.] ``The smoke test showed the cap was cutting off reasoning, so I changed the measuring instrument, not the prompts.''
+\end{description}
+\end{decisionbox}
+
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -3128,6 +3247,15 @@ ACL Anthology, arXiv) or the course PDF.
   & 85,800 prompts rendered by the student with no guard failure \\
 69 & C2 notes & This section, D128--D133, entries 66--69 & Reviewed by the student \\
 
+70 & Generator and output pipeline
+  & \texttt{generator.py}, \texttt{runs.py}, 9 tests
+  & 143 tests pass; resume verified on Google Drive \\
+71 & Colab session problems
+  & Diagnoses of a silent installation failure (half-installed library), of a pull that could not authenticate (Claude's instruction omitted the token) and of a lost working directory after a restart (Claude's cell lacked the \texttt{cd})
+  & Each fix run and confirmed by the student \\
+72 & Smoke tests and the output-cap finding
+  & Inspection cell; diagnosis of truncation; three remedies with reasons; analysis of the remaining truncated answers
+  & Decision D138 taken by the student; before/after measured on the same questions \\
 
 
 \end{longtable}
