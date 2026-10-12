@@ -1587,6 +1587,49 @@ answers are repetition loops and non-converging comparisons of passages,
 mostly in poisoned contexts, which no cap would end; they are reported as
 answers without a final answer.
 
+\paragraph{Throughput.}
+Throughput was measured with batches of the size used in the runs (500--550
+requests from the 50 pilot questions), timing generation only; greedy and
+sampled requests used different conditions, so that cached prompt prefixes
+could not favour the second measurement (Table~\ref{tab:c3-throughput}). The
+L4 is about 4.5 times slower than the A100. Llama is the slowest model because
+it writes the longest answers. With identical prompts and seeds, a few greedy
+answers of Qwen differed between the A100 and the L4, as expected from
+hardware-dependent floating-point arithmetic.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+ & & \multicolumn{2}{c}{Greedy} & \multicolumn{2}{c}{Samples ($n{=}5$)} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Model & GPU & req/s & out tok/s & req/s & out tok/s \\
+\midrule
+Qwen    & A100 & 23.0 & 1{,}527 & 9.5 & 3{,}149 \\
+Llama   & A100 & 12.6 & 2{,}095 & 4.2 & 3{,}361 \\
+Mistral & A100 & 21.2 & 940     & 9.8 & 2{,}073 \\
+Qwen    & L4   & 4.7  & 313     & 2.2 & 746 \\
+\bottomrule
+\end{tabular}
+\caption{Measured throughput (output cap 512; for Qwen on the A100 the cap of
+256 was never reached, so the measurement holds at 512).}
+\label{tab:c3-throughput}
+\end{table}
+
+\paragraph{Compute plan.}
+Each model answers 64 conditions $\times$ 550 questions, i.e.\ 35{,}200
+greedy and 35{,}200 sampled requests. On the A100 this gives about 6.0 hours
+of generation (Qwen 1.5, Llama 3.1, Mistral 1.5). Allowing for smaller pilot
+batches, model loading, writing to Drive and reconnections, the plan is about
+1 hour for the pilot and 6.3 hours for the main run, about 38 compute units
+at 5.3 units per hour; with an estimated 8 units for the judge (Block D), about
+46 of the 80 available units. On the L4 the same generation would take about
+27 hours, which does not fit the schedule. All main runs use the A100 (D139).
+The reserve compute pack is not bought before the pilot (D140). The estimate
+excludes the length of the retrieval prompts (C4) and is re-measured in the
+pilot. C3 itself used 9.9 units.
+
+
 
 
 
@@ -2971,6 +3014,23 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D139 --- One GPU type for all main runs}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Pilot and main runs use the A100 for every model; the L4 is a fallback only for isolated missing shards outside the main comparison; the L4 speed was measured with Qwen only.
+  \item[Why.] Identical prompts and seeds gave a few different greedy answers on the A100 and the L4; mixing GPU types would add noise between conditions. The L4 would need about 27 hours. One model suffices to measure the speed ratio.
+  \item[Alternatives.] Whichever GPU is free (mixes hardware); measuring all models on the L4 (two more downloads for a fallback).
+  \item[Interview line.] ``All main answers come from one GPU type, because I observed that hardware changes a few greedy answers.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D140 --- Reserve compute pack decided after the pilot}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] No reserve pack is bought now; it is bought if the pilot's measured cost, scaled to the main run, leaves under about 15 units of margin, or if work must move to the L4.
+  \item[Why.] The measured plan needs about 46 of 80 units (about 40\% margin); the pilot replaces estimates with measurements.
+  \item[Alternatives.] Buy now (money spent on an estimate); never buy (risk of stopping mid-run).
+  \item[Interview line.] ``I measured the cost before spending more, with a clear threshold for buying extra compute.''
+\end{description}
+\end{decisionbox}
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -3256,6 +3316,11 @@ ACL Anthology, arXiv) or the course PDF.
 72 & Smoke tests and the output-cap finding
   & Inspection cell; diagnosis of truncation; three remedies with reasons; analysis of the remaining truncated answers
   & Decision D138 taken by the student; before/after measured on the same questions \\
+
+73 & Throughput measurement and compute plan
+  & Measurement cell (batch size, separate conditions per mode), A100/L4 comparison, compute plan and reserve-pack threshold
+  & All measurements run by the student; decision D140 taken by the student \\
+
 
 
 \end{longtable}

@@ -110,3 +110,15 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Its limitation:** the remaining 5% are repetition loops and endless comparisons under conflict, which no cap fixes; they are reported as answers without a final answer.
 
 
+### Table: throughput and compute plan (C3)
+- **What it shows:** requests per second per model on the A100 (Qwen 23, Llama 12.6, Mistral 21 greedy; 4–10 with 5 samples) and Qwen on the L4 (4.5× slower). The whole study needs about 6 A100 hours of generation, about 46 of my 80 compute units including the judge.
+- **How to read it:** samples are cheaper than 5 separate answers because the 5 share one reading of the prompt; Llama is slowest because it writes the longest answers.
+- **What it means:** the full design fits the budget with about 40% margin, without cutting anything; the L4 would take 27 hours, so the A100 is required.
+- **Its limitation:** retrieval prompts and the judge are not yet measured; the pilot re-measures everything.
+
+### Observation: the GPU itself can change an answer (C3)
+- **What it shows:** with identical prompts and seeds, a few of Qwen's greedy answers differed between the A100 and the L4.
+- **How to read it:** GPUs do floating-point arithmetic in different orders; tiny differences can tip which token is "most likely".
+- **What it means:** all main runs use one GPU type, so this cannot add noise between conditions.
+- **Its limitation:** exact output reproducibility is therefore not claimed; settings, seeds and versions are recorded instead.
+
