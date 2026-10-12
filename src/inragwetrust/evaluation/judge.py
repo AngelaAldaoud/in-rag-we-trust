@@ -1,4 +1,4 @@
-"""Gemma judge: conflict flag (D48) and answer verdict (D160, D164). Runs in its own process (D148).
+"""Gemma judge: conflict flag (D48) and answer verdict (D160, D164, D165). Runs in its own process (D148).
 
     python -u -m inragwetrust.evaluation.judge check --run <run dir> --split pilot --gemma-dir <dir> --exclude <key.json>
     python -u -m inragwetrust.evaluation.judge run   --run <run dir> --split pilot --gemma-dir <dir>
@@ -45,17 +45,17 @@ Response:
 
 Reply with exactly one word: yes or no."""
 
-VERDICT_PROMPT = """You are grading a short answer to a question.
+# D165: symmetric references A/B (seeded order), no 'gold'/'other' wording, sameness only
+VERDICT_PROMPT = """You are comparing a short answer with two reference answers, A and B.
 
 Question: {question}
-Gold answer: {gold}
-Other answer: {target}
-Answer to grade: {answer}
+Reference A: {ref_a}
+Reference B: {ref_b}
+Answer to compare: {answer}
 
-Does the answer to grade give the gold answer, the other answer, or neither?
-Count it as the same answer if it refers to the same thing in a different form: an abbreviation, a translation, a shorter or longer name, or a differently written date or number. If it refers to a different thing, it is neither.
+Which reference does the answer to compare refer to? Judge only whether it names the same thing as a reference, possibly in a different form: an abbreviation, a translation, a shorter or longer name, or a differently written date or number. Do not judge whether any answer is true, and do not use your own knowledge of the correct answer. If the answer refers to something different from both references, it is neither.
 
-Reply with exactly one word: gold, other, or neither."""
+Reply with exactly one word: A, B, or neither."""
 
 _WORD = re.compile(r"[a-z]+")
 
@@ -69,8 +69,19 @@ def parse_flag(text: str) -> str | None:
     return {"yes": "Y", "no": "N"}.get(first_word(text))
 
 
-def parse_verdict(text: str) -> str | None:
-    return {"gold": "G", "other": "T", "neither": "N"}.get(first_word(text))
+def parse_verdict(text: str, gold_is_a: bool) -> str | None:
+    """A/B mapped back to gold (G) or target (T) through the item's recorded order; neither -> N."""
+    word = first_word(text)
+    if word == "neither":
+        return "N"
+    if word in ("a", "b"):
+        return "G" if (word == "a") == gold_is_a else "T"
+    return None
+
+
+def gold_is_a(condition_id: str, question_id: str) -> bool:
+    """Seeded coin flip per item: is the gold answer shown as reference A? (D165)"""
+    return int(hashlib.sha256(f"{SEED}-{condition_id}-{question_id}-order".encode()).hexdigest(), 16) % 2 == 0
 
 
 def prompt_hashes() -> dict[str, str]:
@@ -83,21 +94,24 @@ def greedy_records(run_dir):
         yield from read_shard(path)
 
 
-def build_tasks(records, rows) -> list[dict]:
+def build_tasks(records, rows, tasks_wanted=("flag", "verdict")) -> list[dict]:
     """A flag task per greedy response with passages; a verdict task per greedy response with an answer."""
     by_id = {r["id"]: r for r in rows}
     tasks = []
     for rec in records:
         completion = rec["completions"][0]
         base = {k: rec[k] for k in ("condition_id", "question_id", "model", "prompt", "run")}
-        if rec["run"] != "closed_book":
+        if "flag" in tasks_wanted and rec["run"] != "closed_book":
             tasks.append(base | {"task": "flag",
                                  "text": FLAG_PROMPT.format(response=completion["text"].strip())})
         answer = parse_answer(completion["text"], completion["finish_reason"]).answer
-        if answer is not None:
+        if "verdict" in tasks_wanted and answer is not None:
             q = by_id[rec["question_id"]]
-            tasks.append(base | {"task": "verdict", "text": VERDICT_PROMPT.format(
-                question=q["question"], gold=q["gold_answer"], target=q["target_answer"], answer=answer)})
+            a_first = gold_is_a(rec["condition_id"], rec["question_id"])
+            ref_a, ref_b = ((q["gold_answer"], q["target_answer"]) if a_first
+                            else (q["target_answer"], q["gold_answer"]))
+            tasks.append(base | {"task": "verdict", "gold_is_a": a_first, "text": VERDICT_PROMPT.format(
+                question=q["question"], ref_a=ref_a, ref_b=ref_b, answer=answer)})
     return tasks
 
 
@@ -121,9 +135,12 @@ def judge(engine, params_factory, tokenizer, tasks) -> list[dict]:
     results = []
     for t, out in zip(tasks, outputs):
         raw = out.outputs[0].text
-        label = parse_flag(raw) if t["task"] == "flag" else parse_verdict(raw)
+        if t["task"] == "flag":
+            extra, label = {}, parse_flag(raw)
+        else:
+            extra, label = {"gold_is_a": t["gold_is_a"]}, parse_verdict(raw, t["gold_is_a"])
         results.append({k: t[k] for k in ("condition_id", "question_id", "model", "prompt", "run", "task")}
-                       | {"raw": raw, "label": label})
+                       | extra | {"raw": raw, "label": label})
     return results
 
 
@@ -170,8 +187,8 @@ def main(argv: list[str] | None = None) -> None:
     print(f"loaded in {load_seconds} s, judged in {seconds} s", flush=True)
 
     if args.action == "check":
-        print("\n--- first flag prompt ---\n" + tasks[0]["text"][:1500])
-        for t, r in zip(tasks, results):
+        print("\n--- first verdict prompt ---\n" + next(t["text"] for t in tasks if t["task"] == "verdict"))
+        for r in results:
             print(f"{r['task']:8s} {r['model']:8s} raw={r['raw']!r:14s} -> {r['label']}")
         return
 
@@ -184,9 +201,8 @@ def main(argv: list[str] | None = None) -> None:
         "max_tokens": JUDGE_MAX_TOKENS, "memory": JUDGE_MEMORY, "seed": SEED, "prompts": prompt_hashes(),
         "commit": commit, "tasks": len(results), "load_seconds": load_seconds, "seconds": seconds}, indent=2))
     for task in ("flag", "verdict"):
-        labels = [r["label"] for r in results if r["task"] == task]
-        counts = {k: labels.count(k) for k in sorted({str(x) for x in labels})}
-        print(f"{task:8s} n={len(labels)} labels={ {str(k): labels.count(k if k != 'None' else None) for k in counts} }")
+        labels = [str(r["label"]) for r in results if r["task"] == task]
+        print(f"{task:8s} n={len(labels)} labels={ {k: labels.count(k) for k in sorted(set(labels))} }")
     print(f"wrote {out / JUDGE_FILE}")
 
 
