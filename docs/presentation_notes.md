@@ -204,3 +204,24 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **What it means:** RQ2's price — caution against poison also blocks answers when the evidence is merely incomplete.
 - **Its limitation:** pilot only; BM25 often retrieves no answer-bearing passage, which itself drives refusals.
 
+
+
+99 & Power check
+  & Script measuring $p_d$ on the pilot and McNemar power; analysis of the options; decision D178 proposed
+  & Run by the student; decision accepted by the student \\
+100 & Analysis plan and launch instructions
+  & \texttt{docs/analysis\_plan.md}, \texttt{docs/main\_run.md}; D179--D181
+  & Checked against Block A Sections 3.3--4.5 and decisions D147--D178; accepted by the student \\
+101 & Block D close
+  & State reports, notes, BLOCK\_D handoff
+  & Reviewed by the student \\
+
+
+
+  ### Finding: I checked whether my sample was big enough — and documented where it is not (D5)
+- **What it shows:** using the pilot, I measured how often two prompts disagree on the same question (p_d). The median cell has 92% power to detect a 5-point difference at N = 500; a quarter of cells only 75%.
+- **How to read it:** "power" = the chance of detecting a real 5-point difference; 80% is the usual target. MDD = the smallest difference detectable with 80% power: about 4 points in a typical cell, at most about 6.6 points in the weakest.
+- **What it means:** my pre-registered rule said "increase N if under-powered". Only 52 more prepared questions existed, which would not reach 80% anyway, so I kept N = 500 as a documented deviation. The confirmatory tests pool 16 cells per question, so they are well powered; single cells are exploratory.
+- **Its limitation:** in single cells I can miss effects smaller than about 5–7 points, so a non-significant single-cell result does not mean "no effect".
+- **If asked "why didn't you just add questions?":** the only ready questions were 52 reserve ones (power 0.79, still below 80%), and adding them meant rebuilding the data and retrieval pipeline the night before the main run — a bigger risk to correctness than the small power gain.
+

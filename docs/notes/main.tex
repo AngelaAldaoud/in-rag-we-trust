@@ -2350,6 +2350,83 @@ accuracy bracket (rules vs.\ judge) is about 20 points wide at $\rho=0$; the
 compute balance after the D3 judge session was not recorded and is estimated.
 
 
+\section{D5: Freeze and launch}
+
+\paragraph{Power check (D59).} Block A required the pilot to measure $p_d$,
+the share of questions on which two prompt conditions disagree, before the
+main run. Over the 96 pilot cells (model $\times$ meta-prompt $\times$ poison
+type $\times$ $\rho>0$, outcome Poisoned against the plain prompt), $p_d$ had
+median 0.11, 75th percentile 0.18 and maximum 0.28, giving McNemar power at
+$N=500$ for a five-point difference of 0.92, 0.75 and 0.56. About a quarter of
+single cells are therefore under-powered. Only 52 further prepared questions
+exist, which would raise the 75th-percentile power to about 0.78; reaching
+0.80 would need about 563 questions. Because the confirmatory F2 tests pool
+16 cells per question and single cells are exploratory, $N$ stays 500; this is
+a documented deviation from D59, and the main analysis reports the minimum
+detectable difference per cell (D178).
+
+\paragraph{Analysis plan.} The plan for the main results is fixed in
+\texttt{docs/analysis\_plan.md} before any main response exists (D180). It
+keeps Block A's confirmatory families F1--F4 and Holm correction, specifies
+the data and regression formula of each test, and lists the exploratory
+analyses and the caveats found in Block D: the accuracy bracket, the flag
+baseline at $\rho=0$, the judge's over-flagging and weaker agreement for Qwen,
+and the measured precision of the hallucination rule.
+
+\paragraph{Launch order.} Greedy responses of all three models are generated
+first, then judged, then the self-consistency samples follow (D179), as
+Block A planned (D67): every primary result exists before the long sampling
+phase. Instructions, checks and resume steps are in \texttt{docs/main\_run.md}.
+
+\paragraph{Freeze.} The evaluator code, both judge prompts and the analysis
+plan are fixed at git tag \texttt{evaluator-v1} (D181).
+
+\subsection{Finding: the pilot's power check}
+\label{sec:d5-power}
+
+\paragraph{Why.} Block A sized the study at $N=500$ assuming that two prompt
+conditions disagree on 10--15\% of questions ($p_d$), and required the pilot
+to measure $p_d$: if a single cell had less than 80\% power for a five-point
+difference, $N$ would be increased, never decreased (D59).
+
+\paragraph{Measurement.} For each of the 96 pilot cells (model $\times$
+meta-prompt $\times$ poison type $\times$ $\rho>0$), $p_d$ is the share of
+questions that are \textsc{Poisoned} under the meta-prompt but not under the
+plain prompt, or the reverse. Power is McNemar's at $\alpha=0.05$, two-sided,
+with Block A's formula; the minimum detectable difference (MDD) is the
+smallest difference found with 80\% power.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\hline
+Pilot cells & $p_d$ & Power at $N=500$, $\Delta = 5$ points & MDD at 80\% power \\
+\hline
+Median          & 0.11 & 0.92 & 4.2 points \\
+75th percentile & 0.18 & 0.75 & 5.3 points \\
+Maximum         & 0.28 & 0.56 & 6.6 points \\
+\hline
+\end{tabular}
+\caption{Power check on the 96 pilot cells.}
+\end{table}
+
+\paragraph{Result.} The typical cell is well powered, but about a quarter of
+single cells fall below 80\% for a five-point difference; Block A's rule would
+require a larger $N$. Only 52 further prepared questions exist: $N=552$ would
+raise the 75th-percentile power to about 0.79, and reaching 0.80 would need
+about 563 questions (about 880 for the worst cell).
+
+\paragraph{Decision (D178).} $N$ stays 500, as a documented deviation from
+D59. The confirmatory F2 tests pool all 16 cells of a question ($\rho>0$
+$\times$ poison types), so they are far better powered than a single cell;
+single-cell comparisons are exploratory and reported with intervals. Even the
+least powered cell can detect differences of about 6.6 points, and the median
+cell about 4 points. Pilot $p_d$ values rest on 50 questions per cell, so the
+maximum is partly noise; the main analysis recomputes the MDD from the main-run
+$p_d$.
+
+\paragraph{Limitation.} Five-point effects in single cells may be missed; the
+paper must not read a non-significant single-cell difference as ``no effect''.
 
 
 
@@ -4089,6 +4166,43 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{decisionbox}
 
 
+\begin{decisionbox}{D178 --- N stays 500 (deviation from D59)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] $N=500$; the main analysis reports the minimum detectable difference per cell. \emph{Documented deviation from the rule of D59.}
+  \item[Why.] Pilot $p_d$ gave power 0.92 (median cell) but 0.75 (75th percentile); only 52 extra prepared questions exist (power about 0.78); confirmatory F2 tests pool 16 cells per question; single cells are exploratory.
+  \item[Alternatives.] $N=552$ (rebuild of Blocks B--C, +10\% compute, still below 0.80); new data (impossible before the deadline).
+  \item[Interview line.] ``A quarter of single cells were under-powered and more data was not available; my confirmatory tests pool across cells, so I kept 500 and report what each cell can detect.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D179 --- Main-run order}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Greedy for all models, then the judge, then the samples for all models, through \texttt{run\_set --modes}.
+  \item[Why.] Implements D67: all primary data and the flags exist before the longest phase; a failure during sampling cannot delay the main analysis.
+  \item[Alternatives.] Greedy then samples per model, as in the pilot (primary data of the last model arrives only at the end); the judge at the very end.
+  \item[Interview line.] ``I ordered the main run so every result I test exists first.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D180 --- Analysis plan frozen}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{docs/analysis\_plan.md} fixes the data, formula and test of F1--F4, the Holm families, the exploratory analyses and the known caveats before any main result exists.
+  \item[Why.] Block A fixed the families; the exact model specifications and the Block D caveats must also be fixed in advance so no choice can follow the data (D55).
+  \item[Alternatives.] Deciding specifications during Block F (post-hoc freedom).
+  \item[Interview line.] ``Every confirmatory model was written down before the data it tests existed.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D181 --- Evaluator frozen at evaluator-v1}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The parser, outcome rules, hallucination rule, judge prompts, metrics, report code and analysis plan are fixed at git tag \texttt{evaluator-v1}; Block F uses exactly that version.
+  \item[Why.] The main results must be produced by code that was validated on the pilot and could not have been adjusted to them.
+  \item[Alternatives.] Continuing development during the main analysis.
+  \item[Interview line.] ``The code that scored my main results was frozen before they existed.''
+\end{description}
+\end{decisionbox}
+
+
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -4485,7 +4599,17 @@ ACL Anthology, arXiv) or the course PDF.
   & Two estimates (C3 large-batch throughput; pilot time scaled), compute decision D177
   & Inputs from the Block C handoff and the pilot logs; decision accepted by the student \\
 
+99 & Power check
+  & Script measuring $p_d$ on the pilot and McNemar power; analysis of the options; decision D178 proposed
+  & Run by the student; decision accepted by the student \\
+100 & Analysis plan and launch instructions
+  & \texttt{docs/analysis\_plan.md}, \texttt{docs/main\_run.md}; D179--D181
+  & Checked against Block A Sections 3.3--4.5 and decisions D147--D178; accepted by the student \\
+101 & Block D close
+  & State reports, notes, BLOCK\_D handoff
+  & Reviewed by the student \\
 
+  
   
 \end{longtable}
 }
