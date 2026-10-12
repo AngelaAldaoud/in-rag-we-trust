@@ -90,3 +90,7 @@ def test_render_refuses_prompts_that_are_too_long():
 def test_prompt_hashes_flag_unchanged_verdict_changed():
     h = j.prompt_hashes()
     assert h["flag"] == "324e2f1c735e" and h["verdict"] != "0c801fd77ec1"
+def test_exact_marks_answers_that_are_literally_gold_or_target():
+    tasks = j.build_tasks([record("poisoned", "Answer: lyon.", cid="a"), record("poisoned", "Answer: The Paris", cid="b"),
+                           record("poisoned", "Answer: Marseille", cid="c")], ROWS, tasks_wanted=("verdict",))
+    assert [t["exact"] for t in tasks] == ["T", "G", None]

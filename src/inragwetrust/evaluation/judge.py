@@ -25,6 +25,7 @@ from inragwetrust.evaluation.parse import parse_answer
 from inragwetrust.models.runs import read_shard
 from inragwetrust.retrieval import build as files
 from inragwetrust.retrieval.load import SPLITS, load_contexts
+from inragwetrust.textmatch import normalize
 
 JUDGE_MODEL = "kaggle:google/gemma-2/transformers/gemma-2-9b-it/2"     # same weights as Block B
 JUDGE_MAX_LEN, JUDGE_MAX_TOKENS, JUDGE_MEMORY = 2048, 4, 0.95           # B4 settings (D119)
@@ -110,8 +111,11 @@ def build_tasks(records, rows, tasks_wanted=("flag", "verdict")) -> list[dict]:
             a_first = gold_is_a(rec["condition_id"], rec["question_id"])
             ref_a, ref_b = ((q["gold_answer"], q["target_answer"]) if a_first
                             else (q["target_answer"], q["gold_answer"]))
-            tasks.append(base | {"task": "verdict", "gold_is_a": a_first, "text": VERDICT_PROMPT.format(
-                question=q["question"], ref_a=ref_a, ref_b=ref_b, answer=answer)})
+            exact = ("G" if normalize(answer) == normalize(q["gold_answer"])
+                     else "T" if normalize(answer) == normalize(q["target_answer"]) else None)
+            tasks.append(base | {"task": "verdict", "gold_is_a": a_first, "exact": exact,
+                                 "text": VERDICT_PROMPT.format(question=q["question"], ref_a=ref_a,
+                                                               ref_b=ref_b, answer=answer)})
     return tasks
 
 
@@ -175,7 +179,8 @@ def main(argv: list[str] | None = None) -> None:
         rng = random.Random(SEED)
         pool = [t for t in tasks if (t["condition_id"], t["question_id"]) not in excluded]
         tasks = (rng.sample([t for t in pool if t["task"] == "flag"], 10)
-                 + rng.sample([t for t in pool if t["task"] == "verdict"], 10))
+                 + rng.sample([t for t in pool if t.get("exact") == "G"], 10)
+                 + rng.sample([t for t in pool if t.get("exact") == "T"], 10))
     print(f"{len(tasks)} judge tasks | prompts {prompt_hashes()}", flush=True)
 
     start = time.time()
@@ -188,8 +193,13 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.action == "check":
         print("\n--- first verdict prompt ---\n" + next(t["text"] for t in tasks if t["task"] == "verdict"))
-        for r in results:
-            print(f"{r['task']:8s} {r['model']:8s} raw={r['raw']!r:14s} -> {r['label']}")
+        right = 0
+        for t, r in zip(tasks, results):
+            expected = t.get("exact") or "-"
+            right += t["task"] == "verdict" and r["label"] == expected
+            print(f"{r['task']:8s} {r['model']:8s} raw={r['raw']!r:14s} -> {r['label']}   expected {expected}")
+        print(f"\nknown-answer verdicts right: {right}/20 -> "
+              + ("PASS: run cell 4" if right >= 19 else "FAIL: do not run cell 4"))
         return
 
     out = args.run / JUDGE_DIR
