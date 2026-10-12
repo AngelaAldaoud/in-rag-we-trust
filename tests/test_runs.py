@@ -46,7 +46,7 @@ def test_schema_and_order(tmp_path):
     assert [r["question_id"] for r in recs] == ["q1", "q2"]
     r = recs[0]
     assert r["condition_id"] == "qwen__plain__clean-0.00" and r["rho"] == 0.0
-    assert r["temperature"] == 0.0 and r["n"] == 1 and r["max_tokens"] == 256
+    assert r["temperature"] == 0.0 and r["n"] == 1 and r["max_tokens"] == 512
     assert len(r["prompt_hash"]) == 64 and r["env"] == ENV
     assert r["completions"] == [{"text": "Answer: q1-0", "n_tokens": 3, "finish_reason": "stop"}]
 

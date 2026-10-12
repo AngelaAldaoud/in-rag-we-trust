@@ -10,7 +10,7 @@ from inragwetrust.conditions import MODELS
 from inragwetrust.data.build import SEED
 from inragwetrust.models.chat import REVISIONS
 
-MAX_TOKENS = 256
+MAX_TOKENS = 512
 MODES = {
     "greedy": {"temperature": 0.0, "n": 1},
     "samples": {"temperature": 0.7, "n": 5},
