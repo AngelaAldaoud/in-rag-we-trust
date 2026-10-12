@@ -139,3 +139,16 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** the added sentence makes the passage longer and adds no question words, so BM25 scores it lower.
 - **What it means:** framing that may persuade a model more also reaches the model less often — relevant when reading RQ4.
 - **Its limitation:** specific to BM25; a dense retriever might behave differently.
+
+
+### Result: the pilot run (D1)
+- **What it shows:** the full design (64 conditions × 3 models, greedy + 5 samples) ran once on 50 held-out pilot questions: 384 complete shards, 57,600 answers, 47 minutes on an A100, 6.5 compute units.
+- **How to read it:** one row per model; load = putting the model on the GPU, greedy/samples = generation time; out-tokens = total words-pieces the model wrote.
+- **What it means:** the pipeline works end to end, unattended, and every answer is traceable to one commit; Llama is the slow model because its occasional repetition loops make each batch wait.
+- **Its limitation:** 50 questions only — the pilot is for building and checking the evaluator and measuring cost, not for conclusions; pilot timing does not scale linearly to the main run.
+
+### Result: meta-prompts make answers longer (D1, quantified in D4)
+- **What it shows:** asking the model to check consistency or source reliability makes it write about 2–4 times more tokens than the plain prompt, for all three models.
+- **How to read it:** tokens per 50 answers, by prompt; higher = more reasoning written before the answer line.
+- **What it means:** any robustness gain from the meta-prompts (RQ2) has a price in time and compute; we report both.
+- **Its limitation:** length is a cost measure, not a quality measure — a longer answer is not necessarily a better-reasoned one.

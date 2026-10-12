@@ -1,12 +1,5 @@
-"""Rendered prompt examples and prompt lengths (C2, extended in C4).
-
-Run on the Mac (HuggingFace login needed for the gated models):
-    uv run --with transformers==5.18.0 python -m inragwetrust.models.render_examples
-"""
-
 from __future__ import annotations
 
-import gzip
 import json
 import statistics
 
@@ -14,23 +7,10 @@ from inragwetrust.conditions import MODELS, PROMPTS
 from inragwetrust.data.build import PROCESSED_DIR
 from inragwetrust.models.chat import load_tokenizer, render
 from inragwetrust.models.prompts import messages
+from inragwetrust.retrieval.load import load_contexts
 
 DOCS = PROCESSED_DIR.parents[1] / "docs"
 EXAMPLE_CONTEXT = "authority-0.50"
-
-
-def read_rows(name: str) -> list[dict]:
-    with gzip.open(PROCESSED_DIR / name, "rt", encoding="utf-8") as fh:
-        return [json.loads(line) for line in fh]
-
-
-def load_rows() -> list[dict]:
-    """Controlled contexts (C1) joined with the retrieved contexts (C4) of each question."""
-    rows = read_rows("contexts.jsonl.gz")
-    retrieved = {r["id"]: r["contexts"] for r in read_rows("bm25_contexts.jsonl.gz")}
-    for row in rows:
-        row["contexts"] = row["contexts"] | retrieved[row["id"]]
-    return rows
 
 
 def kind_of(context_id: str) -> str:
@@ -48,7 +28,7 @@ def all_prompts(row: dict):
 
 
 def main() -> None:
-    rows = load_rows()
+    rows = load_contexts()
     example = next(r for r in rows if r["split"] == "main")
     doc = ["# Rendered prompt examples (C2)", "",
            f"Question `{example['id']}`, context `{EXAMPLE_CONTEXT}` and closed-book. "

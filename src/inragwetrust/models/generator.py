@@ -28,7 +28,7 @@ class Request:
 class Completion:
     text: str
     n_tokens: int
-    finish_reason: str              # "stop" (model ended) or "length" (hit the 256 cap)
+    finish_reason: str              # "stop" (model ended) or "length" (hit the MAX_TOKENS cap, D138)
 
 
 def request_seed(condition_id: str, question_id: str, mode: str, seed: int = SEED) -> int:

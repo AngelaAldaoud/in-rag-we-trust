@@ -1704,6 +1704,206 @@ The original rule had hidden that BM25 cannot distinguish an entity-swapped
 passage from the truth.
 
 
+\chapter{Block D: Evaluation and pilot}
+\label{ch:blockd}
+
+\section{D1: Pilot runner and launch}
+
+\paragraph{Goal.}
+Run the complete design once on the 50 pilot questions, which are disjoint
+from the 500 main questions: all 64 conditions per model (48 poisoned, 3
+clean $\rho=0$, 1 closed-book, 12 BM25 retrieval) $\times$ 3 models, greedy
+decoding and then 5 samples at $T=0.7$. The pilot supplies the outputs on
+which the evaluator is built and validated, measures the real cost of a run,
+and exposes format problems while they are still cheap to fix. Because the
+pilot questions never enter the main analysis, adjusting the evaluator after
+inspecting them does not bias the main results.
+
+\paragraph{Shared context loader (D147).}
+The join of the 18 controlled contexts (C1) and the 4 retrieved contexts
+(C4) per question moved from the documentation script into
+\texttt{retrieval.load.load\_contexts}. The loader refuses to return data if
+the two files cover different questions, if a context identifier appears in
+both files, or if a question does not end with exactly 22 contexts; it can
+return one split only. The documentation script now uses it; regenerating
+\texttt{docs/prompt\_examples.md} produced a byte-identical file and
+identical prompt-length statistics, which shows the move changed nothing.
+Nine tests (five on the real files, four on deliberately broken fake files).
+
+\paragraph{Run script (D148, D149).}
+\texttt{models.run\_set} runs all 64 conditions of one model on one split,
+greedy then samples, through the existing \texttt{runs.run\_model} (resume
+included). Each model runs in its own operating-system process, so GPU memory
+is fully released between models and the three models run back to back
+without manual restarts. The script refuses any GPU other than the A100
+(D139), records whether the working tree differed from the commit
+(\texttt{commit\_dirty}), and writes a timestamped run log per model and mode
+with load time, run time and per-shard tokens. Seven tests with a fake
+environment, tokenizer and model check the wiring: mode order, 50 pilot
+questions, 64 conditions including the 12 retrieval and the closed-book
+conditions, one log per mode, the A100 guard and argument validation.
+Test suite: 168 tests.
+
+\paragraph{Pilot run.}
+Notebook \texttt{04\_d1\_pilot} (commit \texttt{795aa80}), Colab A100-SXM4
+40\,GB, vLLM 0.31.0, bf16, output cap 512. All three processes exited
+normally; 384 shards were written (64 conditions $\times$ 2 modes $\times$
+3 models), no partial shards remained, and every shard held exactly 50
+distinct questions with 1 (greedy) or 5 (samples) completions, all stamped
+with commit \texttt{795aa80} and a clean working tree. Raw outputs are stored
+on Google Drive under \texttt{runs/pilot}; the local copy is git-ignored
+(D150).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrrrr}
+\hline
+Model & Load (s) & Greedy (s) & Samples (s) & Total (min) &
+Greedy out-tokens & Sample out-tokens \\
+\hline
+Qwen2.5-7B    & 227.9 & 193.4 & 280.5 & 12.1 &   207{,}998 & 1{,}066{,}458 \\
+Mistral-7B    & 121.5 & 195.4 & 297.8 & 10.6 &   131{,}513 &   705{,}441 \\
+Llama-3.1-8B  & 127.3 & 558.4 & 762.0 & 24.5 &   542{,}514 & 2{,}578{,}894 \\
+\hline
+Total         &       &       &       & 47.2 & & \\
+\hline
+\end{tabular}
+\caption{Pilot generation on the A100: 3{,}200 greedy and 3{,}200 sampling
+requests per model. Qwen's load time includes a one-time compilation of a
+sampling kernel. Compute: 80.06 $\rightarrow$ 73.59 units, i.e.\ 6.47 units
+for 74 minutes connected (installation, loading, generation and checks).}
+\end{table}
+
+\paragraph{Finding: shard size bounds the speed of slow-finishing models.}
+Llama's greedy pass took 558\,s, about twice the 254\,s predicted from the C3
+throughput. Its greedy shards took 6.6--10.0\,s each almost independently of
+the number of tokens produced. A batch finishes only when its longest
+completion finishes; Llama produces occasional repetition loops that run to
+the 512-token cap, so nearly every 50-question shard waited for one such
+completion. The C3 throughput was measured on batches of 550 requests; main
+run shards hold 500 questions, so the pilot time must not be scaled linearly
+to the main run. The main-run estimate is recomputed from the logged token
+counts in D4.
+
+\paragraph{Finding: the meta-prompts lengthen the answers.}
+Output tokens per shard of 50 greedy answers (excluding closed-book) were
+1{,}770--2{,}397 (plain), 3{,}022--3{,}935 (consistency) and
+3{,}610--4{,}537 (reliability) for Qwen; 802--1{,}267, 1{,}331--2{,}594 and
+2{,}626--3{,}977 for Mistral; 3{,}858--6{,}970, 8{,}523--11{,}315 and
+8{,}737--10{,}536 for Llama. The prompt conditions therefore cost roughly
+twice to four times as many output tokens as the plain prompt. This is the
+cost side of RQ2 and is quantified per answer in D4. Under the plain prompt
+Mistral writes almost no reasoning before its answer line.
+
+\paragraph{Repository hygiene.}
+\texttt{runs/} was not ignored by git; a rule was added before any output
+could be committed (D150). Notebook \texttt{03\_c3\_generation} contained a
+block of disabled commands, scratch cell labels and an empty cell; these were
+removed with \texttt{nbformat}, and the outputs of its first two cells, which
+partly came from the removed commands, were cleared rather than edited (D151).
+Their content (environment record) is preserved in
+\texttt{results/c3\_throughput/*.json}.
+
+\subsection*{Decision log}
+
+\begin{decisionbox}{D147 · Shared context loader}
+\textbf{Decision.} The controlled and retrieved contexts are joined by one
+package function, \texttt{retrieval.load.load\_contexts}, with integrity
+checks (same questions, no identifier clash, 22 contexts per question) and a
+split filter; the documentation script and all runs use it.\\
+\textbf{Why.} The pilot and the main run must read contexts through the same
+code; the previous merge could overwrite a context silently or fail with an
+unclear error.\\
+\textbf{Alternatives.} Copying the join into the notebook (two copies can
+drift); keeping it in the documentation script (wrong home for run-critical
+code); merging the two files on disk (duplicated data, broken C1/C4
+checksums).\\
+\textbf{Interview line.} ``Every run reads its contexts through one tested
+loader that refuses to start if the two context files don't line up
+exactly.''
+\end{decisionbox}
+
+\begin{decisionbox}{D148 · One model per process}
+\textbf{Decision.} Pilot and main runs go through the command-line script
+\texttt{models.run\_set}, one model per process, which calls the existing
+\texttt{runs.run\_model}; one notebook cell runs the three models in sequence
+and stops at the first failure.\\
+\textbf{Why.} A finished process always frees all GPU memory, so the models
+run unattended back to back; pilot and main run execute identical, tested
+code.\\
+\textbf{Alternatives.} Looping over models inside the notebook process (vLLM
+running in-process, D102, may not release memory); restarting the runtime by
+hand (requires presence, wastes compute units).\\
+\textbf{Interview line.} ``Each model runs in a fresh process through one
+tested script, so the pilot and the main run execute the same code and can't
+interfere through GPU memory.''
+\end{decisionbox}
+
+\begin{decisionbox}{D149 · Hardware guard and run logs}
+\textbf{Decision.} The run script stops on any GPU other than the A100,
+records \texttt{commit\_dirty}, and writes a timestamped log per model and
+mode.\\
+\textbf{Why.} D139 holds only if it is enforced; a commit hash alone does not
+identify the code if files were edited; the logs provide the measured times
+for the compute decision (D140).\\
+\textbf{Alternatives.} Relying on choosing the right GPU by hand; timing runs
+by hand (imprecise, lost if the session ends).\\
+\textbf{Interview line.} ``The hardware rule and the cost measurement are
+enforced and recorded by the run script itself.''
+\end{decisionbox}
+
+\begin{decisionbox}{D150 · Raw outputs outside git}
+\textbf{Decision.} Model outputs live in \texttt{runs/}; the canonical copy is
+on Google Drive, the local copy is git-ignored, and unit tests use short real
+examples copied into test files.\\
+\textbf{Why.} Outputs are generated data, not source; the main run is about
+ten times the pilot's 7.8\,MB; reported results are rebuilt from the shards by
+evaluator code that is in git.\\
+\textbf{Alternatives.} Committing outputs (heavy repository, data mixed with
+code); Git LFS (extra tooling and quota); committing only the pilot
+(inconsistent rule). Open for Block H: how readers obtain the raw outputs.\\
+\textbf{Interview line.} ``Raw generations are stored once, on Drive; the
+repository holds the code that produced and evaluates them, and the derived
+tables.''
+\end{decisionbox}
+
+\begin{decisionbox}{D151 · Clean notebooks, unedited outputs}
+\textbf{Decision.} Repository notebooks contain only working cells with
+header comments; outputs are never edited by hand, and an output that no
+longer matches its code is cleared, only when its content is preserved
+elsewhere.\\
+\textbf{Why.} Clean notebooks and honest records: every remaining output was
+printed by the code above it.\\
+\textbf{Alternatives.} Leaving scratch code in notebook 03; editing output
+text (falsifies the record); re-running notebook 03 (about 10 compute units
+to reproduce existing evidence).\\
+\textbf{Interview line.} ``Every output in the notebooks was printed by the
+code above it; where code was removed, I cleared its output rather than
+editing it.''
+\end{decisionbox}
+
+\subsection*{AI-usage log}
+
+\begin{description}
+\item[78.] Claude (Opus 5.5) retrieved and summarised the ORGANIZER and
+Block A--C chats with past-chat search. The final Block C handoff was not yet
+indexed; the student supplied it. Verified by the student against the plan.
+\item[79.] Claude wrote \texttt{retrieval/load.py} and
+\texttt{models/run\_set.py} without test files and proposed deferring the
+loader tests until after the GPU launch. The student caught this; 16 tests
+were written and passed before the push, restoring the project rule that every
+file ships with its tests.
+\item[80.] Claude designed the pilot launch (run script, notebook~04 launch
+loop with per-model processes and console logs on Drive, output check cell).
+Verified by 168 passing tests, the 384-shard completeness and commit check,
+and the run logs. Claude diagnosed the Llama slowdown (batch waits for the
+longest completion) from the logged per-shard times.
+\item[81.] Claude proposed the \texttt{.gitignore} check, which showed that
+\texttt{runs/} was not ignored, and the \texttt{nbformat} script that cleaned
+notebook~03 with assertions on the expected cell layout; the student ran and
+checked both.
+\end{description}
+
 
 
 \chapter{Decision Log}\label{ch:decisions}
@@ -1719,7 +1919,6 @@ rejected, and a one-sentence justification for the oral discussion.
     inside the same repository.
   \item[Why.] Every phase must end with a push, and the commit history then
     records how the methodology was designed.
-  \item[Alternatives.] Push everything only in A4 (breaks the push-per-phase
     rule, risks losing work); build the full layout now (does A4's work out
     of order).
   \item[Interview line.] ``I versioned the research design from day one, so
@@ -3162,7 +3361,52 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{decisionbox}
 
 
+\section{Block D}\label{sec:decisions-d}
 
+\begin{decisionbox}{D147 --- Shared context loader}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Controlled and retrieved contexts are joined by one package function, \texttt{retrieval.load.load\_contexts}, with integrity checks (same questions, no identifier clash, 22 contexts per question) and a split filter; the documentation script and all runs use it.
+  \item[Why.] The pilot and the main run must read contexts through the same code; the previous merge could overwrite a context silently or fail with an unclear error.
+  \item[Alternatives.] Copying the join into the notebook (two copies can drift); keeping it in the documentation script (wrong home for run-critical code); merging the files on disk (duplicated data, broken C1/C4 checksums).
+  \item[Interview line.] ``Every run reads its contexts through one tested loader that refuses to start if the two context files don't line up exactly.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D148 --- One model per process}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Pilot and main runs go through the command-line script \texttt{models.run\_set}, one model per process, calling the existing \texttt{runs.run\_model}; one notebook cell runs the three models in sequence and stops at the first failure.
+  \item[Why.] A finished process always frees all GPU memory, so the models run unattended back to back; pilot and main run execute identical, tested code.
+  \item[Alternatives.] Looping over models inside the notebook process (vLLM in-process, D102, may not release memory); restarting the runtime by hand (requires presence, wastes compute units).
+  \item[Interview line.] ``Each model runs in a fresh process through one tested script, so the pilot and the main run execute the same code and can't interfere through GPU memory.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D149 --- Hardware guard and run logs}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The run script stops on any GPU other than the A100, records \texttt{commit\_dirty}, and writes a timestamped log per model and mode.
+  \item[Why.] D139 holds only if it is enforced; a commit hash alone does not identify the code if files were edited; the logs give the measured times for the compute decision (D140).
+  \item[Alternatives.] Choosing the right GPU by hand; timing runs by hand (imprecise, lost if the session ends).
+  \item[Interview line.] ``The hardware rule and the cost measurement are enforced and recorded by the run script itself.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D150 --- Raw outputs outside git}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Model outputs live in \texttt{runs/}; the canonical copy is on Google Drive, the local copy is git-ignored, and unit tests use short real examples copied into test files.
+  \item[Why.] Outputs are generated data, not source; the main run is about ten times the pilot's 7.8\,MB; reported results are rebuilt from the shards by evaluator code that is in git.
+  \item[Alternatives.] Committing outputs (heavy repository, data mixed with code); Git LFS (extra tooling and quota); committing only the pilot (inconsistent rule). Open for Block H: how readers obtain the raw outputs.
+  \item[Interview line.] ``Raw generations are stored once, on Drive; the repository holds the code that produced and evaluates them, and the derived tables.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D151 --- Clean notebooks, unedited outputs}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Repository notebooks contain only working cells with header comments; outputs are never edited by hand; an output that no longer matches its code is cleared, only when its content is preserved elsewhere.
+  \item[Why.] Clean notebooks and honest records: every remaining output was printed by the code above it.
+  \item[Alternatives.] Leaving scratch code in notebook 03; editing output text (falsifies the record); re-running notebook 03 (about 10 compute units to reproduce existing evidence).
+  \item[Interview line.] ``Every output in my notebooks was printed by the code above it; where code was removed, I cleared its output rather than editing it.''
+\end{description}
+\end{decisionbox}
 
 
 \chapter{AI-Usage Log}\label{ch:ailog}
@@ -3470,6 +3714,41 @@ ACL Anthology, arXiv) or the course PDF.
 
 
   
+\end{longtable}
+}
+
+\section{Block D}\label{sec:ailog-d}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{0.6cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.8cm}}
+\caption{AI usage during Block D.}\label{tab:ailog-d}\\
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+78 & Recover the plan and the state of Blocks A--C
+  & Summary of the ORGANIZER and Block A--C chats; the final Block C handoff was not yet searchable
+  & Handoff supplied and summary confirmed by the student \\
+79 & Shared loader and run script
+  & \texttt{retrieval/load.py}, \texttt{models/run\_set.py}; Claude first omitted their test files and proposed deferring the loader tests until after the GPU launch
+  & Caught by the student; 16 tests written and passed before the push (168 in total) \\
+80 & Pilot launch and check
+  & Notebook~04 cells (per-model processes, console logs on Drive, completeness check); diagnosis of the Llama slowdown
+  & Run by the student; 384 complete shards from one clean commit; timings and compute units read from the logs and Colab \\
+81 & Repository hygiene
+  & \texttt{.gitignore} check (showed \texttt{runs/} was not ignored); \texttt{nbformat} cleanup script for notebook~03 with layout assertions
+  & Run and checked by the student \\
 \end{longtable}
 }
 }

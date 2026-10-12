@@ -14,3 +14,6 @@ data/raw/
 
 # Secrets
 .env
+
+# Model outputs (D150): canonical copy on Google Drive, never committed
+runs/
