@@ -1630,6 +1630,79 @@ excludes the length of the retrieval prompts (C4) and is re-measured in the
 pilot. C3 itself used 9.9 units.
 
 
+\section{Realistic-retrieval check (C4)}\label{sec:c4}
+
+\paragraph{Set-up.}
+For each poison type, a BM25 index (Okapi BM25, $k_1 = 1.5$, $b = 0.75$, the
+tokenisation of Block B) is built over that type's collection of 9{,}301
+passages: the four clean passages and four poisoned passages of each of the 550
+questions, their bridge passages and the HotpotQA distractor paragraphs. Each
+question, as written, retrieves the five highest-scoring passages from the whole
+collection; documents with equal scores are ordered by a seeded random key. The
+retrieved passages, in rank order, form the contexts of the 36 retrieval
+conditions. Retrieval prompts are about 3\% longer than controlled prompts
+(mean 693--768 tokens).
+
+\paragraph{Results.}
+Table~\ref{tab:c4-rates} summarises the 500 main questions. In half of the
+questions no passage containing the answer is retrieved: the question names the
+bridge entity, so the bridge passage is retrieved in 73\% of questions and
+ranked first in 56\%, while the second-hop answer passage shares fewer words
+with the question. On average about two of the five passages are the question's
+own HotpotQA distractors, which were selected for their similarity to the
+question. When answer-bearing passages are retrieved, poisoned passages are
+retrieved with them: at least one poisoned passage appears for 34--44\% of
+questions, and the effective poison ratio among answer-bearing passages averages
+0.29--0.50. Three or more poisoned passages are rare (under 9\%). Swap poisons,
+which differ from their clean twins only in the answer, are retrieved as often
+as the truth (effective ratio 0.50); framed poisons are retrieved less often,
+because their added sentence lengthens the passage without matching the
+question.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & Swap & Correct & Authority & Recency \\
+\midrule
+Gold passage in top 5 (\%)            & 28.4 & 36.4 & 33.8 & 34.8 \\
+Bridge passage in top 5 (\%)          & 72.6 & 73.2 & 72.4 & 72.8 \\
+No answer-bearing passage (\%)        & 50.6 & 51.0 & 49.6 & 49.6 \\
+At least one poisoned passage (\%)    & 44.4 & 34.2 & 39.0 & 39.0 \\
+Own clean / poisoned (mean)           & 0.88 / 0.85 & 1.13 / 0.54 & 1.08 / 0.63 & 1.08 / 0.62 \\
+Mean effective poison ratio           & 0.50 & 0.29 & 0.35 & 0.36 \\
+Questions with 3--4 poisoned passages & 42 & 4 & 8 & 8 \\
+\bottomrule
+\end{tabular}
+\caption{BM25 top-5 retrieval over the 500 main questions.}
+\label{tab:c4-rates}
+\end{table}
+
+\paragraph{Interpretation.}
+The check supports the controlled design in two ways. Realistic retrieval of a
+poisoned corpus produces mixed contexts at the low and middle poison ratios of
+the design (0.25--0.5), while ratios of 0.75 and 1 are a stress test.
+Single-step retrieval also often misses the second hop of a multi-hop question;
+the controlled contexts therefore always include the answer-bearing passages and
+the bridge, so that the study measures how models use evidence that is present.
+The setting is a poisoned-corpus scenario in the sense of PoisonedRAG
+\citep{zou2024poisonedrag}: the collection is small and contains planted near
+duplicates of every answer passage, so the rates are higher than in open-web
+retrieval and are not estimates of natural exposure.
+
+\paragraph{Finding: how a tie is broken can create a result.}
+The first implementation ordered equal scores alphabetically by document
+identifier. A diagnostic showed that 62\% of Swap twins score exactly the same
+as their clean passage, and that a tie decided the top five in 21\% of Swap
+questions; because identifiers contain the poison type, the rule favoured clean
+passages over Swap, Correct and Recency poisons and Authority poisons over clean
+passages. With a seeded random order among equal scores (D146), the mean number
+of retrieved Swap poisons rose from 0.76 to 0.85, the effective ratio from 0.42
+to 0.50, and the questions ranking a poisoned passage first from 25 to 58. The
+framed types changed by at most 0.01, since their added sentence prevents ties.
+The original rule had hidden that BM25 cannot distinguish an entity-swapped
+passage from the truth.
+
 
 
 
@@ -3032,6 +3105,66 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+
+
+\begin{decisionbox}{D141 --- Standard BM25 with default settings}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{rank\_bm25.BM25Okapi} ($k_1 = 1.5$, $b = 0.75$), one index per collection, Block B tokeniser for documents and queries, no stop words or stemming.
+  \item[Why.] Standard values; no labelled data for tuning, and tuning on the study's questions would bias the check; identical tokenisation for queries and documents.
+  \item[Alternatives.] \texttt{bm25s}; Pyserini/Lucene (Java); tuned parameters; stemming.
+  \item[Interview line.] ``Standard BM25 with default settings, because tuning it on my own questions would bias the check.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D142 --- Query and top five}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The query is the question text; the whole collection can be retrieved; the five highest scores are kept. (Tie rule revised by D146.)
+  \item[Why.] What a user would type; a real retriever does not filter by question; five matches the context size.
+  \item[Alternatives.] Question plus answer (unknown at question time); searching only the question's documents; top ten.
+  \item[Interview line.] ``Each question searches the whole collection as written, and the top five become the context.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D143 --- Retrieved passages in rank order}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Retrieved contexts keep BM25's order, best match first.
+  \item[Why.] Standard practice in RAG pipelines; the retrieval conditions are the realistic case, so they are not position-matched to the controlled ones.
+  \item[Alternatives.] Seeded shuffle as in C1.
+  \item[Interview line.] ``The realistic condition passes passages in rank order, like a real pipeline.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D144 --- Retrieval measures}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Per question and type: gold hit, own clean and poisoned passages, bridge hit, documents of other questions, effective poison ratio (undefined without answer-bearing passages), passage ranked first; reported over the main questions.
+  \item[Why.] They show whether poisons are retrieved and at which ratios, linking the realistic case to the controlled design.
+  \item[Alternatives.] Recall@5 of the gold passage only (says nothing about poisons).
+  \item[Interview line.] ``I measured where realistic retrieval lands on my poison-ratio scale.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D145 --- Retrieved-context file}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{bm25\_contexts.jsonl.gz}: the same rows and order as the controlled contexts, passages with position, role (``poisoned'' as in C1), slot for the question's own answer-bearing passages, document identifier, rank and score; summaries and main-set rates with checksums in the metadata.
+  \item[Why.] Controlled and retrieved contexts join by question; one name per role; every rate is traceable to the stored searches.
+  \item[Alternatives.] Retrieval inside the generation notebook (results not stored).
+  \item[Interview line.] ``The retrieved contexts are stored exactly as the models will read them.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D146 (revision) --- Seeded random order among equal scores}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Documents with equal scores are ordered by the SHA-256 of the project seed, the query and the document identifier. \emph{Revises the tie rule of D142.}
+  \item[Why.] Alphabetical order decided the top five in 21\% of Swap questions and favoured clean or poisoned passages depending on the type name; the hash gives every tied document an equal, reproducible chance, independently per question.
+  \item[Alternatives.] Alphabetical (biased); keeping all tied documents (contexts of varying size); always preferring the poison (biased the other way).
+  \item[Interview line.] ``My first tie rule silently favoured clean passages; I measured it and replaced it with a fair, seeded tie-break.''
+\end{description}
+\end{decisionbox}
+
+
+
+
+
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
 purposes, and to what extent their outputs were modified or verified. This
@@ -3322,7 +3455,21 @@ ACL Anthology, arXiv) or the course PDF.
   & All measurements run by the student; decision D140 taken by the student \\
 
 
+74 & BM25 search and retrieved contexts
+  & \texttt{bm25.py}, \texttt{build\_bm25.py}, 9 tests
+  & 152 tests pass; two builds give identical checksums \\
+75 & Tie-breaking diagnosis
+  & Identified that Claude's alphabetical tie rule could bias results; diagnostic (first version assumed a wrong identifier format); seeded tie-break
+  & Bias measured by the student (62\% equal twin scores for Swap); before/after compared on the same questions \\
+76 & Retrieval prompt lengths
+  & Extension of \texttt{render\_examples.py}
+  & Run by the student; earlier lengths and examples reproduced exactly \\
+77 & C4 notes and Block C handoff
+  & This section, D141--D146, entries 74--77, presentation notes, handoff
+  & Reviewed by the student \\
 
+
+  
 \end{longtable}
 }
 }
