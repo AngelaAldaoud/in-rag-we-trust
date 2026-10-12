@@ -122,3 +122,20 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **What it means:** all main runs use one GPU type, so this cannot add noise between conditions.
 - **Its limitation:** exact output reproducibility is therefore not claimed; settings, seeds and versions are recorded instead.
 
+### Table: what a real retriever returns (C4)
+- **What it shows:** for 500 questions, BM25 searched a 9,301-passage collection containing true, poisoned and unrelated passages, and returned the top 5.
+- **How to read it:** half the questions retrieve no passage containing the answer (BM25 finds the first hop, which names the entity in the question, not the second); when answer passages are found, poisons come with them at an average ratio of 0.29–0.50.
+- **What it means:** realistic retrieval produces exactly the mixed low-to-middle ratios my controlled design studies; ρ = 0.75–1 is a stress test. And because retrieval often misses the answer, the controlled contexts always include it — the study measures how models use evidence that is there.
+- **Its limitation:** a small collection with planted near-duplicates — a poisoned-corpus scenario (PoisonedRAG), not natural web exposure.
+
+### Finding: how a tie is broken can create a result (C4)
+- **What it shows:** 62% of Swap poisons score exactly like their true twin; my first rule broke ties alphabetically, which always favoured the truth for Swap. With a fair, seeded tie-break, Swap's effective poison ratio went from 0.42 to 0.50, and questions with a poison ranked first from 25 to 58.
+- **How to read it:** same searches, same scores; only the order among exact ties changed. Framed poisons barely changed, because their extra sentence prevents ties.
+- **What it means:** BM25 cannot tell an entity swap from the truth — and an arbitrary implementation detail had hidden this. I found it by asking which choices could favour one condition.
+- **Its limitation:** the random tie-break is one fair rule; a different seed would move a few individual questions, not the averages.
+
+### Observation: persuasive framing trades retrievability (C4)
+- **What it shows:** Swap poisons are retrieved like the truth (ratio 0.50); Correct, Authority and Recency less (0.29–0.36).
+- **How to read it:** the added sentence makes the passage longer and adds no question words, so BM25 scores it lower.
+- **What it means:** framing that may persuade a model more also reaches the model less often — relevant when reading RQ4.
+- **Its limitation:** specific to BM25; a dense retriever might behave differently.
