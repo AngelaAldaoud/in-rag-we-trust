@@ -1,6 +1,6 @@
-"""Rendered prompt examples and prompt lengths (C2).
+"""Rendered prompt examples and prompt lengths (C2, extended in C4).
 
-Run on the Mac (HF_TOKEN must be set for the gated models):
+Run on the Mac (HuggingFace login needed for the gated models):
     uv run --with transformers==5.18.0 python -m inragwetrust.models.render_examples
 """
 
@@ -19,13 +19,28 @@ DOCS = PROCESSED_DIR.parents[1] / "docs"
 EXAMPLE_CONTEXT = "authority-0.50"
 
 
-def load_rows() -> list[dict]:
-    with gzip.open(PROCESSED_DIR / "contexts.jsonl.gz", "rt", encoding="utf-8") as fh:
+def read_rows(name: str) -> list[dict]:
+    with gzip.open(PROCESSED_DIR / name, "rt", encoding="utf-8") as fh:
         return [json.loads(line) for line in fh]
 
 
+def load_rows() -> list[dict]:
+    """Controlled contexts (C1) joined with the retrieved contexts (C4) of each question."""
+    rows = read_rows("contexts.jsonl.gz")
+    retrieved = {r["id"]: r["contexts"] for r in read_rows("bm25_contexts.jsonl.gz")}
+    for row in rows:
+        row["contexts"] = row["contexts"] | retrieved[row["id"]]
+    return rows
+
+
+def kind_of(context_id: str) -> str:
+    if context_id == "closedbook":
+        return "closedbook"
+    return "retrieval" if context_id.startswith("bm25-") else "controlled"
+
+
 def all_prompts(row: dict):
-    """(context_id, prompt, messages) for every controlled context and its allowed prompts."""
+    """(context_id, prompt, messages) for every context of a question and its allowed prompts."""
     for cid, ctx in row["contexts"].items():
         texts = [p["text"] for p in ctx]
         for prompt in (["plain"] if cid == "closedbook" else PROMPTS):
@@ -48,20 +63,17 @@ def main() -> None:
                 p = render(tok, messages(example["question"], texts, prompt))
                 doc += [f"### {prompt} · {cid} ({p.n_tokens} tokens, hash `{p.prompt_hash[:12]}`)",
                         "", "```text", p.text, "```", ""]
-                if prompt == "plain" and cid == EXAMPLE_CONTEXT:
-                    print(f"\n===== {model} · plain · {cid} =====\n{p.text}")
 
-        lengths = {"controlled": [], "closedbook": []}
+        lengths = {"controlled": [], "closedbook": [], "retrieval": []}
         for row in rows:
             for cid, prompt, msgs in all_prompts(row):
-                kind = "closedbook" if cid == "closedbook" else "controlled"
-                lengths[kind].append(render(tok, msgs).n_tokens)
+                lengths[kind_of(cid)].append(render(tok, msgs).n_tokens)
         summary = {k: {"prompts": len(v), "mean": round(statistics.mean(v), 1),
                        "max": max(v), "total": sum(v)} for k, v in lengths.items()}
-        print(f"\nLENGTHS {model}: {json.dumps(summary)}")
+        print(f"LENGTHS {model}: {json.dumps(summary)}")
 
     (DOCS / "prompt_examples.md").write_text("\n".join(doc) + "\n", encoding="utf-8")
-    print("\nwrote docs/prompt_examples.md")
+    print("wrote docs/prompt_examples.md")
 
 
 if __name__ == "__main__":

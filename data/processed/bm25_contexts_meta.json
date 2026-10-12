@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "k": 5,
+  "bm25": "rank_bm25.BM25Okapi, k1=1.5, b=0.75",
+  "questions": {
+    "pilot": 50,
+    "main": 500
+  },
+  "rates_main": {
+    "swap": {
+      "questions": 500,
+      "gold_hit": 0.284,
+      "bridge_hit": 0.726,
+      "any_poison": 0.444,
+      "mean_own_clean": 0.88,
+      "mean_own_poison": 0.85,
+      "mean_other": 0.32,
+      "no_answer_bearing": 0.506,
+      "own_poison_distribution": {
+        "0": 278,
+        "1": 60,
+        "2": 120,
+        "3": 41,
+        "4": 1
+      },
+      "mean_effective_rho": 0.501,
+      "top1_role": {
+        "own bridge": 282,
+        "own clean": 45,
+        "own distractor": 106,
+        "own poisoned": 58,
+        "other": 9
+      }
+    },
+    "correct": {
+      "questions": 500,
+      "gold_hit": 0.364,
+      "bridge_hit": 0.732,
+      "any_poison": 0.342,
+      "mean_own_clean": 1.13,
+      "mean_own_poison": 0.54,
+      "mean_other": 0.32,
+      "no_answer_bearing": 0.51,
+      "own_poison_distribution": {
+        "0": 329,
+        "1": 78,
+        "2": 89,
+        "3": 3,
+        "4": 1
+      },
+      "mean_effective_rho": 0.288,
+      "top1_role": {
+        "own bridge": 284,
+        "own clean": 96,
+        "own poisoned": 5,
+        "own distractor": 105,
+        "other": 10
+      }
+    },
+    "authority": {
+      "questions": 500,
+      "gold_hit": 0.338,
+      "bridge_hit": 0.724,
+      "any_poison": 0.39,
+      "mean_own_clean": 1.08,
+      "mean_own_poison": 0.63,
+      "mean_other": 0.33,
+      "no_answer_bearing": 0.496,
+      "own_poison_distribution": {
+        "0": 305,
+        "1": 85,
+        "2": 102,
+        "3": 7,
+        "4": 1
+      },
+      "mean_effective_rho": 0.354,
+      "top1_role": {
+        "own bridge": 284,
+        "own clean": 92,
+        "own poisoned": 11,
+        "own distractor": 104,
+        "other": 9
+      }
+    },
+    "recency": {
+      "questions": 500,
+      "gold_hit": 0.348,
+      "bridge_hit": 0.728,
+      "any_poison": 0.39,
+      "mean_own_clean": 1.08,
+      "mean_own_poison": 0.62,
+      "mean_other": 0.31,
+      "no_answer_bearing": 0.496,
+      "own_poison_distribution": {
+        "0": 305,
+        "1": 88,
+        "2": 99,
+        "3": 7,
+        "4": 1
+      },
+      "mean_effective_rho": 0.356,
+      "top1_role": {
+        "own bridge": 282,
+        "own clean": 89,
+        "own distractor": 106,
+        "own poisoned": 14,
+        "other": 9
+      }
+    }
+  },
+  "inputs": {
+    "contexts.jsonl.gz": "8cf20c1eebbf43e8f7b0c887855733294bfa1add0719481014f0e04dc325316d",
+    "collection_swap.jsonl.gz": "156dd59d8ed4ea345821e914c2018a0f56528d53ac32d3004069f4f25e192fcc",
+    "collection_correct.jsonl.gz": "33930d70613124c5152405f0c7acf1c8a0a56ac31e2353256308253f510ed4ec",
+    "collection_authority.jsonl.gz": "03803c2b892d2c3bc90c5b9ca6c01c6693ce210f35a417bfec9774c84c96d0da",
+    "collection_recency.jsonl.gz": "a53f74a0c79907e33cae661114f2fc3d723f08419f6ceadb246ff9e01914b903"
+  },
+  "outputs": {
+    "bm25_contexts.jsonl.gz": "75e8e71b1989c05df6887eb7aed5099f07c2ba0660f0cbbc59195efc05178d2b"
+  }
+}
