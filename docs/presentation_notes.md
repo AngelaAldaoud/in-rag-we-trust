@@ -185,3 +185,22 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** a "hallucination" here means a fact the model could not have read in its context.
 - **What it means:** wrong answers mostly reuse context facts in the wrong way rather than inventing — which is exactly what poisoning exploits.
 - **Its limitation:** small validation samples (13 and 18); wrong answers without names or numbers are not counted.
+
+### Result: the pilot robustness curves (D4)
+- **What it shows:** for each model, accuracy and attack success as the share of poisoned passages (rho) goes from 0 to 1.
+- **How to read it:** at rho = 0 there is no poison, so attack success must be 0 (it is); each step right adds one poisoned passage out of four.
+- **What it means:** for Qwen and Mistral, one poisoned passage barely matters — the drop comes when the lie becomes the majority; Llama is fooled already by one (6.5%).
+- **Its limitation:** 50 questions (±4–8 points); accuracy levels sit inside a bracket (rules 54–59% vs judge 75–77% at rho = 0), comparisons are more reliable than levels.
+
+### Result: when do models notice a conflict?
+- **What it shows:** the share of answers saying the passages disagree peaks at mixed contexts and falls when every passage tells the same lie.
+- **How to read it:** at rho = 1 there is nothing to disagree about — all passages agree on the false answer.
+- **What it means:** conflict detection works only when truth and lie coexist; a uniform lie is invisible. Even clean contexts get flagged (Llama 25%, Qwen 27%), so rho = 0 is the baseline.
+- **Its limitation:** the flag judge over-flags slightly (validated, kappa 0.735).
+
+### Result: protective prompts cost answers under real retrieval
+- **What it shows:** with BM25 retrieval, attack success stays low, but asking models to check consistency or reliability makes them refuse far more (Mistral about 24% → 62% no usable answer).
+- **How to read it:** "no usable answer" = abstained or no answer line.
+- **What it means:** RQ2's price — caution against poison also blocks answers when the evidence is merely incomplete.
+- **Its limitation:** pilot only; BM25 often retrieves no answer-bearing passage, which itself drives refusals.
+

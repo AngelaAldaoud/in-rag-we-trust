@@ -1,0 +1,7 @@
+model,mode,n,line_start,mid_line,no_answer_line,truncated,cut
+llama,greedy,3200,0.9147,0.0006,0.0847,0.0694,0.0
+llama,samples,16000,0.8937,0.0095,0.0968,0.0196,0.0004
+mistral,greedy,3200,0.7544,0.225,0.0206,0.0,0.0
+mistral,samples,16000,0.7654,0.2154,0.0192,0.0,0.0
+qwen,greedy,3200,0.9809,0.0191,0.0,0.0,0.0
+qwen,samples,16000,0.9647,0.0347,0.0006,0.0,0.0

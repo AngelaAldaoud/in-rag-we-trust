@@ -2229,6 +2229,127 @@ its word-by-word comparison could miss an invented fact whose words all occur
 somewhere in the passages (none was found in 18 checks).
 
 
+\section{D4: Metrics and pilot report}
+
+\subsection{Metric definitions}
+The Block A metrics are computed per group of responses, each proportion with
+its Wilson 95\% interval (D52). Accuracy, attack success and every other
+outcome share use all responses as denominator, so a missing answer line never
+improves a score (D153). Five details left open by the D2 and D3 revisions
+were fixed before any code was written:
+\begin{itemize}[nosep]
+  \item \textbf{Self-consistency} compares, for each question, the five
+        sampled answers after reducing every abstention to one value and every
+        missing answer line to another; other answers are compared by their
+        normalised head. A secondary version compares outcomes (D171).
+  \item \textbf{Hallucination} is reported over all responses (Block A) and
+        over \textsc{OtherWrong} responses; closed-book separately; always with
+        the D169 precision and miss rate (D172).
+  \item \textbf{Flag} counts every greedy response with passages, including
+        responses without an answer line (D173).
+  \item \textbf{EM and F1} against the gold use the answer head; abstentions
+        and missing answers score zero (D174).
+  \item \textbf{Exploratory upper bound}: Acc$^{+}$ and ASR$^{+}$ re-label
+        only rule-\textsc{OtherWrong} answers by the judge's verdict (D175,
+        D170).
+\end{itemize}
+Implementation: \texttt{evaluation.metrics} and \texttt{evaluation.report},
+which writes seven tables (by $\rho$, pooled by $\rho$, full grid,
+retrieval, closed-book, self-consistency, format). 293 tests.
+
+\subsection{Pilot results}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llrrrrr}
+\hline
+Model & $\rho$ & Acc & ASR & No usable & Flag & Acc$^{+}$ \\
+\hline
+Llama   & 0    & 54.0 &  0.0 & 12.7 & 24.7 & 76.7 \\
+        & 0.25 & 54.0 &  6.5 & 12.8 & 68.2 & 76.3 \\
+        & 0.5  & 39.0 & 13.8 & 19.3 & 73.5 & 61.7 \\
+        & 0.75 & 27.8 & 24.3 & 17.7 & 71.0 & 49.7 \\
+        & 1    &  7.3 & 41.7 & 18.3 & 51.3 & 26.3 \\
+Mistral & 0    & 59.3 &  0.0 &  8.7 &  2.0 & 77.3 \\
+        & 0.25 & 55.8 &  0.2 & 13.8 &  9.7 & 75.5 \\
+        & 0.5  & 47.0 &  8.3 & 14.8 & 16.0 & 66.0 \\
+        & 0.75 & 18.7 & 34.7 & 15.5 & 14.0 & 36.7 \\
+        & 1    &  4.5 & 51.3 & 14.5 &  6.8 & 17.8 \\
+Qwen    & 0    & 58.7 &  0.0 & 18.0 & 26.7 & 75.3 \\
+        & 0.25 & 60.8 &  0.5 & 16.5 & 41.3 & 79.0 \\
+        & 0.5  & 40.5 & 13.3 & 20.7 & 47.8 & 59.7 \\
+        & 0.75 & 18.3 & 30.5 & 22.8 & 44.3 & 35.7 \\
+        & 1    &  3.7 & 48.5 & 23.0 & 34.0 & 19.5 \\
+\hline
+\end{tabular}
+\caption{Pilot, greedy, controlled contexts, prompts and poison types pooled
+(\%). $n=150$ at $\rho=0$ and $600$ otherwise per model. Acc$^{+}$ is
+exploratory (D175).}
+\end{table}
+
+All sanity checks held: attack success is exactly zero at $\rho=0$; accuracy
+falls and attack success rises with $\rho$ for every model; Acc$^{+}\ge$ Acc
+everywhere; the format table reproduces D2 (Mistral 22.5\% answer lines in
+mid-line, Llama 8.5\% greedy responses without an answer line, Qwen none);
+closed-book responses carry no flag.
+
+\paragraph{Observations (50 questions; not conclusions).}
+(i) The accuracy bracket is wide: at $\rho=0$ rule-based accuracy is
+54--59\% and the judge-based upper bound 75--77\%; the D2 audit suggested the
+rules miss 7--10 points, the judge adds about 20, consistent with its measured
+leniency (D170). Levels are therefore uncertain, while comparisons across
+$\rho$, prompts and models use the same scoring throughout.
+(ii) For Qwen and Mistral one poisoned passage in four barely changes accuracy;
+the large drop comes when poisons become the majority. Llama is already fooled
+in 6.5\% of answers at $\rho=0.25$.
+(iii) The conflict flag peaks at intermediate $\rho$ and falls at $\rho=1$,
+where all passages agree on the false answer and there is nothing to
+contradict. It is non-zero at $\rho=0$ (Llama 25\%, Qwen 27\%, Mistral 2\%),
+partly from the judge's over-flagging and partly from models calling clean
+paraphrases inconsistent; RQ3 must use $\rho=0$ as the baseline.
+(iv) Under BM25 retrieval attack success stays low (0--10\%) but up to 72\% of
+responses give no usable answer, consistent with C4 (no answer-bearing passage
+retrieved for about half the questions); the meta-prompts raise refusals
+sharply there (Mistral about 24\% $\rightarrow$ 62\%), the cost side of RQ2.
+(v) Closed-book accuracy is 12\% for every model; 44--54\% of closed-book
+responses contain an invented fact.
+(vi) Self-consistency ranges from 0.52 (closed-book) to 0.89; Qwen is the most
+consistent model; the outcome-based version is always at least the
+answer-based one.
+
+\subsection{Main-run cost (D177)}
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\hline
+ & From C3 throughput & Pilot $\times 10$ \\
+\hline
+Qwen (32{,}000 greedy + 32{,}000 sampled requests) & 79 min & 79 min \\
+Mistral & 80 min & 82 min \\
+Llama & 169 min & 220 min \\
+Loading & 8 min & 8 min \\
+Judge (about 187{,}000 tasks) and installation & 36 min & 36 min \\
+\hline
+Total & about 6.2 h & about 7.1 h \\
+Compute units (5.3 per hour) & about 33 & about 38 \\
+\hline
+\end{tabular}
+\caption{Estimated cost of the main run on the A100.}
+\end{table}
+
+The C3 rates were measured on large batches; pilot shards of 50 questions waste
+time waiting for Llama's 512-token loops, so the truth should lie near the
+lower estimate. About 67 units remain, leaving at least 29 after the upper
+estimate, above the 15-unit threshold of D140: no reserve pack is bought. If
+the balance at the start of Block E is below 55 units, the decision is
+revisited before launch.
+
+\subsection{Limitations}
+Fifty pilot questions give intervals of $\pm$4--8 points per cell; the
+accuracy bracket (rules vs.\ judge) is about 20 points wide at $\rho=0$; the
+compute balance after the D3 judge session was not recorded and is estimated.
+
+
 
 
 
@@ -3904,6 +4025,69 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D171 --- What self-consistency compares}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Each sample is reduced to ``abstain'', ``no answer'' or its normalised head before comparing; SC is the share equal to the modal value, averaged over questions; an outcome-based version is reported alongside.
+  \item[Why.] Abstentions come in many wordings, which would make consistent refusal look inconsistent; aliases make equal answers look different, which the outcome version catches.
+  \item[Alternatives.] Raw normalised answers only; dropping samples without an answer (unequal denominators, Llama loses about 10\%).
+  \item[Interview line.] ``A model that refuses five times in five wordings is consistent; I compare meaning, not wording.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D172 --- Hallucination denominators}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Primary over all responses (Block A); secondary over \textsc{OtherWrong} responses; closed-book separately; always with D169's precision and miss rate.
+  \item[Why.] Block A fixed the first; the second answers ``when it is wrong, does it invent?''; without passages every fact counts as invented.
+  \item[Alternatives.] One denominator only; pooling closed-book.
+  \item[Interview line.] ``I report how often models invent overall and how often a wrong answer is an invention.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D173 --- Flag denominator}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] All greedy responses with passages, including those without an answer line.
+  \item[Why.] The flag is about what the response says; Llama's responses without an answer line often state the conflict.
+  \item[Alternatives.] Only responses with an answer line (drops about 8\% of Llama, often its conflict statements).
+  \item[Interview line.] ``The flag reads the whole response, so every response with passages counts.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D174 --- EM and F1}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] On the answer head against the gold head after normalisation; abstentions and missing answers score zero; reported as secondary measures.
+  \item[Why.] Standard HotpotQA scoring for comparison with the literature, consistent with the main matching.
+  \item[Alternatives.] The full answer (Mistral's commentary would lower its F1 by style).
+  \item[Interview line.] ``EM and F1 connect my numbers to the HotpotQA literature; accuracy and attack success are my main metrics.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D175 --- Exploratory upper bound}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Acc$^{+}$ and ASR$^{+}$ re-label only rule-\textsc{OtherWrong} answers by the verdict (gold $\to$ correct, target $\to$ poisoned); always shown next to the rule-based values and labelled exploratory.
+  \item[Why.] Implements the bracket of D170 without overriding outcomes the audit found exact.
+  \item[Alternatives.] Re-labelling every outcome with the judge.
+  \item[Interview line.] ``My main numbers are rule-based; the judge gives an upper bound, and the truth lies between.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D176 --- Pilot tables in the repository}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The seven derived pilot tables (CSV, a few kilobytes) are committed from \texttt{results/pilot/} although \texttt{results/} is ignored by git.
+  \item[Why.] D150 keeps raw outputs out but the derived tables in; anyone can read the pilot numbers without rerunning anything.
+  \item[Alternatives.] Tables only in the notes (not machine-readable); committing raw outputs (D150).
+  \item[Interview line.] ``Every number in my pilot report is in a versioned table produced by tested code.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D177 --- Main-run compute (D140 decision)}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] No reserve compute pack: the main run is estimated at 33--38 units against about 67 available; revisited if Block E starts below 55 units.
+  \item[Why.] The margin (at least 29 units) exceeds D140's 15-unit threshold; the estimate brackets large-batch throughput and the pilot's slower small-batch timing.
+  \item[Alternatives.] Buying the pack now (money spent without need); scaling pilot time alone (overestimates, D1).
+  \item[Interview line.] ``I measured the cost before spending more, and the margin was large enough.''
+\end{description}
+\end{decisionbox}
+
 
 
 \chapter{AI-Usage Log}\label{ch:ailog}
@@ -4291,6 +4475,16 @@ ACL Anthology, arXiv) or the course PDF.
 95 & Process errors during D3
   & Colab steps requested before pushes were confirmed; a cost estimate of 130{,}000 verdict prompts (actually about 26{,}000); a notebook check script that crashed on an empty cell; edits written without the current file; a stale header comment in notebook~05
   & Operating rules adopted (push before run, whole files, current version first, cost and size stated in advance); a state report and continuation handoff written \\
+96 & Metric definitions and module
+  & Proposals D171--D175; \texttt{metrics.py} with 11 tests
+  & Definitions accepted by the student; tests on hand-computed values pass \\
+97 & Report tables and pilot report
+  & \texttt{report.py} with 3 tests; reading of the pilot tables (sanity checks, observations)
+  & Run by the student; all sanity checks hold; numbers copied from the CSV files \\
+98 & Main-run cost estimate
+  & Two estimates (C3 large-batch throughput; pilot time scaled), compute decision D177
+  & Inputs from the Block C handoff and the pilot logs; decision accepted by the student \\
+
 
   
 \end{longtable}
