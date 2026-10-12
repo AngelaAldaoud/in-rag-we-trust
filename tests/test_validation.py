@@ -1,4 +1,4 @@
-"""Tests for the D3 validation sample and sheet (D163)."""
+"""Tests for the D3 validation sample and sheets (D163, D166)."""
 
 import pytest
 
@@ -29,7 +29,8 @@ def test_draw_takes_five_per_cell_then_fills_to_300():
     assert len(chosen) == 300 and len({v.key_of(r) for r in chosen}) == 300
     cells = {}
     for r in chosen:
-        cells[(r["model"], r["prompt"], str(v.level(r)))] = cells.get((r["model"], r["prompt"], str(v.level(r))), 0) + 1
+        cell = (r["model"], r["prompt"], str(v.level(r)))
+        cells[cell] = cells.get(cell, 0) + 1
     assert len(cells) == 54 and min(cells.values()) >= 5
     assert all(r["mode"] == "greedy" and r["run"] != "closed_book" for r in chosen)
 
@@ -64,3 +65,36 @@ def test_sheet_command_refuses_to_overwrite(tmp_path):
     (tmp_path / v.SHEET).write_text("my labels")
     with pytest.raises(SystemExit, match="refusing to overwrite"):
         v.main(["sheet", "--run", "runs/pilot", "--split", "pilot", "--out", str(tmp_path)])
+
+
+def test_draw_hall_returns_fresh_distinct_flagged_and_unflagged_items():
+    flagged = [dict(row(m, "plain", 0.5, i, "OtherWrong", True), answer=f"A{i % 5}")
+               for m in MODELS for i in range(40)]
+    unflagged = [dict(row(m, "plain", 0.5, 100 + i, "OtherWrong", False), answer=f"born in {1900 + i}")
+                 for m in MODELS for i in range(40)]
+    used = {v.key_of(r) for r in flagged[:5]}
+    hits, misses = v.draw_hall(flagged + unflagged, used)
+    assert sorted(r["model"] for r in hits) == ["llama"] * 10 + ["mistral"] * 10 + ["qwen"] * 10
+    assert sorted(r["model"] for r in misses) == ["llama"] * 6 + ["mistral"] * 6 + ["qwen"] * 6
+    assert not {v.key_of(r) for r in hits + misses} & used
+    assert all(r["hall"] for r in hits) and not any(r["hall"] for r in misses)
+    pairs = [(r["model"], r["question_id"], r["answer"]) for r in hits]
+    assert len(pairs) == len(set(pairs))
+
+
+def test_hall_sheet_writes_h_and_m_items_and_reads_them_back(tmp_path):
+    hall = [dict(row("qwen", "plain", 0.5, 1, "OtherWrong", True))]
+    misses = [dict(row("llama", "plain", 0.5, 2, "OtherWrong", False), answer="born in 1901")]
+    v.write_sheet(tmp_path, [], hall, {}, ROWS, v.HALL_SHEET, v.HALL_KEY, misses)
+    sheet = (tmp_path / v.HALL_SHEET).read_text()
+    assert "### H1" in sheet and "### M1" in sheet and "| [1] Lyon is in France." in sheet
+    assert "facts the rule found in the passages: 1901" in sheet
+    (tmp_path / v.HALL_SHEET).write_text(sheet.replace("hall: \n", "hall: n\n").replace("miss: \n", "miss: k\n"))
+    labels = v.read_fields(tmp_path / v.HALL_SHEET)
+    assert labels["H1"] == {"hall": "N"} and labels["M1"] == {"miss": "K"}
+
+
+def test_hall_sheet_command_refuses_to_overwrite(tmp_path):
+    (tmp_path / v.HALL_SHEET).write_text("my labels")
+    with pytest.raises(SystemExit, match="refusing to overwrite"):
+        v.main(["hall-sheet", "--run", "runs/pilot", "--split", "pilot", "--out", str(tmp_path)])

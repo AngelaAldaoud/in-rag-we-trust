@@ -23,7 +23,21 @@ ABSTAIN_PHRASES = re.compile(
     r"|(?:do not|does not|dont|doesnt) (?:provide|mention|specify|state))\b")
 NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 SPACY_MODEL = "en_core_web_sm"                 # pinned in Block B (D89)
+_TOKEN = re.compile(r"[^\W_]+")                      # runs of letters/digits (any alphabet)
+_NUMBER_FORM = re.compile(r"(\d+)(?:st|nd|rd|th|s)?")  # 6th -> 6, 1920s -> 1920
 
+
+def fact_tokens(text: str) -> set[str]:
+    """Comparable words of a fact or of the passages (D166): hyphens and apostrophes split words,
+    ordinals and decades reduce to their digits, possessive 's, single letters and stop words are dropped."""
+    tokens = set()
+    for t in _TOKEN.findall(text.lower()):
+        m = _NUMBER_FORM.fullmatch(t)
+        if m:
+            t = m.group(1)
+        if (len(t) > 1 or t.isdigit()) and t not in STOP_WORDS:
+            tokens.add(t)
+    return tokens
 
 @dataclass(frozen=True)
 class Scored:
@@ -74,7 +88,7 @@ def score(parsed: ParsedAnswer, gold: str, target: str, passages: list[str]) -> 
     if ABSTAIN_PHRASES.search(normalize(answer)):
         return Scored(ABSTAIN, None, None)                                   # rule 6
 
-    context = " ".join(passages)                                             # rule 7
-    missing = tuple(f for f in facts(answer_head) if not contains_normalized(f, context))
+    context_tokens = fact_tokens(" ".join(passages))                          # rule 7 (D161, D166)
+    missing = tuple(f for f in facts(answer_head) if fact_tokens(f) - context_tokens)
     hall_strict = not any(contains_normalized(answer_head, p) for p in passages)
     return Scored(OTHER_WRONG, bool(missing), hall_strict, missing)

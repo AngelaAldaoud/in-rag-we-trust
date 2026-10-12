@@ -1,0 +1,203 @@
+{
+  "H1": {
+    "question_id": "5ae20e265542994d89d5b325",
+    "condition_id": "mistral__plain__bm25-correct",
+    "model": "mistral",
+    "missing_facts": [
+      "the \"Wild Woman of Buttle"
+    ]
+  },
+  "H2": {
+    "question_id": "5ae82c3d55429952e35eaa75",
+    "condition_id": "qwen__plain__bm25-correct",
+    "model": "qwen",
+    "missing_facts": [
+      "British"
+    ]
+  },
+  "H3": {
+    "question_id": "5ab29e87554299194fa9346e",
+    "condition_id": "llama__plain__bm25-authority",
+    "model": "llama",
+    "missing_facts": [
+      "Alltel Stadium"
+    ]
+  },
+  "H4": {
+    "question_id": "5abd68b45542993062266c77",
+    "condition_id": "mistral__reliability__bm25-authority",
+    "model": "mistral",
+    "missing_facts": [
+      "1936",
+      "Berlin Olympics",
+      "Louis Zamperini"
+    ]
+  },
+  "H5": {
+    "question_id": "5ab29e87554299194fa9346e",
+    "condition_id": "mistral__reliability__correct-1.00",
+    "model": "mistral",
+    "missing_facts": [
+      "TIAA Bank Field"
+    ]
+  },
+  "H6": {
+    "question_id": "5a832f9d5542993344745fe4",
+    "condition_id": "mistral__plain__bm25-authority",
+    "model": "mistral",
+    "missing_facts": [
+      "Benny Ciaramello",
+      "Benny Ciaramello's"
+    ]
+  },
+  "H7": {
+    "question_id": "5ac308135542990b17b154f4",
+    "condition_id": "mistral__reliability__recency-0.25",
+    "model": "mistral",
+    "missing_facts": [
+      "the years 1241 to 1250"
+    ]
+  },
+  "H8": {
+    "question_id": "5ae5caff554299546bf82f69",
+    "condition_id": "mistral__reliability__correct-1.00",
+    "model": "mistral",
+    "missing_facts": [
+      "9",
+      "E10"
+    ]
+  },
+  "H9": {
+    "question_id": "5ae785685542994a481bbd47",
+    "condition_id": "llama__reliability__bm25-authority",
+    "model": "llama",
+    "missing_facts": [
+      "Munich"
+    ]
+  },
+  "H10": {
+    "question_id": "5ac4920d5542996feb3fe8d3",
+    "condition_id": "mistral__plain__bm25-correct",
+    "model": "mistral",
+    "missing_facts": [
+      "1901",
+      "5",
+      "December 5, 1901",
+      "Walt Disney"
+    ]
+  },
+  "H11": {
+    "question_id": "5ae22f4e5542996483e6492f",
+    "condition_id": "mistral__plain__bm25-recency",
+    "model": "mistral",
+    "missing_facts": [
+      "19962"
+    ]
+  },
+  "H12": {
+    "question_id": "5ae5caff554299546bf82f69",
+    "condition_id": "mistral__reliability__authority-1.00",
+    "model": "mistral",
+    "missing_facts": [
+      "9"
+    ]
+  },
+  "H13": {
+    "question_id": "5a832f9d5542993344745fe4",
+    "condition_id": "mistral__plain__bm25-recency",
+    "model": "mistral",
+    "missing_facts": [
+      "Benny Ciaramello"
+    ]
+  },
+  "M1": {
+    "question_id": "5a80274e5542992e7d278dfb",
+    "condition_id": "qwen__consistency__authority-0.50",
+    "model": "qwen"
+  },
+  "M2": {
+    "question_id": "5ac4920d5542996feb3fe8d3",
+    "condition_id": "qwen__consistency__authority-0.50",
+    "model": "qwen"
+  },
+  "M3": {
+    "question_id": "5a8c52685542995e66a475bb",
+    "condition_id": "mistral__consistency__recency-1.00",
+    "model": "mistral"
+  },
+  "M4": {
+    "question_id": "5adde17f5542992200553b87",
+    "condition_id": "mistral__plain__authority-0.75",
+    "model": "mistral"
+  },
+  "M5": {
+    "question_id": "5ae20e265542994d89d5b325",
+    "condition_id": "qwen__reliability__swap-1.00",
+    "model": "qwen"
+  },
+  "M6": {
+    "question_id": "5ab55e015542992aa134a2d3",
+    "condition_id": "qwen__consistency__authority-0.25",
+    "model": "qwen"
+  },
+  "M7": {
+    "question_id": "5ab55e015542992aa134a2d3",
+    "condition_id": "qwen__consistency__bm25-authority",
+    "model": "qwen"
+  },
+  "M8": {
+    "question_id": "5abfa18f5542990832d3a176",
+    "condition_id": "llama__consistency__authority-1.00",
+    "model": "llama"
+  },
+  "M9": {
+    "question_id": "5adf41a45542993a75d26456",
+    "condition_id": "llama__consistency__authority-1.00",
+    "model": "llama"
+  },
+  "M10": {
+    "question_id": "5a80274e5542992e7d278dfb",
+    "condition_id": "llama__plain__authority-1.00",
+    "model": "llama"
+  },
+  "M11": {
+    "question_id": "5ac308135542990b17b154f4",
+    "condition_id": "qwen__consistency__recency-0.25",
+    "model": "qwen"
+  },
+  "M12": {
+    "question_id": "5ab94acd554299743d22eac6",
+    "condition_id": "mistral__plain__clean-0.00",
+    "model": "mistral"
+  },
+  "M13": {
+    "question_id": "5ab94acd554299743d22eac6",
+    "condition_id": "llama__plain__clean-0.00",
+    "model": "llama"
+  },
+  "M14": {
+    "question_id": "5ae65b845542992ae0d162f1",
+    "condition_id": "mistral__reliability__authority-0.25",
+    "model": "mistral"
+  },
+  "M15": {
+    "question_id": "5a8456ef5542990548d0b289",
+    "condition_id": "llama__reliability__authority-1.00",
+    "model": "llama"
+  },
+  "M16": {
+    "question_id": "5ae65b845542992ae0d162f1",
+    "condition_id": "mistral__reliability__recency-0.50",
+    "model": "mistral"
+  },
+  "M17": {
+    "question_id": "5abb2f245542996cc5e49fd2",
+    "condition_id": "llama__plain__bm25-swap",
+    "model": "llama"
+  },
+  "M18": {
+    "question_id": "5add352b5542990dbb2f7dc4",
+    "condition_id": "mistral__consistency__swap-1.00",
+    "model": "mistral"
+  }
+}
