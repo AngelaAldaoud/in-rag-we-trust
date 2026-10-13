@@ -10,7 +10,7 @@ dependencies = [
     "numpy",
     "pandas",
     "scipy",
-    "statsmodels",
+    "statsmodels==0.15.0",
     "matplotlib",
     "pyyaml",
     "rank-bm25",

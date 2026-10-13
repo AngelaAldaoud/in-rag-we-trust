@@ -512,7 +512,7 @@ requires-dist = [
     { name = "rank-bm25" },
     { name = "scipy" },
     { name = "spacy", specifier = "==3.8.11" },
-    { name = "statsmodels" },
+    { name = "statsmodels", specifier = "==0.15.0" },
     { name = "thinc", specifier = "==8.3.10" },
     { name = "tqdm" },
 ]
