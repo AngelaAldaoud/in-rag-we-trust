@@ -1,0 +1,106 @@
+\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}
+
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+
+% Marks text still to be written; the final paper must contain none.
+\newcommand{\placeholder}[1]{\textcolor{red}{[#1]}}
+
+\raggedbottom
+
+\begin{document}
+
+\title[In RAG We Trust?]{In RAG We Trust? A Controlled Measurement of How Open
+Language Models Handle Poisoned Retrieval}
+
+\author*[1]{\fnm{Angela} \sur{Aldaoud}}\email{angela.aldaoud@studenti.unimi.it}
+
+\affil*[1]{\orgdiv{M.Sc.\ in Computer Science (LM-18)},
+\orgname{Universit\`a degli Studi di Milano}, \orgaddress{\city{Milan},
+\country{Italy}}}
+
+\abstract{\placeholder{Abstract: written last, after the results.}}
+
+\keywords{retrieval-augmented generation, knowledge conflicts, data poisoning,
+robustness, evaluation of language models}
+
+\maketitle
+% ---------------- PAGE BUDGET (max 8 pages incl. floats and references) ----
+% Title, abstract, keywords ............ 0.50
+% 1 Introduction (incl. literature) .... 1.00
+% 2 Research Question and Methodology .. 2.50  (incl. revisions table)
+% 3 Experimental Results ............... 2.50  (setup 0.25; RQ1-RQ4 2.25)
+% 4 Concluding Remarks ................. 0.75
+% Back matter (AI use, availability) ... 0.25
+% References ........................... 0.50
+% Total ................................ 8.00
+% Floats: max 4 (revisions table + 3 in Results).
+% Overflow: cut Methodology detail (refer to repo docs), never the discussion.
+% ---------------------------------------------------------------------------
+
+
+\section{Introduction}\label{sec:intro}
+\placeholder{Motivation and the RAG trust problem.}
+
+\placeholder{Short discussion of the relevant literature.}
+
+\placeholder{Main question and contribution.}
+
+\section{Research Question and Methodology}\label{sec:method}
+
+\subsection{Goals and research questions}\label{sec:rqs}
+\placeholder{Main question, RQ1--RQ4, hypotheses H1--H4.}
+
+\subsection{Problem definition}\label{sec:formal}
+\placeholder{Formal notation, outcomes, metrics.}
+
+\subsection{Data and poisoned contexts}\label{sec:data}
+\placeholder{HotpotQA sample, false answers, poison types, context rule,
+retrieval check.}
+
+\subsection{Models, prompts and decoding}\label{sec:models}
+\placeholder{Three models, three prompts, greedy decoding and samples.}
+
+\subsection{Scoring and statistical analysis}\label{sec:scoring}
+\placeholder{Outcome rules, conflict-flag judge and its validation,
+hallucination, statistics.}
+
+\subsection{Revisions to the planned design}\label{sec:revisions}
+\placeholder{What changed after testing, and why.}
+
+\section{Experimental Results}\label{sec:results}
+
+\subsection{Experimental setup}\label{sec:setup}
+\placeholder{Written in Block G2.}
+
+\subsection{Robustness to poison (RQ1)}\label{sec:rq1}
+\placeholder{Written in Block G2.}
+
+\subsection{Effect of meta-prompts (RQ2)}\label{sec:rq2}
+\placeholder{Written in Block G2.}
+
+\subsection{Conflict awareness (RQ3)}\label{sec:rq3}
+\placeholder{Written in Block G2.}
+
+\subsection{Poison types, models and realistic retrieval (RQ4)}\label{sec:rq4}
+\placeholder{Written in Block G2.}
+
+\section{Concluding Remarks}\label{sec:conclusions}
+\placeholder{Critical discussion, limitations and future work, written in
+Block G2.}
+
+\backmatter
+
+\bmhead{Use of AI tools}
+\placeholder{Mandatory AI-usage disclaimer, written in Block G2 from the
+AI-usage log.}
+
+\bmhead{Code and data availability}
+\placeholder{GitHub repository link and how to obtain the raw outputs
+(Block H).}
+
+\bibliography{refs}
+
+\end{document}

@@ -2475,6 +2475,130 @@ including the download and the check.
 Block F reads the flags relative to their $\rho=0$ baseline, as the analysis
 plan requires.
 
+
+
+
+\section{E4: Samples and archive}
+
+\paragraph{Procedure.} Notebook~06 cell~8 ran \texttt{models.run\_set} with
+\texttt{--split main --modes samples} for Qwen, Mistral and Llama, each in
+its own process (D148, D179). The sampling settings ($n=5$, $T=0.7$, seed
+20261009, cap 512) are fixed inside the frozen run script, not in the
+notebook.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\hline
+Model & Load (s) & Generation (s) & Wall time (min) & Output tokens \\
+\hline
+Qwen    & 86.1 & 3644.5 &  62.4 & 10{,}306{,}734 \\
+Mistral & 80.9 & 3539.4 &  60.6 &  6{,}955{,}275 \\
+Llama   & 87.9 & 7770.0 & 131.2 & 25{,}187{,}183 \\
+\hline
+Total   &      &        & 254.3 & 42{,}449{,}192 \\
+\hline
+\end{tabular}
+\caption{Sample main run, 64 shards of 500 prompts $\times$ 5 samples per model, NVIDIA A100-SXM4-40GB.}
+\end{table}
+
+\paragraph{Compute.} 49.8 units before and 26.39 after: 23.4 units
+(13:51--18:17, including the final check). The whole GPU part of Block E
+cost 39.1 units (65.5 to 26.39), slightly above the estimate of 34--38
+(D177) because the judge and the Llama samples took longer than estimated;
+26.4 units remain.
+
+\paragraph{Interruptions.} At about 14:24 the browser lost its connection a
+second time; the runtime continued. Every model reports 64 shards written
+and none skipped, so no run was resumed and each model's samples come from
+one uninterrupted process.
+
+\paragraph{Completeness.} 384 shards (64 per model and mode), each with 500
+records for 500 distinct questions, exactly one completion per greedy record
+and five per sample record; every record carries commit \texttt{a93ec0c}
+with no local changes; no temporary files. All 384 shards contain the same
+500 questions.
+
+\paragraph{Archive (D185).} The whole run folder (shards, run logs and judge
+output) was packed into \texttt{runs/main\_runs.tar} on Drive: 67.7\,MB,
+385 compressed JSON-lines files (384 shards and the judge output), 406
+entries in total. Its SHA-256 fingerprint, to be reproduced on the Mac
+before scoring, is:
+\begin{center}\small
+\texttt{3e9813f00ac8a8722667d12b672d2eb231ae32dfe5c18c4482f98fa6e9a7dfab}
+\end{center}
+
+
+\section{E5: Archive, verification and scoring}
+
+\paragraph{Transfer and integrity (D185).} The archive (67{,}676{,}160 bytes)
+was downloaded to the Mac; its SHA-256 fingerprint was identical to the one
+computed on Colab, so the scored data is byte-identical to the GPU output. It
+was unpacked into \texttt{runs/main} (git-ignored, D150): 385 compressed
+files, no temporary files.
+
+\paragraph{Scoring code.} No file under \texttt{src/}, \texttt{tests/},
+\texttt{pyproject.toml} or \texttt{uv.lock} differs from the tag
+\texttt{evaluator-v1}; all later commits changed notes only. All 293 tests
+passed in the Mac environment before scoring.
+
+\paragraph{Metrics step.} \texttt{evaluation.report} imports and calls
+\texttt{greedy\_metrics} and \texttt{sc\_metrics} from
+\texttt{evaluation.metrics}, so the two commands of
+\texttt{docs/main\_run.md} (score, report) already cover scoring, metrics and
+tables; nothing was added.
+
+\paragraph{Scoring and tables.} \texttt{evaluation.score} scored 576{,}000
+completions (96{,}000 greedy, 480{,}000 samples) in 56\,s;
+\texttt{evaluation.report} wrote seven tables to \texttt{results/main/} in
+5\,s, committed like the pilot tables (D176):
+\begin{itemize}[nosep]
+  \item \texttt{grid.csv} (153 rows): model $\times$ prompt $\times$ poison type $\times$ level, with the shared $\rho=0$ level;
+  \item \texttt{by\_rho.csv} (45 rows): model $\times$ prompt $\times$ level, poison types pooled;
+  \item \texttt{by\_rho\_pooled.csv} (15 rows): model $\times$ level, prompts and types pooled;
+  \item \texttt{retrieval.csv} (36 rows): model $\times$ prompt $\times$ BM25 context;
+  \item \texttt{closed\_book.csv} (3 rows): one row per model;
+  \item \texttt{sc.csv} (57 rows): self-consistency per model $\times$ prompt $\times$ level, including BM25 and closed-book;
+  \item \texttt{format.csv} (6 rows): answer position, missing answer lines, truncation and cuts per model and mode.
+\end{itemize}
+Every rate is stored with its 95\% Wilson interval and its denominator.
+
+\paragraph{Sanity checks.} Each model has 32{,}000 greedy and 160{,}000 sample
+completions, and its outcome shares sum to 100\%. Every grid, retrieval and
+closed-book cell has 500 responses; pooled tables have the expected multiples
+(2{,}000 and 6{,}000); no table has an empty cell. Answer-line failures did not
+collapse: NoAnswer is 6.2\% (Llama), 1.4\% (Mistral) and 0.1\% (Qwen) of
+greedy responses, the pattern of the pilot. 5.1\% of Llama's greedy responses
+reached the 512-token cap (its known repetition loops) while no answer line
+was cut, and 21\% of Mistral's answers are mid-line, as on the pilot (D152).
+The conflict flag at $\rho=0$ shows the pilot's pattern of baselines.
+
+\paragraph{Poisoned answers at $\rho=0$ (D188).} Five greedy responses whose
+context contains no false passage were scored \textsc{Poisoned}; they come
+from two questions. (1) ``What album succeeded Kendrick Lamar's album that had
+the song Money Trees in it?'': ``Money Trees'' is on \emph{Good Kid, M.A.A.D
+City} (2012), which was followed by \emph{To Pimp a Butterfly} (2015), the
+target chosen in Block B; the stored gold, \emph{Section.80}, is wrong. Llama
+and Qwen answered from their own knowledge, against the passages. (2) ``Who was
+born first Margaret Pellegrini or Jerry Maren?'': a comparison question
+despite the bridge-only filter (D84), with the gold stored under Jerry Maren's
+birth name, Gerard Marenghi; two of Mistral's answers are right but use his
+stage name and name both people, so they matched only the target; one Mistral
+answer is genuinely wrong. The scoring code worked as specified; the items are
+flawed. Both facts were checked against Wikipedia.
+
+\paragraph{Correction to E2.} The E2 note suggested that a few long answers
+slowed Mistral's shards. No Mistral answer reached the cap, so that
+explanation is unverified; longer prompts under Mistral's tokenizer are an
+alternative.
+
+\paragraph{Totals.} About 6\,h\,45\,min of generation and judging on one
+A100 (greedy 114.3\,min, judge 36.6\,min, samples 254.3\,min), 39.1 compute
+units in total.
+
+\paragraph{Not interpreted here.} No result is read for meaning in Block E;
+Block F applies \texttt{docs/analysis\_plan.md} unchanged.
+
 \chapter{Revisions to the Original Design}\label{ch:revisions}
 
 The design fixed in Block A was tested at every stage before the main run,
@@ -2599,126 +2723,7 @@ and schedule of Section~\ref{sec:computeplan} were also replaced by measured
 values (D177).
 
 
-\section{E4: Samples and archive}
 
-\paragraph{Procedure.} Notebook~06 cell~8 ran \texttt{models.run\_set} with
-\texttt{--split main --modes samples} for Qwen, Mistral and Llama, each in
-its own process (D148, D179). The sampling settings ($n=5$, $T=0.7$, seed
-20261009, cap 512) are fixed inside the frozen run script, not in the
-notebook.
-
-\begin{table}[h]
-\centering
-\begin{tabular}{lrrrr}
-\hline
-Model & Load (s) & Generation (s) & Wall time (min) & Output tokens \\
-\hline
-Qwen    & 86.1 & 3644.5 &  62.4 & 10{,}306{,}734 \\
-Mistral & 80.9 & 3539.4 &  60.6 &  6{,}955{,}275 \\
-Llama   & 87.9 & 7770.0 & 131.2 & 25{,}187{,}183 \\
-\hline
-Total   &      &        & 254.3 & 42{,}449{,}192 \\
-\hline
-\end{tabular}
-\caption{Sample main run, 64 shards of 500 prompts $\times$ 5 samples per model, NVIDIA A100-SXM4-40GB.}
-\end{table}
-
-\paragraph{Compute.} 49.8 units before and 26.39 after: 23.4 units
-(13:51--18:17, including the final check). The whole GPU part of Block E
-cost 39.1 units (65.5 to 26.39), slightly above the estimate of 34--38
-(D177) because the judge and the Llama samples took longer than estimated;
-26.4 units remain.
-
-\paragraph{Interruptions.} At about 14:24 the browser lost its connection a
-second time; the runtime continued. Every model reports 64 shards written
-and none skipped, so no run was resumed and each model's samples come from
-one uninterrupted process.
-
-\paragraph{Completeness.} 384 shards (64 per model and mode), each with 500
-records for 500 distinct questions, exactly one completion per greedy record
-and five per sample record; every record carries commit \texttt{a93ec0c}
-with no local changes; no temporary files. All 384 shards contain the same
-500 questions.
-
-\paragraph{Archive (D185).} The whole run folder (shards, run logs and judge
-output) was packed into \texttt{runs/main\_runs.tar} on Drive: 67.7\,MB,
-385 compressed JSON-lines files (384 shards and the judge output), 406
-entries in total. Its SHA-256 fingerprint, to be reproduced on the Mac
-before scoring, is:
-\begin{center}\small
-\texttt{3e9813f00ac8a8722667d12b672d2eb231ae32dfe5c18c4482f98fa6e9a7dfab}
-\end{center}
-
-
-\section{E5: Archive, verification and scoring}
-
-\paragraph{Transfer and integrity (D185).} The archive (67{,}676{,}160 bytes)
-was downloaded to the Mac; its SHA-256 fingerprint was identical to the one
-computed on Colab, so the scored data is byte-identical to the GPU output. It
-was unpacked into \texttt{runs/main} (git-ignored, D150): 385 compressed
-files, no temporary files.
-
-\paragraph{Scoring code.} No file under \texttt{src/}, \texttt{tests/},
-\texttt{pyproject.toml} or \texttt{uv.lock} differs from the tag
-\texttt{evaluator-v1}; all later commits changed notes only. All 293 tests
-passed in the Mac environment before scoring.
-
-\paragraph{Metrics step.} \texttt{evaluation.report} imports and calls
-\texttt{greedy\_metrics} and \texttt{sc\_metrics} from
-\texttt{evaluation.metrics}, so the two commands of
-\texttt{docs/main\_run.md} (score, report) already cover scoring, metrics and
-tables; nothing was added.
-
-\paragraph{Scoring and tables.} \texttt{evaluation.score} scored 576{,}000
-completions (96{,}000 greedy, 480{,}000 samples) in 56\,s;
-\texttt{evaluation.report} wrote seven tables to \texttt{results/main/} in
-5\,s, committed like the pilot tables (D176):
-\begin{itemize}[nosep]
-  \item \texttt{grid.csv} (153 rows): model $\times$ prompt $\times$ poison type $\times$ level, with the shared $\rho=0$ level;
-  \item \texttt{by\_rho.csv} (45 rows): model $\times$ prompt $\times$ level, poison types pooled;
-  \item \texttt{by\_rho\_pooled.csv} (15 rows): model $\times$ level, prompts and types pooled;
-  \item \texttt{retrieval.csv} (36 rows): model $\times$ prompt $\times$ BM25 context;
-  \item \texttt{closed\_book.csv} (3 rows): one row per model;
-  \item \texttt{sc.csv} (57 rows): self-consistency per model $\times$ prompt $\times$ level, including BM25 and closed-book;
-  \item \texttt{format.csv} (6 rows): answer position, missing answer lines, truncation and cuts per model and mode.
-\end{itemize}
-Every rate is stored with its 95\% Wilson interval and its denominator.
-
-\paragraph{Sanity checks.} Each model has 32{,}000 greedy and 160{,}000 sample
-completions, and its outcome shares sum to 100\%. Every grid, retrieval and
-closed-book cell has 500 responses; pooled tables have the expected multiples
-(2{,}000 and 6{,}000); no table has an empty cell. Answer-line failures did not
-collapse: NoAnswer is 6.2\% (Llama), 1.4\% (Mistral) and 0.1\% (Qwen) of
-greedy responses, the pattern of the pilot. 5.1\% of Llama's greedy responses
-reached the 512-token cap (its known repetition loops) while no answer line
-was cut, and 21\% of Mistral's answers are mid-line, as on the pilot (D152).
-The conflict flag at $\rho=0$ shows the pilot's pattern of baselines.
-
-\paragraph{Poisoned answers at $\rho=0$ (D188).} Five greedy responses whose
-context contains no false passage were scored \textsc{Poisoned}; they come
-from two questions. (1) ``What album succeeded Kendrick Lamar's album that had
-the song Money Trees in it?'': ``Money Trees'' is on \emph{Good Kid, M.A.A.D
-City} (2012), which was followed by \emph{To Pimp a Butterfly} (2015), the
-target chosen in Block B; the stored gold, \emph{Section.80}, is wrong. Llama
-and Qwen answered from their own knowledge, against the passages. (2) ``Who was
-born first Margaret Pellegrini or Jerry Maren?'': a comparison question
-despite the bridge-only filter (D84), with the gold stored under Jerry Maren's
-birth name, Gerard Marenghi; two of Mistral's answers are right but use his
-stage name and name both people, so they matched only the target; one Mistral
-answer is genuinely wrong. The scoring code worked as specified; the items are
-flawed. Both facts were checked against Wikipedia.
-
-\paragraph{Correction to E2.} The E2 note suggested that a few long answers
-slowed Mistral's shards. No Mistral answer reached the cap, so that
-explanation is unverified; longer prompts under Mistral's tokenizer are an
-alternative.
-
-\paragraph{Totals.} About 6\,h\,45\,min of generation and judging on one
-A100 (greedy 114.3\,min, judge 36.6\,min, samples 254.3\,min), 39.1 compute
-units in total.
-
-\paragraph{Not interpreted here.} No result is read for meaning in Block E;
-Block F applies \texttt{docs/analysis\_plan.md} unchanged.
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
 rejected, and a one-sentence justification for the oral discussion.
@@ -4489,6 +4494,72 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``The code that scored my main results was frozen before they existed.''
 \end{description}
 \end{decisionbox}
+
+\section{Block E}\label{sec:decisions-e}
+
+\begin{decisionbox}{D182 --- The main run executes the tag, not the branch}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Notebook~06 checks out \texttt{evaluator-v1} after cloning, and prints the commit and the number of changed files before anything runs.
+  \item[Why.] Other work is pushed to the branch on the same day; without the checkout, a session resumed after a disconnection could run a different commit than the shards already written.
+  \item[Alternatives.] Cloning the branch as in the pilot (unsafe while others push); freezing the branch for the day (blocks the paper work).
+  \item[Interview line.] ``Every main-run shard was produced by the tagged evaluator commit, and the notebook enforces it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D183 --- Storage recorded before the run}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The preflight cell prints the free space on Drive and on the Colab disk.
+  \item[Why.] The run needs about 0.2\,GB on Drive and about 64\,GB on the Colab disk; a full disk discovered hours into the run would waste compute and time.
+  \item[Alternatives.] Assuming enough space (unverified).
+  \item[Interview line.] ``I checked storage before spending GPU time.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D184 --- Compute recorded at every phase boundary}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The Colab balance is read and recorded before and after the greedy, judge and sampling phases.
+  \item[Why.] The report states the measured cost of each stage, not an estimate.
+  \item[Alternatives.] Recording only the total (loses the per-stage cost).
+  \item[Interview line.] ``I can tell you what each stage of the experiment cost.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D185 --- Fingerprint of the archive}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The SHA-256 of \texttt{main\_runs.tar} is printed on Colab and recomputed on the Mac after the download; scoring starts only if they are equal.
+  \item[Why.] Equal fingerprints prove the scored file is byte-identical to the one the GPU session wrote, whatever Drive's download does to it.
+  \item[Alternatives.] Comparing file sizes (misses corruption that keeps the size); no check.
+  \item[Interview line.] ``The data I scored is provably identical to what the GPU produced.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D186 --- Judge download without the pilot folder}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Notebook~06 reuses only the Kaggle download part of notebook~05's access cell. \emph{Adapts \texttt{docs/main\_run.md}, which names the whole cell.}
+  \item[Why.] That cell also sets the run folder to \texttt{runs/pilot}; copied whole, it would point the judge at the pilot outputs.
+  \item[Alternatives.] Copying the cell whole (wrong folder).
+  \item[Interview line.] ``I reused the validated download code but kept the run folder fixed to the main run.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D187 --- Judge run after 19/20 known-answer verdicts}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The main judge run went ahead after the check scored 19/20, the minimum of the rule fixed in D165; the miss is reported.
+  \item[Why.] The threshold was fixed before any main output existed. The miss repeats the known under-recognition of the target (D170) and affects only the exploratory verdict; all flag replies, which feed RQ3, parsed correctly.
+  \item[Alternatives.] Re-running the check hoping for 20/20 (the judge is greedy and seeded, so it would repeat the same answer, and retrying until a check looks better is selective reporting); revising the verdict prompt (changes a frozen instrument after seeing main data, D181).
+  \item[Interview line.] ``My judge passed the check I had fixed in advance with exactly the minimum, and I reported the one miss instead of retrying.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D188 --- Two flawed questions documented, scoring unchanged}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The five $\rho=0$ \textsc{Poisoned} responses are traced to two flawed questions (a wrong gold label whose target is the truth; a comparison question with the gold stored under a birth name). Scoring, data and the analysis plan stay unchanged. Block F audits the main set for both kinds of flaw and reports F1--F4 without the flagged questions as an exploratory sensitivity analysis, next to the unchanged primary results.
+  \item[Why.] The evaluator and the plan were frozen before the main results existed (D180, D181: no response is excluded); changing a rule or dropping questions after seeing results is post-hoc tuning (D55). The flaws affect 2 of 500 questions but act at every $\rho$, so their influence must be measured, not assumed.
+  \item[Alternatives.] Re-scoring with an alias fix, or dropping the two questions now (changes frozen instruments after seeing main data); ignoring them (leaves a known bias unmeasured).
+  \item[Interview line.] ``My sanity check found two flawed HotpotQA items; I documented them and measure their influence separately, without touching the frozen scoring.''
+\end{description}
+\end{decisionbox}
+
 \section{Block G}\label{sec:decisions-g}
 
 \begin{decisionbox}{D200 --- Separate numbering ranges for parallel chats}
