@@ -1,0 +1,4 @@
+model,n,no_answer,no_answer_truncated,no_answer_stopped,cap_hits_all
+llama,32000,0.06209375,0.05128125,0.0108125,0.0513125
+mistral,32000,0.0136875,0.0,0.0136875,0.0
+qwen,32000,0.000875,0.0,0.000875,0.0
