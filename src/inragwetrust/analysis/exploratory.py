@@ -1,4 +1,5 @@
 """Exploratory analyses for Block F3 (analysis plan section 5). Intervals only, no significance claims.
+Comparisons between groups of questions use question-clustered bootstrap intervals (D264).
 Run with:
     uv run python -m inragwetrust.analysis.exploratory
 """
@@ -23,6 +24,7 @@ from inragwetrust.poisoning.build import read_jsonl_gz
 RESULTS = Path("results/analysis")
 NO_USABLE = ("Abstain", "NoAnswer")
 PRECISION, MISS_RATE = "9/13", "0/18"
+D127_FIRST_SLOT0 = 102
 
 
 def rate(k, n) -> tuple[float, float, float]:
@@ -33,7 +35,7 @@ def rate(k, n) -> tuple[float, float, float]:
 
 
 def rates(d: pd.DataFrame, groups: list[str], cols: list[str]) -> pd.DataFrame:
-    """Rates of 0/1 columns per group, with Wilson 95% intervals."""
+    """Rates of 0/1 columns per condition group, with Wilson 95% intervals (plan section 3)."""
     rows = []
     for key, g in d.groupby(groups, dropna=False):
         key = key if isinstance(key, tuple) else (key,)
@@ -41,6 +43,20 @@ def rates(d: pd.DataFrame, groups: list[str], cols: list[str]) -> pd.DataFrame:
         for col in cols:
             v = g[col].dropna()
             row[col], row[col + "_lo"], row[col + "_hi"] = rate(v.sum(), len(v))
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def cluster_rates(d: pd.DataFrame, groups: list[str], cols: list[str]) -> pd.DataFrame:
+    """Rates per group of questions with question-clustered bootstrap 95% intervals (D264)."""
+    rows = []
+    for key, g in d.groupby(groups, dropna=False):
+        key = key if isinstance(key, tuple) else (key,)
+        row = dict(zip(groups, key), n=len(g), n_questions=g["question_id"].nunique())
+        for col in cols:
+            per_q = g.groupby("question_id")[col].agg(["sum", "count"])
+            row[col] = per_q["sum"].sum() / per_q["count"].sum()
+            row[col + "_lo"], row[col + "_hi"] = cluster_bootstrap(per_q["sum"], per_q["count"])
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -60,6 +76,13 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df["outcome"].isin(labels).astype(int)
     df["group"] = df["context_id"].map({c: context_group(c) for c in df["context_id"].unique()})
     return df
+
+
+def add_upper(df: pd.DataFrame, records: list[dict]) -> pd.DataFrame:
+    """Judge-based upper-bound outcomes with the frozen upper_outcome (D170, D175)."""
+    up = pd.Series([upper_outcome(r, None if pd.isna(r["verdict_label"]) else r["verdict_label"])
+                    for r in records], index=df.index)
+    return df.assign(correct_plus=up.eq("Correct").astype(int), poisoned_plus=up.eq("Poisoned").astype(int))
 
 
 def paired_diff(pairs: pd.DataFrame, before: str, after: str) -> tuple[float, float, float]:
@@ -101,17 +124,17 @@ def weights(n: int, n_boot: int = BOOTSTRAP, seed: int = SEED) -> np.ndarray:
     return np.random.default_rng(seed).multinomial(n, np.full(n, 1 / n), size=n_boot)
 
 
-def crossover(d: pd.DataFrame, w: np.ndarray) -> dict:
+def crossover(d: pd.DataFrame, w: np.ndarray, asr: str = "poisoned", acc: str = "correct") -> dict:
     """Smallest rho with ASR > Acc (D27), with a question-bootstrap 95% interval."""
-    agg = d.groupby(["question_id", "rho"])[["poisoned", "correct"]].sum()
-    p, c = agg["poisoned"].unstack(), agg["correct"].unstack()
+    agg = d.groupby(["question_id", "rho"])[[asr, acc]].sum()
+    p, c = agg[asr].unstack(), agg[acc].unstack()
     rhos = p.columns.to_numpy()
 
     def first(pp, cc):
         above = pp > cc
         return np.where(above.any(-1), rhos[above.argmax(-1)], np.nan)
 
-    point = float(first(p.sum(0).to_numpy(), c.sum(0).to_numpy()))
+    point = float(first(p.to_numpy(float).sum(axis=0), c.to_numpy(float).sum(axis=0)))
     boot = first(w @ p.to_numpy(float), w @ c.to_numpy(float))
     ok = boot[~np.isnan(boot)]
     lo = float(np.percentile(ok, 2.5, method="lower")) if len(ok) else np.nan
@@ -120,12 +143,17 @@ def crossover(d: pd.DataFrame, w: np.ndarray) -> dict:
 
 
 def crossovers(c: pd.DataFrame) -> pd.DataFrame:
+    """Rule-based crossover per model and per curve; upper-bound crossover per model (D265)."""
     w = weights(c["question_id"].nunique())
-    rows = [{"model": m, "prompt": "all", "poison_type": "all", **crossover(c[c["model"] == m], w)}
-            for m in sorted(c["model"].unique())]
+    rows = []
+    for m in sorted(c["model"].unique()):
+        d = c[c["model"] == m]
+        rows.append({"model": m, "prompt": "all", "poison_type": "all", "scoring": "rules", **crossover(d, w)})
+        rows.append({"model": m, "prompt": "all", "poison_type": "all", "scoring": "upper bound",
+                     **crossover(d, w, "poisoned_plus", "correct_plus")})
     for (m, p, t), _ in c[c["rho"] > 0].groupby(["model", "prompt", "poison_type"]):
         d = c[(c["model"] == m) & (c["prompt"] == p) & ((c["poison_type"] == t) | (c["rho"] == 0))]
-        rows.append({"model": m, "prompt": p, "poison_type": t, **crossover(d, w)})
+        rows.append({"model": m, "prompt": p, "poison_type": t, "scoring": "rules", **crossover(d, w)})
     return pd.DataFrame(rows)
 
 
@@ -150,12 +178,9 @@ def flag_cells(c: pd.DataFrame) -> pd.DataFrame:
     return f.merge(u, left_on=[k + "_flagged" for k in keys], right_on=[k + "_unflagged" for k in keys])
 
 
-def bracket(df: pd.DataFrame, records: list[dict]) -> pd.DataFrame:
-    """Rule-based Acc/ASR next to the judge-based upper bound Acc+/ASR+ (frozen upper_outcome)."""
-    up = pd.Series([upper_outcome(r, None if pd.isna(r["verdict_label"]) else r["verdict_label"])
-                    for r in records], index=df.index)
-    d = df.assign(correct_plus=up.eq("Correct").astype(int), poisoned_plus=up.eq("Poisoned").astype(int))
-    return rates(d, ["model", "group"], ["correct", "correct_plus", "poisoned", "poisoned_plus"])
+def bracket(df: pd.DataFrame) -> pd.DataFrame:
+    """Rule-based Acc/ASR next to the judge-based upper bound Acc+/ASR+."""
+    return rates(df, ["model", "group"], ["correct", "correct_plus", "poisoned", "poisoned_plus"])
 
 
 def no_answer(df: pd.DataFrame) -> pd.DataFrame:
@@ -189,9 +214,7 @@ def prior_belief(df: pd.DataFrame, c: pd.DataFrame) -> pd.DataFrame:
                                how="left", validate="many_to_one")
     c2["cb_group"] = np.select([c2["cb_outcome"].eq("Poisoned"), c2["cb_outcome"].eq("Correct")],
                                ["target without passages", "gold without passages"], "other")
-    out = rates(c2, ["model", "cb_group", "rho"], ["poisoned", "correct"])
-    out["n_questions"] = out["n"] / 12
-    return out
+    return cluster_rates(c2, ["model", "cb_group", "rho"], ["poisoned", "correct"])
 
 
 def retrieval(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -200,7 +223,7 @@ def retrieval(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     by_cond = rates(r, ["model", "prompt", "poison_type"], ["poisoned", "correct"]).merge(
         r.groupby(["model", "prompt", "poison_type"])["eff_rho"].mean().rename("mean_eff_rho").reset_index())
     r["eff_bin"] = r["eff_rho"].map(lambda x: "none" if pd.isna(x) else f"{x:.2f}")
-    return by_cond, rates(r, ["model", "eff_bin"], ["poisoned", "correct"])
+    return by_cond, cluster_rates(r, ["model", "eff_bin"], ["poisoned", "correct"])
 
 
 def slot_position(layout: dict, slot: int) -> int:
@@ -217,22 +240,20 @@ def first_poison(ids: set[str]) -> pd.DataFrame:
             slot = rec["layout"]["poison_order"][0]
             rows.append({"question_id": rec["id"], "first_slot": slot,
                          "first_position": slot_position(rec["layout"], slot)})
-    return pd.DataFrame(rows)
-
-
-def slot0_is_original(ids: set[str]) -> float:
-    q = {r["id"]: r["answer_passage"] for r in read_jsonl_gz(PROCESSED_DIR / "questions.jsonl.gz") if r["id"] in ids}
-    p = {r["id"]: r["clean"][0] for r in read_jsonl_gz(PROCESSED_DIR / "poisons.jsonl.gz") if r["id"] in ids}
-    return float(np.mean([q.get(i) == p.get(i) for i in ids]))
+    out = pd.DataFrame(rows)
+    n0 = int(out["first_slot"].eq(0).sum())
+    if n0 != D127_FIRST_SLOT0:
+        raise ValueError(f"slot 0 poisoned first in {n0} questions; D127 recorded {D127_FIRST_SLOT0}")
+    return out
 
 
 def position_and_leaks(c: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     one = c[c["rho"] == 0.25].merge(first_poison(set(c["question_id"])), on="question_id", validate="many_to_one")
-    one["first_is_slot0"] = one["first_slot"].eq(0)
+    one["first_is_original"] = one["first_slot"].eq(0)
     pos = c[c["rho"] > 0].assign(leak_any=lambda t: t["leak_word"] | t["leak_number"])
-    return (rates(one, ["model", "first_position"], ["poisoned"]),
-            rates(one, ["model", "first_is_slot0"], ["poisoned"]),
-            rates(pos, ["model", "leak_any"], ["poisoned"]))
+    return (cluster_rates(one, ["model", "first_position"], ["poisoned"]),
+            cluster_rates(one, ["model", "first_is_original"], ["poisoned"]),
+            cluster_rates(pos, ["model", "leak_any"], ["poisoned"]))
 
 
 def mdd(p_d: float, n: int = 500, alpha: float = 0.05, power: float = 0.80) -> float:
@@ -274,52 +295,38 @@ def main(argv: list[str] | None = None) -> None:
     a = ap.parse_args(argv)
     df = add_indicators(pd.read_parquet(a.table))
     records = df.to_dict("records")
+    df = add_upper(df, records)
     c = controlled(df)
     c["nousable"] = c["outcome"].isin(NO_USABLE).astype(int)
     by_cond, by_eff = retrieval(df)
-    position, slot0, leaks = position_and_leaks(c)
+    position, original, leaks = position_and_leaks(c)
     t = {"prompt_effects": prompt_effects(c), "transitions": transitions(c), "crossover": crossovers(c),
-         "flag_baseline": flag_vs_baseline(c), "flag_cells": flag_cells(c), "bracket": bracket(df, records),
+         "flag_baseline": flag_vs_baseline(c), "flag_cells": flag_cells(c), "bracket": bracket(df),
          "no_answer": no_answer(df), "hallucination": hallucination(df), "em_f1": em_f1(df, records),
          "closed_book": rates(df[df["group"] == "closed-book"], ["model"], ["correct", "poisoned", "abstain", "nousable"]),
          "prior_belief": prior_belief(df, c), "retrieval_conditions": by_cond, "retrieval_eff_rho": by_eff,
-         "position": position, "slot0": slot0, "leaks": leaks, "mdd": mdd_cells(c),
+         "position": position, "original_first": original, "leaks": leaks, "mdd": mdd_cells(c),
          "type_model": rates(c[c["rho"] > 0], ["model", "poison_type", "rho"], ["poisoned"])}
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
+    stale = out / "explore_slot0.csv"
+    if stale.exists():
+        stale.unlink()
     for name, table in t.items():
         table.to_csv(out / f"explore_{name}.csv", index=False)
     with pd.option_context("display.width", 250, "display.max_columns", 40, "display.max_rows", 200):
-        pe = t["prompt_effects"]
-        pe = pe[pe["metric"] != "nousable"].assign(
-            v=lambda x: (x["delta"] * 100).round(1).astype(str) + " [" + (x["lo"] * 100).round(1).astype(str)
-            + ", " + (x["hi"] * 100).round(1).astype(str) + "]")
-        show("1 Delta vs plain, points [95% CI]", pe.pivot(index=["model", "meta", "rho"], columns="metric",
-                                                           values="v").reset_index())
-        tr = t["transitions"]
-        show("1b Transitions (share)", tr.pivot_table(index=["model", "meta", "direction"], columns="other_outcome",
-                                                      values="share", fill_value=0).reset_index())
         cr = t["crossover"]
-        show("2 Crossover, pooled", cr[cr["prompt"] == "all"])
-        print("Crossover over 36 curves:", cr[cr["prompt"] != "all"]["crossover"].value_counts(dropna=False).to_dict())
-        show("3 Flag minus rho=0 baseline", t["flag_baseline"])
-        show("4 Accuracy bracket", t["bracket"][["model", "group", "n", "correct", "correct_plus", "poisoned", "poisoned_plus"]])
-        show("5 NoAnswer", t["no_answer"])
-        h = t["hallucination"]
-        show("6 Hall (precision 9/13, miss 0/18)", h[["model", "group", "hall_any", "hall_strict_any", "ow_hall_any"]])
-        show("7 EM/F1", t["em_f1"])
-        show("8a Closed-book", t["closed_book"][["model", "n", "correct", "poisoned", "abstain", "nousable"]])
-        pb = t["prior_belief"]
-        show("8b Prior belief (ASR by closed-book answer)", pb[["model", "cb_group", "rho", "n_questions", "poisoned", "poisoned_lo", "poisoned_hi"]])
-        show("8c Retrieval by effective rho", t["retrieval_eff_rho"][["model", "eff_bin", "n", "poisoned", "correct"]])
-        print("\nSlot 0 equals the original passage for", slot0_is_original(set(c["question_id"])), "of main questions")
-        show("9a ASR at rho=0.25 by display position of the poisoned passage", t["position"][["model", "first_position", "n", "poisoned", "poisoned_lo", "poisoned_hi"]])
-        show("9b ASR at rho=0.25, first poisoned slot is slot 0", t["slot0"][["model", "first_is_slot0", "n", "poisoned", "poisoned_lo", "poisoned_hi"]])
-        show("9c ASR at rho>0 by leak", t["leaks"][["model", "leak_any", "n", "poisoned", "poisoned_lo", "poisoned_hi"]])
-        md = t["mdd"]
-        print("\n=== 10 Per-cell MDD ===")
-        print(md[["p_d", "mdd", "power_5pt"]].describe(percentiles=[0.5, 0.75]).round(3).to_string())
-        print("Cells with power < 0.80 for 5 points:", int((md["power_5pt"] < 0.8).sum()), "of", len(md))
+        show("2 Crossover per model: rules vs upper bound", cr[cr["prompt"] == "all"])
+        show("2 Curves not crossing at 0.75", cr[(cr["prompt"] != "all") & (cr["crossover"] != 0.75)])
+        cols = ["model", "cb_group", "rho", "n_questions", "poisoned", "poisoned_lo", "poisoned_hi"]
+        show("8b Prior belief, clustered CI", t["prior_belief"][cols])
+        show("8c Retrieval by effective rho, clustered CI",
+             t["retrieval_eff_rho"][["model", "eff_bin", "n_questions", "poisoned", "poisoned_lo", "poisoned_hi"]])
+        keep = ["n_questions", "poisoned", "poisoned_lo", "poisoned_hi"]
+        show("9a Position at rho=0.25, clustered CI", t["position"][["model", "first_position"] + keep])
+        show("9b Original passage poisoned first (D127: 102 questions), clustered CI",
+             t["original_first"][["model", "first_is_original"] + keep])
+        show("9c Leaks, clustered CI", t["leaks"][["model", "leak_any"] + keep])
     print("\nWritten", len(t), "tables to", out)
 
 

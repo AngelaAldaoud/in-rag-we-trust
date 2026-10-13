@@ -12,12 +12,28 @@ def test_mdd_and_power_match_block_d_table():
     assert np.isnan(ex.mdd(0.0)) and np.isnan(ex.power_at(0.002, 0.05))
 
 
+def curve_rows(n_q=40):
+    return pd.DataFrame([{"question_id": f"q{i}", "rho": r, "poisoned": int(r >= 0.75), "correct": int(r <= 0.5),
+                          "poisoned_plus": int(r >= 1.0), "correct_plus": int(r <= 0.75)}
+                         for i in range(n_q) for r in (0.0, 0.25, 0.5, 0.75, 1.0)])
+
+
 def test_crossover_point_and_interval():
-    rows = [{"question_id": f"q{i}", "rho": r, "poisoned": int(r >= 0.75), "correct": int(r <= 0.5)}
-            for i in range(40) for r in (0.0, 0.25, 0.5, 0.75, 1.0)]
-    out = ex.crossover(pd.DataFrame(rows), ex.weights(40, n_boot=200))
+    out = ex.crossover(curve_rows(), ex.weights(40, n_boot=200))
     assert out["crossover"] == 0.75 and out["lo"] == 0.75 and out["hi"] == 0.75
     assert out["share_no_crossover"] == 0.0
+
+
+def test_crossover_with_upper_bound_columns():
+    out = ex.crossover(curve_rows(), ex.weights(40, n_boot=200), "poisoned_plus", "correct_plus")
+    assert out["crossover"] == 1.0
+
+
+def test_cluster_rates_keeps_questions_together():
+    d = pd.DataFrame({"question_id": ["a"] * 4 + ["b"] * 4, "g": ["x"] * 8, "poisoned": [1, 1, 1, 1, 0, 0, 0, 0]})
+    out = ex.cluster_rates(d, ["g"], ["poisoned"]).iloc[0]
+    assert out["n"] == 8 and out["n_questions"] == 2 and out["poisoned"] == 0.5
+    assert out["poisoned_lo"] == 0.0 and out["poisoned_hi"] == 1.0
 
 
 def test_slot_position_inserts_bridge():
