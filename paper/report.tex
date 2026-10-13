@@ -42,13 +42,64 @@ robustness, evaluation of language models}
 
 
 \section{Introduction}\label{sec:intro}
-\placeholder{Motivation and the RAG trust problem.}
 
-\placeholder{Short discussion of the relevant literature.}
+Retrieval-augmented generation (RAG) gives a language model access to
+documents it was not trained on: a retriever selects passages relevant to a
+question, and the model answers with those passages in its context
+\citep{lewis2020rag}. The approach improved open-domain question answering
+and made generated text more specific and more factual than that of a model
+without retrieval. It also moves the source of errors. A RAG system is only
+as reliable as what it retrieves, and it implicitly trusts that the retrieved
+text is true.
 
-\placeholder{Main question and contribution.}
+That trust is easy to break. Retrieved passages can be mistaken, out of date,
+or written on purpose to mislead: \citet{zou2024poisonedrag} showed that
+injecting five crafted texts per target question into a knowledge base of
+millions of documents makes a RAG system return the attacker's answer in
+about 90\% of cases. A recent survey organises the trustworthiness of RAG into
+six dimensions, among them factuality and robustness, and observes that most
+work on RAG has targeted accuracy and efficiency rather than these properties
+\citep{zhou2024trustworthiness}.
 
-\section{Research Question and Methodology}\label{sec:method}
+Two empirical studies are closest to ours. \citet{jin2024tugofwar} studied
+conflicts between a model's internal knowledge and retrieved evidence, and
+found that models tend to follow the answer supported by the majority of
+passages, show confirmation bias, and that stronger models can hold on to
+wrong internal knowledge. \citet{wu2024clasheval} perturbed the answers in
+retrieved documents across six domains and found that models adopted the
+incorrect content, overriding a correct prior, more than 60\% of the time;
+the less realistic the error, the less often it was adopted. Evidence-based
+systems such as the fact-checking pipeline of \citet{singal2024evidence},
+which retrieves evidence and lets a language model judge a claim against it,
+depend on exactly this behaviour being sound.
+
+These studies establish that language models can be misled by retrieved text.
+We ask a narrower, practical question: \emph{how reliably do open,
+instruction-tuned language models answer when part of the retrieved evidence
+is deliberately false, and can simple prompt-level instructions make them
+more reliable?} A user of an open model cannot retrain it but can change what
+it is told, so whether an instruction to check the passages for consistency,
+or to judge their reliability, gives any protection, and what it costs when
+the evidence is clean, is worth measuring directly. Alongside the final answer
+we record whether the model states that the passages conflict, because
+noticing a conflict and resisting it are not the same thing.
+
+Our contribution is a measurement, not a new method. We use 500 multi-hop
+questions from HotpotQA \citep{yang2018hotpotqa}, with contexts in which the
+share of false passages ranges from none to all, four kinds of poison that
+share one false answer and differ by a single framing sentence, and three
+prompts that differ by a single sentence. Three open models of 7--8 billion
+parameters answer every condition. The scoring rules and every confirmatory
+test were fixed before the main run, and the scoring was validated by hand on
+a separate pilot set; the changes made to the original design along the way
+are reported in Section~\ref{sec:revisions}. A standard lexical retriever over
+a poisoned collection shows how often such contexts arise in practice.
+\placeholder{One or two sentences on the main findings, written in G2.}
+Section~\ref{sec:method} defines the problem and the method,
+Section~\ref{sec:results} reports the results, and
+Section~\ref{sec:conclusions} discusses them and their limits.
+
+
 
 \subsection{Goals and research questions}\label{sec:rqs}
 \placeholder{Main question, RQ1--RQ4, hypotheses H1--H4.}

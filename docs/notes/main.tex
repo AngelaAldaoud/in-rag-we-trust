@@ -4695,6 +4695,34 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D211 --- Introduction in five paragraphs, literature inside}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Motivation; the trust problem; closest prior studies; our question; contribution and outline. The literature discussion is part of the Introduction, without subheadings.
+  \item[Why.] The course asks for an overview with a short literature discussion; the template asks for no subheadings in the Introduction; a separate related-work section would cost space the page budget gives to the discussion (D209).
+  \item[Alternatives.] A separate Related Work section (about half a page more).
+  \item[Interview line.] ``The Introduction moves from why RAG is trusted, to why that trust fails, to what is already known, to the one thing I measure.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D212 --- References used in the Introduction}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The three course references, the two closest studies (D7), PoisonedRAG for the threat, and HotpotQA for the data. Lost in the Middle and Kamalloo et al.\ are kept for the Methodology, where they justify specific choices.
+  \item[Why.] Each citation supports one claim in the text; nothing is cited for decoration.
+  \item[Alternatives.] Citing all nine references in the Introduction (two would support no claim there).
+  \item[Interview line.] ``Every reference in my introduction backs a specific sentence.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D213 --- Contribution stated as a measurement; findings deferred}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The contribution is stated as a controlled, pre-fixed measurement with no novelty claim (D9); the sentence on the main findings is a placeholder until the results are analysed (Block G2).
+  \item[Why.] The examiner values honest framing; findings written before the analysis would be guesses.
+  \item[Alternatives.] Claiming a gap in the literature (unverifiable, D8); drafting the findings sentence now.
+  \item[Interview line.] ``I claim rigour, not novelty, and my introduction states findings only after I had them.''
+\end{description}
+\end{decisionbox}
+
+
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
 purposes, and to what extent their outputs were modified or verified. This
@@ -5236,6 +5264,12 @@ ACL Anthology, arXiv) or the course PDF.
 137 & Paper skeleton and page budget
   & \texttt{report.tex} skeleton, D206--D209
   & Compiled with 0 errors; every course requirement mapped to a section \\
+138 & Notes coordination with Block E
+  & Placement instructions for D200--D210. Claude's instruction for D200--D204 sent the Block G section to the wrong chapter, the Block E decision heading was lost while editing, and a commit ran although its check had failed; also found that the Revisions chapter split Block E
+  & Outline listed with \texttt{grep}; Block G and Block E sections placed in the Decision Log, Revisions chapter moved after Block E; checks and commit chained so that a failed check stops the commit; the Mac file is now the master copy \\
+139 & Introduction
+  & Five paragraphs of the paper's Introduction, D211--D213
+  & Every factual claim checked against the verified literature table and the official abstracts; read and accepted by the student; compiled \\
 \end{longtable}
 }
 
