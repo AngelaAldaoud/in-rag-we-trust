@@ -2679,7 +2679,55 @@ values (D177).
 \end{description}
 \end{decisionbox}
 
+\section{E4: Samples and archive}
 
+\paragraph{Procedure.} Notebook~06 cell~8 ran \texttt{models.run\_set} with
+\texttt{--split main --modes samples} for Qwen, Mistral and Llama, each in
+its own process (D148, D179). The sampling settings ($n=5$, $T=0.7$, seed
+20261009, cap 512) are fixed inside the frozen run script, not in the
+notebook.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\hline
+Model & Load (s) & Generation (s) & Wall time (min) & Output tokens \\
+\hline
+Qwen    & 86.1 & 3644.5 &  62.4 & 10{,}306{,}734 \\
+Mistral & 80.9 & 3539.4 &  60.6 &  6{,}955{,}275 \\
+Llama   & 87.9 & 7770.0 & 131.2 & 25{,}187{,}183 \\
+\hline
+Total   &      &        & 254.3 & 42{,}449{,}192 \\
+\hline
+\end{tabular}
+\caption{Sample main run, 64 shards of 500 prompts $\times$ 5 samples per model, NVIDIA A100-SXM4-40GB.}
+\end{table}
+
+\paragraph{Compute.} 49.8 units before and 26.39 after: 23.4 units
+(13:51--18:17, including the final check). The whole GPU part of Block E
+cost 39.1 units (65.5 to 26.39), slightly above the estimate of 34--38
+(D177) because the judge and the Llama samples took longer than estimated;
+26.4 units remain.
+
+\paragraph{Interruptions.} At about 14:24 the browser lost its connection a
+second time; the runtime continued. Every model reports 64 shards written
+and none skipped, so no run was resumed and each model's samples come from
+one uninterrupted process.
+
+\paragraph{Completeness.} 384 shards (64 per model and mode), each with 500
+records for 500 distinct questions, exactly one completion per greedy record
+and five per sample record; every record carries commit \texttt{a93ec0c}
+with no local changes; no temporary files. All 384 shards contain the same
+500 questions.
+
+\paragraph{Archive (D185).} The whole run folder (shards, run logs and judge
+output) was packed into \texttt{runs/main\_runs.tar} on Drive: 67.7\,MB,
+385 compressed JSON-lines files (384 shards and the judge output), 406
+entries in total. Its SHA-256 fingerprint, to be reproduced on the Mac
+before scoring, is:
+\begin{center}\small
+\texttt{3e9813f00ac8a8722667d12b672d2eb231ae32dfe5c18c4482f98fa6e9a7dfab}
+\end{center}
 
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
@@ -4971,7 +5019,12 @@ ACL Anthology, arXiv) or the course PDF.
   & A command meant to show the line removed by the E2 commit used a pattern that hid lines starting with ``- ''
   & Corrected command run by the student: the removed line was an empty line \\
 
-
+110 & Samples launch and monitoring
+  & Notebook~06 cell~8; finish-time estimates; diagnosis of a second browser disconnection (runtime still running). The low end of Claude's first estimate (2.5\,h) was too optimistic: Llama's long answers scale with the five samples
+  & Run by the student; measured 4\,h\,14\,min, close to the 4.1\,h of \texttt{docs/main\_run.md}; logs show 0 skipped shards for every model \\
+111 & Final check and archive
+  & Notebook~06 cell~9: checks over both modes, judge presence, archive and SHA-256 fingerprint
+  & Run by the student: 384 shards without problems, 385 compressed files in the archive, fingerprint recorded for the Mac check \\
 
 \end{longtable}
 }

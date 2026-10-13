@@ -242,3 +242,11 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** before the full run, a check on 20 answers with a certain correct label had to score at least 19/20; it scored 19/20, and the one miss is the error type I had already measured.
 - **What it means:** the flag, the measurement behind RQ3, comes from a validated instrument (kappa 0.735) applied unchanged to the main data.
 - **Limitation:** the judge over-flags and agrees least for Qwen; the verdict under-recognises the false target, which is why it only gives an upper bound.
+
+## Block E · E4 Samples and archive (how to explain it to Prof. Ferrara)
+- **What it shows:** 480,000 sampled answers (5 per prompt, T = 0.7) for self-consistency, generated in 4 h 14 min; the whole main run used 39.1 compute units.
+- **How to read it:** each model's samples come from one uninterrupted process; every shard was checked, and the complete output was archived with a SHA-256 fingerprint.
+- **What it means:** the data I score on my laptop is provably the data the GPU produced (the fingerprint must match), and nothing is missing.
+- **Limitation:** sampling uses one fixed seed per process; a different seed would give different samples, which affects individual answers but not the self-consistency measure in expectation.
+
+
