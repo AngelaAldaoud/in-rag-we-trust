@@ -2516,6 +2516,41 @@ consistent with a few long answers setting the time of a whole shard.
 Truncation and NoAnswer rates per model are checked when scoring (E5).
 
 
+
+
+\section{E3: Judge}
+
+\paragraph{Weights.} Gemma-2-9B-it, Kaggle version~2 (the weights validated in
+Blocks B and D), 18\,GB, downloaded with the download part of notebook~05's
+access cell; the judge read \texttt{runs/main} (D186).
+
+\paragraph{Check (D165).} Before the full run, the judge answered 10 flag
+prompts and 20 verdict prompts whose correct label is certain because the
+answer literally equals the gold or the target. All flag replies parsed; 19
+of 20 verdicts were right. The miss was an answer literally equal to the false
+target, judged ``neither'': the same direction of error measured on the pilot,
+where the verdict judge under-recognises the target (D170). The rule fixed in
+advance (at least 19/20) was met, so the run went ahead (D187).
+
+\paragraph{Run.} 188{,}047 judgements: 94{,}500 conflict flags (all greedy
+responses with passages, D162, D173), none unparseable; and 93{,}547 verdicts
+(all greedy responses with an answer line; 2{,}453 responses, 2.6\%, have
+none), of which 32 (0.03\%) were unparseable and are excluded and counted.
+Prompt fingerprints \texttt{324e2f1c735e} (flag) and \texttt{87293ce31bb3}
+(verdict); commit \texttt{a93ec0c}; output in \texttt{runs/main/\_judge/}.
+
+\paragraph{Time and compute.} Loading 55\,s, judging 35.7\,min, about 88
+judgements per second against 148 on the pilot, because the main responses
+in the prompts are longer. 54.22 units before and 49.8 after: 4.4 units
+including the download and the check.
+
+\paragraph{Not interpreted here.} The label counts are not read in Block E;
+Block F reads the flags relative to their $\rho=0$ baseline, as the analysis
+plan requires.
+
+
+
+
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
 rejected, and a one-sentence justification for the oral discussion.
@@ -4335,6 +4370,21 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+
+
+\begin{decisionbox}{D187 --- Judge run after 19/20 known-answer verdicts}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The main judge run went ahead after the check scored 19/20, the minimum of the rule fixed in D165; the miss is reported.
+  \item[Why.] The threshold was fixed before any main output existed. The miss repeats the known under-recognition of the target (D170) and affects only the exploratory verdict; all flag replies, which feed RQ3, parsed correctly.
+  \item[Alternatives.] Re-running the check hoping for 20/20 (the judge is greedy and seeded, so it would repeat the same answer, and retrying until a check looks better is selective reporting); revising the verdict prompt (changes a frozen instrument after seeing main data, D181).
+  \item[Interview line.] ``My judge passed the check I had fixed in advance with exactly the minimum, and I reported the one miss instead of retrying.''
+\end{description}
+\end{decisionbox}
+
+
+
+
+
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
 purposes, and to what extent their outputs were modified or verified. This
@@ -4782,6 +4832,17 @@ ACL Anthology, arXiv) or the course PDF.
 106 & Greedy completeness check
   & Notebook~06 cell~4: shard, record, completion and commit checks, plus a new check that all shards hold the same questions
   & Run by the student: no problems; one question set across all 192 shards \\
+107 & Judge download and check
+  & Notebook~06 cells~5--6 (download part only, D186); analysis of the 19/20 result leading to D187
+  & Run by the student: 18\,GB, run folder \texttt{runs/main}, check passed at the pre-set threshold \\
+108 & Judge run and completeness
+  & Notebook~06 cell~7; a GPU check while the run printed nothing. Claude's time estimate (about 23\,min) was too low (36\,min): it scaled the pilot linearly and ignored the longer prompts
+  & Counts checked against the expected numbers (94{,}500 flags exactly; flags plus verdicts equal the tasks); fingerprints and commit read from the run's metadata \\
+109 & Notes check
+  & A command meant to show the line removed by the E2 commit used a pattern that hid lines starting with ``- ''
+  & Corrected command run by the student: the removed line was an empty line \\
+
+
 
 \end{longtable}
 }

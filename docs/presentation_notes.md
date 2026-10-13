@@ -237,3 +237,8 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Limitation:** greedy decoding on a GPU is deterministic only up to small numerical differences (D139); a rerun on other hardware might differ in rare answers.
 
 
+## Block E · E3 Judge (how to explain it to Prof. Ferrara)
+- **What it shows:** a separate model (Gemma-2-9B-it) labelled every main greedy answer: 94,500 conflict flags and 93,547 verdicts, with the exact prompts I validated against my own hand labels.
+- **How to read it:** before the full run, a check on 20 answers with a certain correct label had to score at least 19/20; it scored 19/20, and the one miss is the error type I had already measured.
+- **What it means:** the flag, the measurement behind RQ3, comes from a validated instrument (kappa 0.735) applied unchanged to the main data.
+- **Limitation:** the judge over-flags and agrees least for Qwen; the verdict under-recognises the false target, which is why it only gives an upper bound.
