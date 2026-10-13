@@ -2729,6 +2729,76 @@ before scoring, is:
 \texttt{3e9813f00ac8a8722667d12b672d2eb231ae32dfe5c18c4482f98fa6e9a7dfab}
 \end{center}
 
+
+\section{E5: Archive, verification and scoring}
+
+\paragraph{Transfer and integrity (D185).} The archive (67{,}676{,}160 bytes)
+was downloaded to the Mac; its SHA-256 fingerprint was identical to the one
+computed on Colab, so the scored data is byte-identical to the GPU output. It
+was unpacked into \texttt{runs/main} (git-ignored, D150): 385 compressed
+files, no temporary files.
+
+\paragraph{Scoring code.} No file under \texttt{src/}, \texttt{tests/},
+\texttt{pyproject.toml} or \texttt{uv.lock} differs from the tag
+\texttt{evaluator-v1}; all later commits changed notes only. All 293 tests
+passed in the Mac environment before scoring.
+
+\paragraph{Metrics step.} \texttt{evaluation.report} imports and calls
+\texttt{greedy\_metrics} and \texttt{sc\_metrics} from
+\texttt{evaluation.metrics}, so the two commands of
+\texttt{docs/main\_run.md} (score, report) already cover scoring, metrics and
+tables; nothing was added.
+
+\paragraph{Scoring and tables.} \texttt{evaluation.score} scored 576{,}000
+completions (96{,}000 greedy, 480{,}000 samples) in 56\,s;
+\texttt{evaluation.report} wrote seven tables to \texttt{results/main/} in
+5\,s, committed like the pilot tables (D176):
+\begin{itemize}[nosep]
+  \item \texttt{grid.csv} (153 rows): model $\times$ prompt $\times$ poison type $\times$ level, with the shared $\rho=0$ level;
+  \item \texttt{by\_rho.csv} (45 rows): model $\times$ prompt $\times$ level, poison types pooled;
+  \item \texttt{by\_rho\_pooled.csv} (15 rows): model $\times$ level, prompts and types pooled;
+  \item \texttt{retrieval.csv} (36 rows): model $\times$ prompt $\times$ BM25 context;
+  \item \texttt{closed\_book.csv} (3 rows): one row per model;
+  \item \texttt{sc.csv} (57 rows): self-consistency per model $\times$ prompt $\times$ level, including BM25 and closed-book;
+  \item \texttt{format.csv} (6 rows): answer position, missing answer lines, truncation and cuts per model and mode.
+\end{itemize}
+Every rate is stored with its 95\% Wilson interval and its denominator.
+
+\paragraph{Sanity checks.} Each model has 32{,}000 greedy and 160{,}000 sample
+completions, and its outcome shares sum to 100\%. Every grid, retrieval and
+closed-book cell has 500 responses; pooled tables have the expected multiples
+(2{,}000 and 6{,}000); no table has an empty cell. Answer-line failures did not
+collapse: NoAnswer is 6.2\% (Llama), 1.4\% (Mistral) and 0.1\% (Qwen) of
+greedy responses, the pattern of the pilot. 5.1\% of Llama's greedy responses
+reached the 512-token cap (its known repetition loops) while no answer line
+was cut, and 21\% of Mistral's answers are mid-line, as on the pilot (D152).
+The conflict flag at $\rho=0$ shows the pilot's pattern of baselines.
+
+\paragraph{Poisoned answers at $\rho=0$ (D188).} Five greedy responses whose
+context contains no false passage were scored \textsc{Poisoned}; they come
+from two questions. (1) ``What album succeeded Kendrick Lamar's album that had
+the song Money Trees in it?'': ``Money Trees'' is on \emph{Good Kid, M.A.A.D
+City} (2012), which was followed by \emph{To Pimp a Butterfly} (2015), the
+target chosen in Block B; the stored gold, \emph{Section.80}, is wrong. Llama
+and Qwen answered from their own knowledge, against the passages. (2) ``Who was
+born first Margaret Pellegrini or Jerry Maren?'': a comparison question
+despite the bridge-only filter (D84), with the gold stored under Jerry Maren's
+birth name, Gerard Marenghi; two of Mistral's answers are right but use his
+stage name and name both people, so they matched only the target; one Mistral
+answer is genuinely wrong. The scoring code worked as specified; the items are
+flawed. Both facts were checked against Wikipedia.
+
+\paragraph{Correction to E2.} The E2 note suggested that a few long answers
+slowed Mistral's shards. No Mistral answer reached the cap, so that
+explanation is unverified; longer prompts under Mistral's tokenizer are an
+alternative.
+
+\paragraph{Totals.} About 6\,h\,45\,min of generation and judging on one
+A100 (greedy 114.3\,min, judge 36.6\,min, samples 254.3\,min), 39.1 compute
+units in total.
+
+\paragraph{Not interpreted here.} No result is read for meaning in Block E;
+Block F applies \texttt{docs/analysis\_plan.md} unchanged.
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
 rejected, and a one-sentence justification for the oral discussion.
@@ -4558,6 +4628,14 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D188 --- Two flawed questions documented, scoring unchanged}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The five $\rho=0$ \textsc{Poisoned} responses are traced to two flawed questions (a wrong gold label whose target is the truth; a comparison question with the gold stored under a birth name). Scoring, data and the analysis plan stay unchanged. Block F audits the main set for both kinds of flaw and reports F1--F4 without the flagged questions as an exploratory sensitivity analysis, next to the unchanged primary results.
+  \item[Why.] The evaluator and the plan were frozen before the main results existed (D180, D181: no response is excluded); changing a rule or dropping questions after seeing results is post-hoc tuning (D55). The flaws affect 2 of 500 questions but act at every $\rho$, so their influence must be measured, not assumed.
+  \item[Alternatives.] Re-scoring with an alias fix, or dropping the two questions now (changes frozen instruments after seeing main data); ignoring them (leaves a known bias unmeasured).
+  \item[Interview line.] ``My sanity check found two flawed HotpotQA items; I documented them and measure their influence separately, without touching the frozen scoring.''
+\end{description}
+\end{decisionbox}
 
 
 
@@ -5025,6 +5103,25 @@ ACL Anthology, arXiv) or the course PDF.
 111 & Final check and archive
   & Notebook~06 cell~9: checks over both modes, judge presence, archive and SHA-256 fingerprint
   & Run by the student: 384 shards without problems, 385 compressed files in the archive, fingerprint recorded for the Mac check \\
+
+112 & Transfer and integrity
+  & Download, fingerprint, unpack and ignore checks on the Mac
+  & Run by the student: identical SHA-256, 385 files, raw outputs ignored by git \\
+113 & Checks before scoring
+  & Code comparison against the tag, the metrics question from \texttt{report.py}'s imports, the test suite, command options
+  & Run by the student: no code change since the tag, metrics called by the report, 293 tests pass \\
+114 & Scoring, report and sanity checks
+  & Commands and a read-only script checking denominators, empty cells and format rates
+  & Run by the student: 576{,}000 completions, 7 tables, all checks pass \\
+115 & Diagnosis of $\rho=0$ \textsc{Poisoned} answers
+  & Read-only scripts and the classification leading to D188. Claude first assumed a field name of the context loader (\texttt{question\_id} instead of \texttt{id}) and the script failed; the structure was then inspected and the lookup rewritten
+  & Questions and answers read from the data by the student; the album order and Jerry Maren's birth name checked against Wikipedia \\
+116 & Notebook into the repository
+  & Check for empty cells and token patterns (counts only); removal of the empty last cell
+  & Run by the student: 9 working cells, no token found; no output edited (D151) \\
+117 & Correction of an E2 note
+  & Claude's E2 explanation of Mistral's slower shards (a few long answers) was not supported by the format table
+  & Stated as a correction in the E5 notes \\
 
 \end{longtable}
 }

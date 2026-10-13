@@ -250,3 +250,15 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Limitation:** sampling uses one fixed seed per process; a different seed would give different samples, which affects individual answers but not the self-consistency measure in expectation.
 
 
+## Block E · E5 Main result tables (how to explain them to Prof. Ferrara)
+*"What it means" is added in Block F, under the frozen analysis plan.*
+
+**Integrity (before any table).** The scored data is byte-identical to the GPU output (equal SHA-256), and it was scored with the frozen code (no code change since the tag; 293 tests pass).
+
+- **grid.csv:** *Shows* every greedy metric per model × prompt × poison type × ρ (153 cells of 500 answers). *How to read:* one row per cell; each rate has a 95% Wilson interval (`_lo`, `_hi`) and its denominator (`_n`). *Limitation:* single cells are exploratory; about a quarter are under-powered for a 5-point difference (D178).
+- **by_rho.csv / by_rho_pooled.csv:** *Shows* the same metrics pooled over poison types (and, in the pooled file, over prompts) for each ρ. *How to read:* the robustness curve; read across ρ within a model. *Limitation:* pooling hides type differences; the confirmatory tests are the GEE and McNemar models, not these tables.
+- **retrieval.csv:** *Shows* answers when a real BM25 search chose the passages. *How to read:* compare with the controlled conditions at the effective ρ BM25 produced (D144). *Limitation:* the share of poison varies per question, so these cells are not a fixed ρ.
+- **closed_book.csv:** *Shows* answers with no passages at all. *How to read:* what the models know without retrieval. *Limitation:* without passages, hallucination counts every fact as invented (D172).
+- **sc.csv:** *Shows* self-consistency over the 5 samples (by normalised answer and by outcome, D171). *How to read:* 1.0 means the same answer in all 5 samples. *Limitation:* it depends on T = 0.7; it measures stability, not correctness.
+- **format.csv:** *Shows* where the answer line sits, how often it is missing, and how often the 512-token cap was hit. *How to read:* Llama hits the cap in 5.1% of greedy answers (repetition loops), which explains most of its NoAnswer. *Limitation:* format failures are counted, never dropped, so they lower every rate for that model.
+- **Sanity finding (D188):** two of 500 questions are flawed (a wrong gold label; a comparison question with an alias). *How to say it:* "I found them with a check whose answer is known (no poison means no poisoned answers), documented them, and Block F measures their influence separately."
