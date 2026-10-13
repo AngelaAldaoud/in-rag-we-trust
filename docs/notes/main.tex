@@ -2773,6 +2773,66 @@ model without any passage, and 43 have a single weak signal. Every candidate is 
 skipped (D259). The review is carried over and completed before the F3 sensitivity analysis (D254).
 Flagged questions are never removed from the primary analysis.
 
+
+\section{F2: Confirmatory analysis}
+
+\paragraph{Implementation.} \texttt{analysis/stats.py} (Wilson intervals, exact McNemar, question-clustered
+paired bootstrap with 10{,}000 resamples and seed 20261009, logistic GEE with the D253 fallback, Holm) and
+\texttt{analysis/confirmatory.py} apply the plan's four families to the 76{,}500 controlled greedy responses.
+All 13 GEE fits converged with the exchangeable working correlation; no fallback was used. A degenerate fit
+is defined as a non-finite estimate or a coefficient above 15 in absolute value (D260); a non-estimable test
+keeps its place in the Holm count with $p=1$ (D261). Results: \texttt{results/analysis/confirmatory\_f1.csv}
+to \texttt{confirmatory\_f4.csv} and \texttt{descriptive\_by\_rho.csv}.
+
+\paragraph{F1 (H1).} For every model, ASR rises with $\rho$: odds ratio from $\rho=0$ to $\rho=1$ Llama 53.7
+(41.8--69.2), Mistral 64.9 (48.8--86.4), Qwen 50.3 (38.2--66.3); Holm-adjusted $p<10^{-169}$. The odds
+ratios are large because almost no answer is poisoned at $\rho=0$ (0.07--0.2\%); in rates, ASR rises to
+55--58\% at $\rho=1$ while accuracy falls to 2--5\%. The largest step is from $\rho=0.5$ to $0.75$ for Mistral
+(+27.5 points) and Qwen (+27.4), and from $0.75$ to $1$ for Llama (+22.9); ASR first exceeds accuracy at
+$\rho=0.75$ for all three models.
+
+\paragraph{F2 (H2).} Over all $\rho>0$, meta-prompts lower ASR significantly in five of six comparisons:
+consistency $-2.4$ (Llama), $-3.3$ (Mistral), $-2.4$ points (Qwen); reliability $-1.8$ (Llama), $-7.7$
+(Mistral); reliability for Qwen $+0.3$ ($-1.2$ to $+1.7$, not significant). The question-clustered GEE agrees
+in every case (D252). About 16\% of pairs change outcome between prompts, in both directions: the prompts
+reshuffle many answers and move the total little. On clean contexts, abstention rises significantly in five
+of six comparisons ($+4$ to $+6$ points; $+14.0$ for Mistral with reliability); accuracy falls significantly
+only for Mistral ($-4.2$ with consistency, $-12.8$ with reliability). Descriptively, the reduction is largest
+at intermediate $\rho$ for Llama and Qwen with consistency, but grows with $\rho$ for Mistral and is
+largest at $\rho=1$ ($-13.5$ with reliability), and appears only at $\rho=1$ for Llama with reliability; a
+reduction without any clean passage cannot come from cross-checking, which suggests abstention (examined
+in F3, exploratory).
+
+\paragraph{F3 (H3).} For every model, flagged answers are less often poisoned with $\rho$, prompt and type
+held fixed: odds ratio Llama 0.835 (0.771--0.904), Mistral 0.808 (0.702--0.931), Qwen 0.823 (0.761--0.891);
+Holm $p\le0.003$. Raw ASR flagged vs unflagged: 22.8 vs 33.1\%, 21.2 vs 30.6\%, 26.0 vs 31.8\%. This is an
+association, not a cause (D21); the judge over-flags and agrees least for Qwen ($\kappa=0.57$). Flag peaks
+at $\rho=0.5$ for all three models (Llama 0.74, Mistral 0.16, Qwen 0.47) and falls at $\rho=1$, but stays above
+the $\rho=0$ baseline for Llama (0.48 vs 0.31) and Qwen (0.30 vs 0.24).
+
+\paragraph{F4 (H4).} All four interaction blocks are significant after Holm: $\rho\times$type
+$\chi^2(3)=22.2$, prompt$\times$type $\chi^2(6)=45.3$, $\rho\times$model $\chi^2(2)=31.7$, prompt$\times$model
+$\chi^2(4)=71.4$; $p\le6\cdot10^{-5}$. With 72{,}000 responses, small interactions are detectable; their size
+is read from the curves. Descriptively (D251), poison types differ by at most 1.4 points within a model, with
+no consistent order; the four types share one false answer and differ by one framing sentence (B3), a weak
+manipulation of plausibility. Llama is poisoned less often than Mistral and Qwen (about 26 vs 29.5\%).
+
+\paragraph{Note on H1.} The frozen H1 places the majority at $\rho=0.5$; with $k=4$ this is a 2--2 tie, and
+the majority begins at $\rho=0.75$. H1 is judged as written and the error is stated (D262).
+
+\paragraph{Verdicts (D250).}
+\begin{tabular}{lll}
+H1 & partly supported & test holds for all models; steepest step leaves the tie, not at it; ``majority at 0.5'' is a tie \\
+H2 & partly supported & 5/6 reductions; not mainly intermediate for Mistral and Llama-reliability; cost not small for Mistral \\
+H3 & supported & association only; flags above baseline at $\rho=1$ for Llama and Qwen \\
+H4 & partly supported & interactions significant; type main effect not supported descriptively; models differ \\
+\end{tabular}
+
+Open for F3: confidence intervals for the per-$\rho$ differences; the abstention explanation of the meta-prompt
+effect; the closed-book part of H1.
+
+
+
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
 rejected, and a one-sentence justification for the oral discussion.
@@ -4898,6 +4958,43 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``I reviewed every candidate the screen produced, not only the convincing ones.''
 \end{description}
 \end{decisionbox}
+\begin{decisionbox}{D260 --- Operational definition of a degenerate GEE fit}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] A fit triggers the D253 fallback if it raises a convergence warning, has a non-finite estimate or standard error, or has any coefficient above 15 in absolute value (odds ratio above about 3 million).
+  \item[Why.] D253 needed a concrete test before any fit; coefficients of that size indicate separation, not an effect. No fit triggered it.
+  \item[Alternatives.] Judging fits by eye after seeing them.
+  \item[Interview line.] ``A failed fit was defined in code before the first fit ran, and none failed.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D261 --- Non-estimable tests stay in the Holm family}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] A non-estimable test enters the Holm adjustment with $p=1$ and is reported as not estimable.
+  \item[Why.] Dropping it would shrink the family and make the remaining tests easier to pass; keeping it is conservative. No test was non-estimable.
+  \item[Alternatives.] Removing it from the family.
+  \item[Interview line.] ``A test I could not estimate still counted against me in the correction.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D262 --- H1 judged as written, its error stated}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The frozen H1 is not reworded. Its verdict judges the observed location of the steepest change, and the paper states that $\rho=0.5$ is a 2--2 tie, with the majority beginning at $\rho=0.75$.
+  \item[Why.] Rewriting a frozen hypothesis after the results would be post-hoc; stating the error openly is honest and is consistent with G1's note.
+  \item[Alternatives.] Silently reading H1 as ``at the majority'' (rewrites it); ignoring the error.
+  \item[Interview line.] ``My hypothesis placed the majority at 0.5, which with four passages is a tie; I kept the wording and showed that the big jump comes when the poison becomes the actual majority.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D263 --- Hypothesis verdicts}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] H1 partly supported, H2 partly supported, H3 supported (association), H4 partly supported, by the D250 rule.
+  \item[Why.] Planned tests hold for all models in F1, F3 and F4, and in five of six F2 comparisons; the descriptive parts disagree in part for H1, H2 and H4.
+  \item[Alternatives.] Verdicts from the planned tests alone (all ``supported'', overstating H1, H2 and H4).
+  \item[Interview line.] ``Three of my four hypotheses are only partly supported, and I can show exactly which part failed and why.''
+\end{description}
+\end{decisionbox}
+
+
 
 
 \chapter{AI-Usage Log}\label{ch:ailog}

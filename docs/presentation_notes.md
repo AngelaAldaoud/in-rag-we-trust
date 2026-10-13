@@ -289,3 +289,32 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** the table is built only if every count equals the Block E counts; the audit screens questions automatically (target answered without passages or on clean passages; "or" in the question) and every candidate is decided by hand with a source.
 - **What it means:** the numbers in the paper come from exactly the questions and targets the models saw; flawed questions are documented, kept in the primary analysis, and their influence is shown in a sensitivity analysis.
 - **Its limitation:** the screen can miss flawed questions without any signal, and HotpotQA's own type label proved unreliable (it calls a comparison question "bridge"), so the audit is a check, not a guarantee.
+
+### Result: more poison, more poisoned answers (F1, H1)
+- **What it shows:** ASR from ~0% (rho=0) to 55-58% (rho=1) for all three models; odds ratio 50-65, p < 1e-169.
+- **How to read it:** the odds ratio compares all-poisoned with clean contexts; it is huge because the clean rate is near zero, so I always show the rates next to it.
+- **What it means:** every model follows the passages; the big jump comes when the poison becomes the majority (0.5 to 0.75), and ASR passes accuracy at rho=0.75.
+- **Its limitation:** my hypothesis called rho=0.5 the majority; with 4 passages it is a tie. I kept the wording and state the error.
+
+### Result: meta-prompts help a little, and partly by refusing (F2, H2)
+- **What it shows:** ASR drops by 1.8-7.7 points in 5 of 6 comparisons; Qwen with the reliability prompt shows no effect.
+- **How to read it:** paired test on the same items; only the pairs that change outcome count. About 16% of pairs change, in both directions.
+- **What it means:** prompts reshuffle many answers but move the total little; the cost is more abstention (up to +14 points) and, for Mistral, lower accuracy on clean contexts (-12.8).
+- **Its limitation:** for Mistral the effect is largest when every passage is false, so it cannot come from cross-checking; the abstention explanation is checked as exploratory.
+
+### Result: noticing the conflict goes with fewer poisoned answers (F3, H3)
+- **What it shows:** flagged answers have 16-19% lower odds of being poisoned, all models; flags peak at rho=0.5.
+- **How to read it:** the odds ratio holds rho, prompt and type fixed.
+- **What it means:** conflict awareness and robustness go together.
+- **Its limitation:** association, not cause; the judge over-flags and agrees least for Qwen; flagged answers are still poisoned 21-26% of the time.
+
+### Result: models and poison types modify the effects, but the types barely differ (F4, H4)
+- **What it shows:** all four interaction tests are significant; overall ASR differs by at most 1.4 points between types.
+- **How to read it:** significance with 72,000 responses detects small differences; the size comes from the curves.
+- **What it means:** the "more plausible lies work better" claim is not supported here.
+- **Its limitation:** my four types share one false answer and differ by one sentence, a weak manipulation of plausibility.
+
+### Summary: hypothesis verdicts
+- H1 partly, H2 partly, H3 supported (association), H4 partly, by a rule fixed before the tests (D250).
+
+
