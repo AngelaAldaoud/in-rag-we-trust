@@ -280,3 +280,12 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** left, the plan; middle, what a measurement showed; right, the fix.
 - **What it means:** the method was tested, not assumed, and every fix came before the main run, so no change could be fitted to the main results.
 - **Its limitation:** the pilot-based fixes rely on small hand-labelled samples (20–300 items), so their error rates have wide intervals.
+
+
+## Block F
+
+### Method: the analysis table and the question audit (F1)
+- **What it shows:** one checked table of all 96,000 greedy responses (outcome, judge flag and verdict, question data), and a hand-checked list of questions with a wrong gold answer or a comparison structure.
+- **How to read it:** the table is built only if every count equals the Block E counts; the audit screens questions automatically (target answered without passages or on clean passages; "or" in the question) and every candidate is decided by hand with a source.
+- **What it means:** the numbers in the paper come from exactly the questions and targets the models saw; flawed questions are documented, kept in the primary analysis, and their influence is shown in a sensitivity analysis.
+- **Its limitation:** the screen can miss flawed questions without any signal, and HotpotQA's own type label proved unreliable (it calls a comparison question "bridge"), so the audit is a check, not a guarantee.
