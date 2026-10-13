@@ -225,3 +225,11 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Its limitation:** in single cells I can miss effects smaller than about 5–7 points, so a non-significant single-cell result does not mean "no effect".
 - **If asked "why didn't you just add questions?":** the only ready questions were 52 reserve ones (power 0.79, still below 80%), and adding them meant rebuilding the data and retrieval pipeline the night before the main run — a bigger risk to correctness than the small power gain.
 
+## Block E · E1 Preflight (how to explain it to Prof. Ferrara)
+- **What it shows:** before the main run, I verified and recorded the code version, budget and storage.
+- **How to read it:** the notebook prints the commit (a93ec0c = tag evaluator-v1) and 0 changed files; compute 65.5 units, above my 55-unit threshold; storage far above the need.
+- **What it means:** every main result comes from the frozen, validated code; the run was not at risk of running out of budget or space.
+- **Limitation:** the compute figures are Colab's own counter, read by hand at phase boundaries.
+
+
+

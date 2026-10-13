@@ -2428,6 +2428,46 @@ $p_d$.
 \paragraph{Limitation.} Five-point effects in single cells may be missed; the
 paper must not read a non-significant single-cell difference as ``no effect''.
 
+\chapter{Block E: Main run}
+\label{ch:blocke}
+
+\section{E1: Preflight}
+
+\paragraph{Goal.} Before any GPU time is spent on the 500 main questions,
+verify and record the code version, the compute budget, the storage and the
+expected output. E1 generates nothing.
+
+\paragraph{Code version (D182).} Notebook~06 (\texttt{06\_e\_main}) clones the
+repository and checks out the tag \texttt{evaluator-v1}; it printed commit
+\texttt{a93ec0c} with no changed files. Checking out the tag instead of the
+branch means that work pushed to the branch during the run (notes, paper)
+can never change the code that generates and later scores the main
+responses, also after a disconnection and resume.
+
+\paragraph{Hardware and software.} NVIDIA A100-SXM4-40GB, the same GPU model
+as the pilot (D139, D149); vLLM 0.31.0 (D99).
+
+\paragraph{Compute (D177, D184).} 65.5 units before E1, above the 55-unit
+threshold of D177, so no reserve pack; 64.38 units before the greedy run
+(E1 cost 1.1 units); the A100 used about 5.3 units per hour. The balance is
+recorded at every phase boundary.
+
+\paragraph{Storage (D183).} Google Drive: 188.2\,GB free; Colab disk:
+198.1\,GB free. Needed: about 0.2\,GB on Drive (shards and their archive,
+each about ten times the pilot's 7.8\,MB) and about 64\,GB on the Colab disk
+(the three generation models and the Gemma judge).
+
+\paragraph{Expected output.} 192 greedy and 192 sample shards (3 models
+$\times$ 64 conditions), each with 500 records. The run folder
+\texttt{runs/main} on Drive was empty (no shards, no temporary files). The
+judge writes into the same folder, so the final archive also holds the flags
+and verdicts.
+
+\paragraph{Additions to the launch instructions.} Five additions to
+\texttt{docs/main\_run.md}, none of which changes the method: the tag
+checkout (D182), the storage record (D183), the per-phase compute record
+(D184), a SHA-256 fingerprint of the archive (D185), and a judge-download
+cell without the pilot's folder setting (D186).
 
 
 \chapter{Decision Log}\label{ch:decisions}
@@ -4202,7 +4242,52 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\section{Block E}\label{sec:decisions-e}
 
+\begin{decisionbox}{D182 --- The main run executes the tag, not the branch}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Notebook~06 checks out \texttt{evaluator-v1} after cloning, and prints the commit and the number of changed files before anything runs.
+  \item[Why.] Other work is pushed to the branch on the same day; without the checkout, a session resumed after a disconnection could run a different commit than the shards already written.
+  \item[Alternatives.] Cloning the branch as in the pilot (unsafe while others push); freezing the branch for the day (blocks the paper work).
+  \item[Interview line.] ``Every main-run shard was produced by the tagged evaluator commit, and the notebook enforces it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D183 --- Storage recorded before the run}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The preflight cell prints the free space on Drive and on the Colab disk.
+  \item[Why.] The run needs about 0.2\,GB on Drive and about 64\,GB on the Colab disk; a full disk discovered hours into the run would waste compute and time.
+  \item[Alternatives.] Assuming enough space (unverified).
+  \item[Interview line.] ``I checked storage before spending GPU time.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D184 --- Compute recorded at every phase boundary}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The Colab balance is read and recorded before and after the greedy, judge and sampling phases.
+  \item[Why.] The report states the measured cost of each stage, not an estimate.
+  \item[Alternatives.] Recording only the total (loses the per-stage cost).
+  \item[Interview line.] ``I can tell you what each stage of the experiment cost.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D185 --- Fingerprint of the archive}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The SHA-256 of \texttt{main\_runs.tar} is printed on Colab and recomputed on the Mac after the download; scoring starts only if they are equal.
+  \item[Why.] Equal fingerprints prove the scored file is byte-identical to the one the GPU session wrote, whatever Drive's download does to it.
+  \item[Alternatives.] Comparing file sizes (misses corruption that keeps the size); no check.
+  \item[Interview line.] ``The data I scored is provably identical to what the GPU produced.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D186 --- Judge download without the pilot folder}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Notebook~06 reuses only the Kaggle download part of notebook~05's access cell. \emph{Adapts \texttt{docs/main\_run.md}, which names the whole cell.}
+  \item[Why.] That cell also sets the run folder to \texttt{runs/pilot}; copied whole, it would point the judge at the pilot outputs.
+  \item[Alternatives.] Copying the cell whole (wrong folder).
+  \item[Interview line.] ``I reused the validated download code but kept the run folder fixed to the main run.''
+\end{description}
+\end{decisionbox}
 
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
@@ -4611,6 +4696,37 @@ ACL Anthology, arXiv) or the course PDF.
 
   
   
+\end{longtable}
+}
+\section{Block E}\label{sec:ailog-e}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{0.6cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.8cm}}
+\caption{AI usage during Block E.}\label{tab:ailog-e}\\
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+102 & Recover the plan and the state of Blocks A--D
+  & Summary of the ORGANIZER and Block A--D chats, including the BLOCK\_D handoff and its open issues
+  & Confirmed by the student \\
+103 & Review of the launch instructions
+  & Check of \texttt{docs/main\_run.md} against the Block E requirements and the pilot notebooks: one risk (branch instead of tag) and five additions, D182--D186
+  & Decisions accepted by the student; judge output location confirmed in notebook~05 \\
+104 & Preflight cells
+  & Notebook~06 cells 1--2 (environment at the tag, Drive, storage, shard counts)
+  & Run by the student: commit \texttt{a93ec0c}, no changed files, empty run folder, storage and compute recorded \\
 \end{longtable}
 }
 }
