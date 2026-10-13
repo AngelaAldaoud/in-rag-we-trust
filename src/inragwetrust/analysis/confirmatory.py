@@ -97,7 +97,8 @@ def family_f2(c: pd.DataFrame) -> pd.DataFrame:
                 rows.append({"family": "F2", "test": test, "model": m, "meta": meta,
                              "estimate_kind": kind, **paired_stats(pz, PLAIN, meta)})
     out = with_holm(rows)
-    expected = {"a": 8000, "b": 500, "c": 500}
+    nq = c["question_id"].nunique()
+    expected = {"a": 16 * nq, "b": nq, "c": nq}
     if not all(out.loc[out["test"] == t, "n"].eq(n).all() for t, n in expected.items()):
         raise ValueError("unexpected number of pairs in F2")
     return out
