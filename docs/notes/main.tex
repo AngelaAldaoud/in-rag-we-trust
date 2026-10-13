@@ -43,6 +43,8 @@
 \newtcolorbox{decisionbox}[1]{%
   colback=green!5, colframe=green!40!black,
   fonttitle=\bfseries, title={Decision #1}}
+  
+\newcommand{\revnote}[1]{\par\smallskip\noindent{\small\color{orange!70!black}\textbf{Revised.} #1}\par\smallskip}
 
 % ---------- 7. Citations ----------
 \usepackage[round,authoryear]{natbib}
@@ -144,7 +146,7 @@ of the results.
   internal memory.
 & Closest prior result. Our accuracy-vs-poison-ratio curve partly
   \emph{replicates} the majority-rule finding. We add poison types,
-  meta-prompts and hedging behaviour, on open 4-bit models. \\
+  meta-prompts and hedging behaviour, on open 7--8B models in 16-bit precision. \\
 \midrule
 
 \citet{wu2024clasheval}
@@ -261,6 +263,10 @@ Each response receives exactly one \emph{outcome} $o \in
   \item \textsc{OtherWrong}: $\hat{a}$ is given but matches neither;
   \item \textsc{Abstain}: no answer is given ($\hat{a} = \varnothing$).
 \end{itemize}
+\revnote{After the pilot, a response without an answer line became
+\textsc{NoAnswer}, separate from \textsc{Abstain}, and an answer naming both
+$a^{*}$ and $\tilde{a}$ became its own outcome, \textsc{Both} (D153, D155;
+Chapter~\ref{ch:revisions}).}
 \end{definitionbox}
 
 \begin{definitionbox}{Conflict flag}
@@ -496,7 +502,9 @@ the gold answer string. We call that paragraph the \emph{answer passage}
 $p^{\mathrm{ans}}$ and the other one the \emph{bridge passage}
 $p^{\mathrm{br}}$. The $N$ questions of the study are drawn at random,
 with a fixed seed, from the eligible pool; a separate, disjoint set of
-questions is drawn for the pilot run.
+questions is drawn for the pilot run. 
+\revnote{A third filter keeps bridge questions only (D84); the counts are in
+Table~\ref{tab:funnel}.}
 
 \paragraph{Target answer.}
 For each question, the target answer $\tilde{a}$ is taken from the gold
@@ -504,6 +512,9 @@ answers of \emph{other} eligible questions with the same entity type
 (person, place, date, number, organisation, other), drawn with a fixed
 seed, such that $\tilde{a} \neq a^{*}$ and $\tilde{a}$ does not occur in
 $p^{\mathrm{ans}}$ or $p^{\mathrm{br}}$.
+\revnote{Same-type targets proved implausible (5 of 30 in a manual check). The
+target answer is now written by the helper model from the question, the gold
+answer and the answer passage, under the same safety rules (D118).}
 
 \paragraph{Clean passages.}
 The $k$ clean passages of a question are $p^{\mathrm{ans}}$ itself and
@@ -574,6 +585,8 @@ templates. The set of poison types is
 Because the swap is deterministic and the framing sentences come from
 templates, poisoned passages need no language model; only the clean
 paraphrases do (Section~\ref{sec:data}).
+\revnote{Since D118 the false answer itself is written by the helper model;
+the swap and the framing sentences remain rule-based.}
 
 \paragraph{Prompt conditions.}
 $\Pi = \{\pi_0, \pi_{\mathrm{cons}}, \pi_{\mathrm{rel}}\}$:
@@ -635,6 +648,9 @@ response that starts with \texttt{Answer:}. If that text is
 \texttt{unknown}, or if the response has no such line, $\hat{a} =
 \varnothing$. Responses without an \texttt{Answer:} line are also counted
 separately and reported as the \emph{format-failure rate}.
+\revnote{The parser takes the last \texttt{Answer:} anywhere in the response,
+because 22\% of Mistral's answer lines start mid-line (D152).}
+
 
 \paragraph{Normalisation and matching.}
 Answers are normalised as in standard question-answering evaluation:
@@ -654,6 +670,10 @@ $\hat{a}$ as a contiguous sequence of whole words.
 \end{itemize}
 Exact match and token-level F1 against $a^{*}$ are reported as secondary
 metrics, for comparison with the HotpotQA literature.
+\revnote{The final rules are ordered and add \textsc{NoAnswer} and
+\textsc{Both}; answers are matched on their head, without bracketed remarks
+(D152--D156, Section D2). Rule-based outcomes are primary; a judge-based
+re-check gives an exploratory upper bound (D170).}
 
 \paragraph{Conflict-flag judge.}
 The conflict flag $f$ is assigned by a judge model (Gemma-2-9B-it, which is
@@ -679,6 +699,10 @@ wrong answers copied from the context:
   \mathbb{1}\big[o_i(\theta) = \textsc{OtherWrong}\ \wedge\
   \hat{a}_i(\theta) \notin C_i(\theta)\big].
 \]
+\revnote{A hallucination is now an \textsc{OtherWrong} answer containing a
+named entity or number found in no passage, compared word by word (D161,
+D166); every rate is reported with the rule's measured precision and miss
+rate (D169).}
 
 \paragraph{Self-consistency.}
 All main metrics use greedy decoding, so each condition has one
@@ -690,7 +714,8 @@ normalisation) to the most frequent one; then
   \mathrm{SC}(\theta) = \tfrac{1}{N}\textstyle\sum_{i=1}^{N} c_i(\theta),
 \]
 which ranges from $1/S$ (every answer different) to $1$ (all identical).
-
+\revnote{Abstentions and missing answers are each reduced to a single value
+before answers are compared (D171).}
 
 \section{Statistical analysis}\label{sec:stats}
 
@@ -796,6 +821,8 @@ set of 50 questions. The values of $p_d$ above are assumptions; they are
 measured in the pilot run. If the pilot shows that $N = 500$ gives less than
 80\% power for a 5-point difference in a single cell, $N$ is increased
 before the full runs; it is never decreased to save compute.
+\revnote{The pilot found a quarter of single cells under-powered; $N = 500$
+was kept as a documented deviation (D178, Section~\ref{sec:d5-power}).}
 
 
 \section{Compute estimate}\label{sec:compute}
@@ -820,6 +847,9 @@ be 2{,}500 input and 400 output tokens per second on a T4, about $2.5\times$
 that on an L4 and $8\times$ on an A100; a 14B model runs at about half the
 speed. These figures are estimates and are replaced by the speeds measured
 in the pilot.
+\revnote{These estimates assumed 4-bit models. All models ran in bfloat16
+(D101); measured costs are in Section~\ref{sec:c3} and D177, and those of the
+main run in Chapter~\ref{ch:blocke}.}
 
 \paragraph{Estimate.}
 Compute-unit (CU) rates are not published by Google; the ranges below
@@ -907,6 +937,9 @@ Date & Compute work \\
 \end{center}
 With the L4 fallback (about 28 hours), a launch on the evening of 11 October
 still finishes on 13 October.
+\revnote{The output cap was raised to 512 tokens (D138), the schedule was
+replaced by the measured plan of D177, and every main run used the A100
+(D139). The main run took place on 13 October.}
 
 
 
@@ -2565,6 +2598,88 @@ answers are scored, never what is asked or how it is tested. The compute plan
 and schedule of Section~\ref{sec:computeplan} were also replaced by measured
 values (D177).
 
+\section{Block G}\label{sec:decisions-g}
+
+\begin{decisionbox}{D200 --- Separate numbering ranges for parallel chats}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Block E keeps D182--D199 and AI entries 102--129; Block G
+    starts at D200 and AI entry 130. Each chat commits and pushes before the
+    other writes to \texttt{main.tex}.
+  \item[Why.] Both chats worked on the same day and edit the same file; fixed
+    ranges make every number unique, and the commit rule prevents one commit
+    from carrying the other chat's half-finished text.
+  \item[Alternatives.] Continuous numbering (two chats could give one number
+    to different entries); one chat waiting for the other (wastes the
+    sampling time).
+  \item[Interview line.] ``Two parts of the project ran in parallel, so I
+    reserved number ranges and committed between their edits.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D201 --- Writing style of the paper}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The paper is written in plain academic English: one point
+    per paragraph, concrete numbers, one name per concept, no inflated claims,
+    limitations stated in our own voice. The notes keep their longer,
+    explanatory style.
+  \item[Why.] The paper is read by the examiner and must be defended sentence
+    by sentence; the notes are study material.
+  \item[Alternatives.] Condensing the notes directly into the paper (too
+    long, wrong register); a promotional style (easy to attack, against D9).
+  \item[Interview line.] ``Every sentence in my paper says one checkable thing,
+    and I can explain where it comes from.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D202 --- Three method references added}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] PoisonedRAG \citep{zou2024poisonedrag}, Lost in the Middle
+    \citep{liu2024lost} and \citet{kamalloo2023evaluating} are added to the
+    bibliography, each verified on its official page (USENIX, ACL
+    Anthology). Page numbers are omitted where the official record gives
+    none.
+  \item[Why.] The notes already relied on them (retrieval setting, passage
+    order, the lexical-matching audit) without a verified entry. They support
+    method choices; they do not widen the literature review fixed in D7.
+  \item[Alternatives.] Removing the statements that rely on them (loses the
+    justification of D123 and the prior evidence for the audit); citing from
+    memory (unverified).
+  \item[Interview line.] ``Every reference in my notes and paper was checked
+    against its official publication record.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D203 --- Revisions recorded, old text kept}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] A chapter lists every revision of the Block A design
+    (Table~\ref{tab:revisions}); at each superseded rule the original text
+    stays, followed by a ``Revised'' note, and superseded decision boxes name
+    their replacement. Sentences that describe the study as it is now (the
+    Jin row of Table~\ref{tab:audit}) are corrected instead.
+  \item[Why.] The examiner can see what was planned, what was found and what
+    changed, and never mistake an old rule for the final one.
+  \item[Alternatives.] Rewriting the old chapters (hides the history);
+    leaving them unmarked (old rules read as current).
+  \item[Interview line.] ``Ten rules changed after testing; I kept the
+    originals visible and show what triggered each change.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D204 --- Each log entry in one place}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The copies of D147--D151 and AI entries 78--81 inside
+    Section D1 are removed, and the first power-check paragraph of D5 now
+    points to the full finding.
+  \item[Why.] The duplicates had started to differ (0.78 against 0.79); one
+    location per entry keeps the record consistent.
+  \item[Alternatives.] Keeping both copies and correcting both (they would
+    drift again).
+  \item[Interview line.] ``Every decision is written once, so the record
+    cannot contradict itself.''
+\end{description}
+\end{decisionbox}
+
+
 
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
@@ -2678,8 +2793,7 @@ rejected, and a one-sentence justification for the oral discussion.
 \begin{decisionbox}{D9 --- No novelty claim; limits stated up front}
 \begin{description}[nosep, leftmargin=0pt]
   \item[Decision.] The positioning (Section~\ref{sec:positioning}) contains no
-    novelty claim and states the two main limits: small 4-bit models and
-    synthetic poisons.
+    novelty claim and states the two main limits: small 4-bit models and synthetic poisons. \emph{Precision revised by D101.}
   \item[Why.] The area is well studied; naming weaknesses before a reviewer
     does is part of an honest discussion.
   \item[Alternatives.] Frame the study as novel (easy to attack and untrue).
@@ -2742,7 +2856,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D14 --- Four outcomes}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Correct, Poisoned, OtherWrong, Abstain.
+  \item[Decision.] Correct, Poisoned, OtherWrong, Abstain. \emph{Extended by D153 and D155.}
   \item[Why.] ``Wrong'' hides two different failures: adopting the poison
     and failing for other reasons.
   \item[Alternatives.] Right/wrong only (cannot show whether the poison
@@ -2942,7 +3056,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D31 --- Target answer from same-type gold answers}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] The false answer is a real answer of another question with the same entity type, drawn with a fixed seed.
+  \item[Decision.] The false answer is a real answer of another question with the same entity type, drawn with a fixed seed. \emph{Replaced by D118.}
   \item[Why.] Plausible, reproducible and free of compute.
   \item[Alternatives.] Asking a language model for a plausible wrong answer (less reproducible, may be accidentally true).
   \item[Interview line.] ``The false answer is always plausible and chosen reproducibly.''
@@ -3014,7 +3128,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D39 --- Three model families}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct, Mistral-7B-Instruct-v0.3, in 4-bit.
+  \item[Decision.] Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct, Mistral-7B-Instruct-v0.3, in 4-bit. \emph{Precision revised by D101.}
   \item[Why.] Matches the plan; similar size makes the family comparison fair; all fit a T4. The course sets no size requirement.
   \item[Alternatives.] Two models (less informative for RQ4).
   \item[Interview line.] ``Three families of the same size compare families fairly.''
@@ -3086,7 +3200,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D47 --- Judge only for the conflict flag}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Outcomes are decided by rules; a model judge decides only $f$.
+  \item[Decision.] Outcomes are decided by rules; a model judge decides only $f$. \emph{Revised by D160 and D170.}
   \item[Why.] Limits model-judge errors to one, validated metric.
   \item[Alternatives.] A model judge for all outcomes.
   \item[Interview line.] ``Only the conflict flag needs language understanding, so only it uses a judge.''
@@ -3104,7 +3218,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D49 --- Definition of hallucination}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] A wrong answer that appears in no passage of the context.
+  \item[Decision.] A wrong answer that appears in no passage of the context. \emph{Replaced by D161 and D166.}
   \item[Why.] The course asks for a hallucination rate; in RAG the useful distinction is using the context wrongly versus inventing.
   \item[Alternatives.] Any wrong answer counts as a hallucination.
   \item[Interview line.] ``A hallucination is a wrong answer absent from every passage the model saw.''
@@ -3194,7 +3308,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D59 --- Pilot may only increase $N$}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] If the pilot shows too little power, $N$ is raised; never lowered.
+  \item[Decision.] If the pilot shows too little power, $N$ is raised; never lowered. \emph{Deviation documented in D178.}
   \item[Why.] Reducing the sample after seeing data introduces bias.
   \item[Alternatives.] Adjust $N$ freely.
   \item[Interview line.] ``The pilot can only make the study larger.''
@@ -3248,7 +3362,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D65 --- One quantisation method}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] 4-bit NF4 with bitsandbytes for all models, from official weights.
+  \item[Decision.] 4-bit NF4 with bitsandbytes for all models, from official weights. \emph{Replaced by D101.}
   \item[Why.] No model is favoured by a different quantisation.
   \item[Alternatives.] Pre-quantised checkpoints from different sources.
   \item[Interview line.] ``All models were compressed the same way.''
@@ -3257,7 +3371,7 @@ rejected, and a one-sentence justification for the oral discussion.
 
 \begin{decisionbox}{D66 --- 256-token output cap}
 \begin{description}[nosep, leftmargin=0pt]
-  \item[Decision.] Same cap for all prompts; truncation rate reported.
+  \item[Decision.] Same cap for all prompts; truncation rate reported. \emph{Cap raised to 512 by D138.}
   \item[Why.] Predictable cost; room for reasoning; comparable prompts.
   \item[Alternatives.] Different caps per prompt.
   \item[Interview line.] ``Every prompt had the same output budget.''
@@ -4859,6 +4973,55 @@ ACL Anthology, arXiv) or the course PDF.
 
 
 
+\end{longtable}
+}
+\section{Block G}\label{sec:ailog-g}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{0.6cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.8cm}}
+\caption{AI usage during Block G.}\label{tab:ailog-g}\\
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+130 & Recover the plan and the state of Blocks A--D
+  & Summary of the ORGANIZER and Block A--D chats, including the BLOCK\_D
+    handoff and its open issues for Block G
+  & Confirmed by the student; numbering ranges agreed with Block E (D200) \\
+131 & Diagnosis of the notes
+  & Found the broken AI-log row 53 (a compile error), an unclosed group, the
+    missing entry 49 and the incomplete entry 101. Claude first named the
+    table error as the cause of the unresolved citations; the student's
+    screenshot showed the real cause, the bibliography named
+    \texttt{refs.bib.tex} on Overleaf
+  & File renamed by the student; entries 49 and 53 restored word for word
+    from the Block B chat; compiled with 0 errors and all citations
+    resolved \\
+132 & Missing references
+  & Block C had cited PoisonedRAG without a bibliography entry and written
+    Lost in the Middle as plain text, both by Claude; three entries written
+    (D202)
+  & Every field copied from the official record (USENIX, ACL Anthology); the
+    Kamalloo finding checked against its abstract before citing \\
+133 & Decision-log corrections
+  & D1's Alternatives line restored; 0.78 corrected to 0.79 in D5 and D178;
+    duplicated entries removed (D204)
+  & Search for 0.78 finds only entry 101; compiled \\
+134 & Revisions chapter and notes
+  & Chapter~\ref{ch:revisions}, Table~\ref{tab:revisions}, ``Revised'' notes
+    and box annotations (D203)
+  & Every number checked against the notes it summarises; compiled \\
 \end{longtable}
 }
 
