@@ -2722,7 +2722,56 @@ answers are scored, never what is asked or how it is tested. The compute plan
 and schedule of Section~\ref{sec:computeplan} were also replaced by measured
 values (D177).
 
+\chapter{Block F: Analysis}\label{ch:blockF}
 
+Block F applies \texttt{docs/analysis\_plan.md} (frozen at tag \texttt{evaluator-v1}) unchanged to the
+main run. Everything outside the plan is labelled exploratory. Decisions D250--D299, AI-usage log 170--199.
+
+\section{F1: Assembly and audits}
+
+\paragraph{Gaps in the frozen plan (fixed before any test).} The plan's tests are complete, but four
+points were not specified; each was decided before any confirmatory result existed. Each hypothesis is
+split into a tested part (the planned test) and a descriptive part (curves with intervals, exploratory),
+with a fixed verdict rule (D250). The confirmatory F4 tests address interactions only; the main-effect
+part of H4 (poison type and model) is reported descriptively, without an added test (D251). The F2
+sensitivity model is \texttt{Poisoned \textasciitilde{} meta + rho + type} clustered by question (D252).
+If a GEE fit fails, it is refitted with an independence working correlation, otherwise reported as not
+estimable (D253).
+
+\paragraph{Software.} \texttt{statsmodels} is pinned to 0.15.0 in \texttt{pyproject.toml} and
+\texttt{uv.lock} (D255). Pinning changed no installed package (identical package list before and after);
+the frozen scorer's environment is therefore unchanged and the 302 tests pass.
+
+\paragraph{Analysis table.} \texttt{inragwetrust.analysis.data} builds one row per greedy response
+(96{,}000) with its rule outcome, judge flag and verdict, question data, the official HotpotQA type,
+B4 leak flags and, for BM25 rows, the per-question effective $\rho$ (D144). Every join is checked, and
+the build stops unless all counts equal those of Block E: 500 questions, 94{,}500 flags
+(0 unparseable), 93{,}547 verdicts (32 unparseable). It reproduces the Block E sanity values (flag at
+$\rho=0$: Llama 0.308, Qwen 0.235, Mistral 0.021; 5 Poisoned responses at $\rho=0$). The table is
+cached in the git-ignored run folder and rebuilt in seconds (D256).
+
+\paragraph{The main set and its targets.} The first build stopped because 73 main questions carry the
+label \emph{reserve} in the B1 file \texttt{questions.jsonl.gz}: they replaced rejected questions in
+B2--B4. The same file also holds the B1 targets, which differ for all 500 questions from the
+generated targets the models saw (D118). The main set is therefore defined by the responses
+themselves, and question, gold and target are read from \texttt{contexts.jsonl.gz}, which agrees with
+\texttt{poisons.jsonl.gz} for all 500 questions (D256).
+
+\paragraph{Question properties.} HotpotQA labels all 500 main questions \emph{bridge}, including the
+comparison question found in Block E (Pellegrini vs Maren); the official label alone cannot detect
+comparison questions. Recomputed with the frozen B4 rule (D257), 10 questions keep a number and 61 a key
+word of the gold in a poisoned passage. Mean effective $\rho$ under BM25: Swap 0.50, Authority 0.35,
+Recency 0.36, Correct 0.29.
+
+\paragraph{Question audit (exploratory, D188).} Candidates are selected automatically and decided by
+hand (D258). A possible gold error has at least one closed-book or clean-context ($\rho=0$) response equal
+to the target, or an OtherWrong response there that the judge reads as the target. A possible comparison
+question contains \emph{or}/\emph{either}, or contains its own gold answer. 73 candidates: 59 gold-error,
+13 comparison, 1 both; both known cases are among them. Of the 60 gold-error candidates, only 2 have a
+target answer on clean contexts (the two known questions), 24 received the target from at least one
+model without any passage, and 43 have a single weak signal. Every candidate is reviewed; none is
+skipped (D259). The review is carried over and completed before the F3 sensitivity analysis (D254).
+Flagged questions are never removed from the primary analysis.
 
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
@@ -4757,6 +4806,100 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``I used my one methodology float to show what my checks changed, not to draw boxes.''
 \end{description}
 \end{decisionbox}
+
+\section{Block E}\label{sec:decisions-e}
+
+\begin{decisionbox}{D250 --- Hypotheses split into tested and descriptive parts; verdict rule fixed}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Each hypothesis has a confirmatory part (its planned test) and a descriptive part (curves with intervals, exploratory). Supported: planned test significant after Holm in the predicted direction for all models, and the descriptive part agrees. Partly supported: the test holds for some models, or holds while the descriptive part disagrees. Not supported: the test is not significant for any model, or is significant in the opposite direction. \emph{Plan gap, fixed before any test.}
+  \item[Why.] H1 (steepest at the $\rho=0.5$ tie), H2 (mainly at intermediate $\rho$) and H3 (flag peak) claim more than one coefficient can test; a verdict rule chosen after the results could favour a nicer verdict.
+  \item[Alternatives.] Judging verdicts case by case after the results (post-hoc freedom); verdicts from the planned tests only (ignores half of each hypothesis).
+  \item[Interview line.] ``Each hypothesis had a tested part and a descriptive part, and I fixed the verdict rule before running the tests.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D251 --- F4 unchanged; type and model main effects descriptive}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] F4 keeps its four interaction tests. The main-effect claim of H4 (more plausible or authoritative types are more effective; models differ) is reported with estimates and intervals only, and the H4 verdict states that this part was not tested confirmatorily. \emph{Plan gap.}
+  \item[Why.] The plan's F4 matches objective O4 (interactions), not H4's main-effect sentence; Block A also never ordered the types by plausibility, so there is no direction to test. A test added after the data exist would not be blind.
+  \item[Alternatives.] Adding two main-effect Wald tests to F4 now (post-hoc confirmatory test).
+  \item[Interview line.] ``My RQ4 test was about interactions; I noticed H4's main-effect claim was not covered and chose not to add a test after the data existed.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D252 --- Specification of the F2 sensitivity GEE}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Per model and meta-prompt: responses of the plain prompt and that meta-prompt at $\rho>0$; \texttt{Poisoned \textasciitilde{} meta + rho + type}, clustered by question, exchangeable working correlation, robust standard errors; reported: odds ratio of \texttt{meta} with 95\% CI. \emph{Plan gap.}
+  \item[Why.] McNemar treats the 8{,}000 pairs as independent, but each question contributes 16; the plan names a GEE check without a formula. The form copies F1/F3 and adds nothing new.
+  \item[Alternatives.] \texttt{Poisoned \textasciitilde{} meta} only (ignores the design variables); interactions with $\rho$ (a different question).
+  \item[Interview line.] ``McNemar ignores that pairs share questions, so I checked every F2(a) result with a question-clustered GEE written down before the fit.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D253 --- Fallback when a GEE fit fails}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] A GEE that does not converge or gives degenerate estimates is refitted with an independence working correlation (robust standard errors remain valid); if that also fails, the test is reported as not estimable with its reason. Every fallback is logged and shown in the table. \emph{Plan gap.}
+  \item[Why.] At $\rho=0$ almost no response is Poisoned (5 of 4{,}500 per model), a known risk for logistic fits; the rule must exist before a failure is seen.
+  \item[Alternatives.] Dropping problematic rows or levels after a failure (data-dependent); penalised regression (not in the plan).
+  \item[Interview line.] ``I decided before fitting what to do if a model failed, so no fix could be chosen to get a nicer number.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D254 --- Audit review carried over to before F3}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] F1 closes with the manual review of the 73 audit candidates as an open task, completed before the F3 sensitivity analysis.
+  \item[Why.] The primary F2 analysis does not use the flagged list; the review needs about 45 minutes of careful checking, which is better done rested than at midnight under deadline.
+  \item[Alternatives.] Reviewing before F2 (delays all confirmatory work).
+  \item[Interview line.] ``The flagged list only feeds the sensitivity analysis, so I ran the confirmatory tests first and reviewed carefully afterwards.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D255 --- statsmodels pinned to 0.15.0}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] \texttt{statsmodels==0.15.0} in \texttt{pyproject.toml}, matching \texttt{uv.lock}; verified that no installed package changed.
+  \item[Why.] Analysis plan \S6; the dependency was locked but unversioned, so a future \texttt{uv lock} could have changed the GEE implementation silently.
+  \item[Alternatives.] Relying on \texttt{uv.lock} alone (pin invisible to readers); upgrading (no reason).
+  \item[Interview line.] ``The statistics library version is fixed and recorded, and I checked that fixing it changed nothing else.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D256 --- Analysis table: main set from the responses, question data from the contexts}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The main set is the 500 question ids in the responses; question, gold and target come from \texttt{contexts.jsonl.gz}; the table is cached in the git-ignored run folder.
+  \item[Why.] The B1 file labels 73 replacement questions \emph{reserve} and holds superseded targets (all 500 differ); the contexts file is what the models saw and the scorer used. The table contains model answers, whose publication is decided in Block H (D150).
+  \item[Alternatives.] Split labels of the B1 file (loses 73 questions, wrong targets); committing the table (publishes raw outputs early).
+  \item[Interview line.] ``My analysis reads exactly the questions and targets the models saw, and a count check stops it if anything is missing.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D257 --- Leak flags recomputed with the frozen B4 function}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Per-question leak flags (number, word) are computed by calling \texttt{check\_poison} on the final poisons.
+  \item[Why.] B4 stored only counts, not question ids; calling the same function guarantees the same rule.
+  \item[Alternatives.] Re-implementing the rule (risk of a different definition).
+  \item[Interview line.] ``The leak flags come from the same code that measured them in Block B.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D258 --- Audit candidate signals}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Gold-error candidates: a closed-book or clean-context response equal to the target, or an OtherWrong one the judge reads as the target. Comparison candidates: \emph{or}/\emph{either} in the question, or the gold inside the question. All decisions by hand, with a source for every yes.
+  \item[Why.] HotpotQA's own type label calls all 500 questions \emph{bridge}, including a known comparison question, so it cannot detect them; the signals catch both known cases.
+  \item[Alternatives.] The official type label (misses the known case); reviewing all 500 questions by hand (not feasible before the deadline).
+  \item[Interview line.] ``The dataset's own label missed a comparison question, so I screened with simple signals and decided every candidate by hand.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D259 --- Every audit candidate is reviewed}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] All 73 candidates are reviewed, including the 43 with a single weak signal. The review sheet cannot be overwritten by the code; decisions go to \texttt{results/analysis/audit\_decisions.csv} and \texttt{flagged\_questions.csv}.
+  \item[Why.] Skipping weak-signal candidates would be a filter chosen after seeing the counts; overwrite protection prevents losing manual labels.
+  \item[Alternatives.] Reviewing only strong-signal candidates.
+  \item[Interview line.] ``I reviewed every candidate the screen produced, not only the convincing ones.''
+\end{description}
+\end{decisionbox}
+
+
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
 purposes, and to what extent their outputs were modified or verified. This
@@ -5312,6 +5455,50 @@ ACL Anthology, arXiv) or the course PDF.
   & Checked against D35 and the frozen analysis plan; the hypothesis itself unchanged \\
 \end{longtable}
 }
+
+\section{Block G}\label{sec:ailog-g}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{0.6cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\raggedright\arraybackslash}p{4.8cm}}
+\caption{AI usage during Block G.}\label{tab:ailog-g}\\
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Purpose} & \textbf{AI output} & \textbf{Verification / modification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+170 & Context recovery, plan review
+  & Read ORGANIZER and Blocks A--E; reviewed the analysis plan; found four plan gaps; proposed D250--D254. Mistake: shell commands with \texttt{\#} comment lines, which zsh rejects (harmless)
+  & Decisions accepted by the student \\
+171 & statsmodels pin
+  & Commands for the pin and the package-list check (D255). Mistake: \texttt{git diff} without \texttt{--no-pager} stopped in the pager
+  & Run and checked by the student \\
+172 & Analysis loader
+  & \texttt{analysis/data.py} and tests (D256, D257). Mistake: a test expected \texttt{None} where pandas gives \texttt{NaN}; test corrected, code unchanged
+  & Tests run by the student \\
+173 & Main set correction
+  & Mistake: main questions selected by the B1 split label (73 missing, superseded targets); caught by the loader's own check, diagnosed with numbers, fixed once (D256)
+  & Diagnosis and fix checked by the student \\
+174 & Question audit
+  & \texttt{analysis/audit.py} and tests (D258, D259); 73 candidates; signal-strength summary
+  & Run by the student; review by the student \\
+175 & F1 close
+  & F1 notes, decision log D250--D259, presentation note
+  & Reviewed by the student \\
+
+
+\end{longtable}
+}
+
 
 % ---------- Bibliography (activated once refs.bib exists) ----------
  \bibliographystyle{plainnat}
