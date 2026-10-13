@@ -1389,14 +1389,13 @@ poison type, prompt and model, so all comparisons between conditions are paired.
 
 \paragraph{Order of the passages.}
 Models use information at the beginning and end of a context more than in the
-middle (Lost in the Middle; Liu et al., 2024). A second, independent permutation
+middle \citep{liu2024lost}. A second, independent permutation
 $\pi_q$ fixes the order of the four slots, and the bridge passage is inserted at
 a seeded position $b_q \in \{0,\dots,4\}$. Both are drawn once per question and
 kept fixed across all conditions, so changing $\rho$ or $t$ only changes the
 content of slots, never their position. Because $\pi_q$ is independent of
 $\sigma_q$, poisoned passages occupy every position about equally often across
 questions; every position is recorded for analysis.
-
 \paragraph{Closed-book.}
 The closed-book condition has no passages.
 
@@ -1804,105 +1803,7 @@ partly came from the removed commands, were cleared rather than edited (D151).
 Their content (environment record) is preserved in
 \texttt{results/c3\_throughput/*.json}.
 
-\subsection*{Decision log}
 
-\begin{decisionbox}{D147 · Shared context loader}
-\textbf{Decision.} The controlled and retrieved contexts are joined by one
-package function, \texttt{retrieval.load.load\_contexts}, with integrity
-checks (same questions, no identifier clash, 22 contexts per question) and a
-split filter; the documentation script and all runs use it.\\
-\textbf{Why.} The pilot and the main run must read contexts through the same
-code; the previous merge could overwrite a context silently or fail with an
-unclear error.\\
-\textbf{Alternatives.} Copying the join into the notebook (two copies can
-drift); keeping it in the documentation script (wrong home for run-critical
-code); merging the two files on disk (duplicated data, broken C1/C4
-checksums).\\
-\textbf{Interview line.} ``Every run reads its contexts through one tested
-loader that refuses to start if the two context files don't line up
-exactly.''
-\end{decisionbox}
-
-\begin{decisionbox}{D148 · One model per process}
-\textbf{Decision.} Pilot and main runs go through the command-line script
-\texttt{models.run\_set}, one model per process, which calls the existing
-\texttt{runs.run\_model}; one notebook cell runs the three models in sequence
-and stops at the first failure.\\
-\textbf{Why.} A finished process always frees all GPU memory, so the models
-run unattended back to back; pilot and main run execute identical, tested
-code.\\
-\textbf{Alternatives.} Looping over models inside the notebook process (vLLM
-running in-process, D102, may not release memory); restarting the runtime by
-hand (requires presence, wastes compute units).\\
-\textbf{Interview line.} ``Each model runs in a fresh process through one
-tested script, so the pilot and the main run execute the same code and can't
-interfere through GPU memory.''
-\end{decisionbox}
-
-\begin{decisionbox}{D149 · Hardware guard and run logs}
-\textbf{Decision.} The run script stops on any GPU other than the A100,
-records \texttt{commit\_dirty}, and writes a timestamped log per model and
-mode.\\
-\textbf{Why.} D139 holds only if it is enforced; a commit hash alone does not
-identify the code if files were edited; the logs provide the measured times
-for the compute decision (D140).\\
-\textbf{Alternatives.} Relying on choosing the right GPU by hand; timing runs
-by hand (imprecise, lost if the session ends).\\
-\textbf{Interview line.} ``The hardware rule and the cost measurement are
-enforced and recorded by the run script itself.''
-\end{decisionbox}
-
-\begin{decisionbox}{D150 · Raw outputs outside git}
-\textbf{Decision.} Model outputs live in \texttt{runs/}; the canonical copy is
-on Google Drive, the local copy is git-ignored, and unit tests use short real
-examples copied into test files.\\
-\textbf{Why.} Outputs are generated data, not source; the main run is about
-ten times the pilot's 7.8\,MB; reported results are rebuilt from the shards by
-evaluator code that is in git.\\
-\textbf{Alternatives.} Committing outputs (heavy repository, data mixed with
-code); Git LFS (extra tooling and quota); committing only the pilot
-(inconsistent rule). Open for Block H: how readers obtain the raw outputs.\\
-\textbf{Interview line.} ``Raw generations are stored once, on Drive; the
-repository holds the code that produced and evaluates them, and the derived
-tables.''
-\end{decisionbox}
-
-\begin{decisionbox}{D151 · Clean notebooks, unedited outputs}
-\textbf{Decision.} Repository notebooks contain only working cells with
-header comments; outputs are never edited by hand, and an output that no
-longer matches its code is cleared, only when its content is preserved
-elsewhere.\\
-\textbf{Why.} Clean notebooks and honest records: every remaining output was
-printed by the code above it.\\
-\textbf{Alternatives.} Leaving scratch code in notebook 03; editing output
-text (falsifies the record); re-running notebook 03 (about 10 compute units
-to reproduce existing evidence).\\
-\textbf{Interview line.} ``Every output in the notebooks was printed by the
-code above it; where code was removed, I cleared its output rather than
-editing it.''
-\end{decisionbox}
-
-\subsection*{AI-usage log}
-
-\begin{description}
-\item[78.] Claude (Opus 5.5) retrieved and summarised the ORGANIZER and
-Block A--C chats with past-chat search. The final Block C handoff was not yet
-indexed; the student supplied it. Verified by the student against the plan.
-\item[79.] Claude wrote \texttt{retrieval/load.py} and
-\texttt{models/run\_set.py} without test files and proposed deferring the
-loader tests until after the GPU launch. The student caught this; 16 tests
-were written and passed before the push, restoring the project rule that every
-file ships with its tests.
-\item[80.] Claude designed the pilot launch (run script, notebook~04 launch
-loop with per-model processes and console logs on Drive, output check cell).
-Verified by 168 passing tests, the 384-shard completeness and commit check,
-and the run logs. Claude diagnosed the Llama slowdown (batch waits for the
-longest completion) from the logged per-shard times.
-\item[81.] Claude proposed the \texttt{.gitignore} check, which showed that
-\texttt{runs/} was not ignored, and the \texttt{nbformat} script that cleaned
-notebook~03 with assertions on the expected cell layout; the student ran and
-checked both.
-\end{description}
 \section{D2: Answer parser and outcome rules}
 
 \subsection{Finding: hand audit of the outcome rules and the hallucination flag}
@@ -2000,12 +1901,13 @@ not blind to the flag, since its subject was the flag's precision. The
 fact-based flag cannot count a wrong common-noun answer (e.g.\ \emph{pineapple
 juice}) as a hallucination, because it contains no entity or number.
 
-\begin{notebox}
-Reference to verify before Block G: an ACL 2023 study of open-domain QA
-evaluation (Kamalloo et al.) reports that lexical matching underestimates the
-accuracy of LLM answers. If confirmed against the ACL Anthology, it is cited
-here as prior evidence for Result 2.
-\end{notebox}
+\paragraph{Prior evidence.}
+The same failure is documented at scale by \citet{kamalloo2023evaluating}:
+re-judging open-domain QA answers by hand on NQ-open, they found that lexical
+matching underestimates the accuracy of every model they tested, and that more
+than half of its failures are answers equivalent in meaning to the gold answer.
+Our audit reproduces this pattern on a small scale: 7 of the 10 misjudged
+\textsc{OtherWrong} answers were the gold answer in another form.
 
 \subsection{What the models write}
 All 57{,}600 pilot completions were inspected before any rule was fixed. The
@@ -2352,18 +2254,10 @@ compute balance after the D3 judge session was not recorded and is estimated.
 
 \section{D5: Freeze and launch}
 
-\paragraph{Power check (D59).} Block A required the pilot to measure $p_d$,
-the share of questions on which two prompt conditions disagree, before the
-main run. Over the 96 pilot cells (model $\times$ meta-prompt $\times$ poison
-type $\times$ $\rho>0$, outcome Poisoned against the plain prompt), $p_d$ had
-median 0.11, 75th percentile 0.18 and maximum 0.28, giving McNemar power at
-$N=500$ for a five-point difference of 0.92, 0.75 and 0.56. About a quarter of
-single cells are therefore under-powered. Only 52 further prepared questions
-exist, which would raise the 75th-percentile power to about 0.78; reaching
-0.80 would need about 563 questions. Because the confirmatory F2 tests pool
-16 cells per question and single cells are exploratory, $N$ stays 500; this is
-a documented deviation from D59, and the main analysis reports the minimum
-detectable difference per cell (D178).
+\paragraph{Power check (D59).} Block A required the pilot to measure the share
+of questions on which two prompt conditions disagree, before the main run. The
+measurement, the resulting power and the decision to keep $N=500$ are reported
+in Section~\ref{sec:d5-power} (D178).
 
 \paragraph{Analysis plan.} The plan for the main results is fixed in
 \texttt{docs/analysis\_plan.md} before any main response exists (D180). It
@@ -2548,7 +2442,128 @@ including the download and the check.
 Block F reads the flags relative to their $\rho=0$ baseline, as the analysis
 plan requires.
 
+\chapter{Revisions to the Original Design}\label{ch:revisions}
 
+The design fixed in Block A was tested at every stage before the main run,
+and ten of its rules did not survive contact with the data or the software.
+This chapter lists each change in one place: what was planned, what a check
+revealed, and what replaced it. The earlier chapters keep the original text,
+with a note pointing to the revision, so that the history of the method stays
+readable.
+
+\begin{notebox}
+Three rules applied to every revision. It was triggered by a measured problem,
+not by a preference. It was made once and then validated; a fix that failed
+its validation was reported, not quietly replaced. And it was made before any
+main-run response existed: the main run used the version frozen at tag
+\texttt{evaluator-v1} (D181).
+\end{notebox}
+
+{\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{
+  >{\raggedright\arraybackslash}p{3.3cm}
+  >{\raggedright\arraybackslash}p{4.9cm}
+  >{\raggedright\arraybackslash}p{4.9cm}
+  >{\raggedright\arraybackslash}p{1.6cm}}
+\caption{Revisions to the Block A design, in the order they were made.}
+\label{tab:revisions}\\
+\toprule
+\textbf{Planned} & \textbf{What a check revealed} & \textbf{What changed} & \textbf{Decision} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Planned} & \textbf{What a check revealed} & \textbf{What changed} & \textbf{Decision} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+All questions except yes/no
+  & Comparison questions name their two candidate answers, so a false answer
+    from outside that pair would be implausible
+  & Bridge questions only (893 removed)
+  & D84 \\
+\midrule
+All models in 4-bit NF4 (D65)
+  & An environment check run before any data was generated showed that the
+    installed vLLM no longer supports bitsandbytes
+  & All models, including the helper, run unquantised in bfloat16; one
+    precision for all removes quantisation as a confounder
+  & D101 \\
+\midrule
+Strict paraphrase filter: any dropped name or number rejects (D108)
+  & About a third of the sample would have been replaced, systematically the
+    detail-rich passages: a selection bias created by a quality filter
+  & Omissions recorded but not blocking; additions and answer loss still
+    reject. Replacements fell from 32\% to 14\%
+  & D110, D111 \\
+\midrule
+False answer drawn from gold answers of the same entity type (D31, D107)
+  & A manual check found only 5 of 30 false answers plausible, which risked a
+    floor effect hiding every comparison
+  & False answers written by the helper model from the question, the gold
+    answer and the passage, under the same safety rules: 19 of 30 plausible
+    on the same questions ($p \approx 0.0005$)
+  & D115, D118 \\
+\midrule
+Output cap of 256 tokens (D66)
+  & 17\% of Llama's greedy answers were cut off before the answer line, mostly
+    under the consistency prompt, so RQ2 would have measured the cap
+  & Cap raised to 512 for all models; the prompts were not touched.
+    Truncation fell to 5\%
+  & D138 \\
+\midrule
+BM25 ties broken alphabetically (D142)
+  & 62\% of Swap poisons score exactly like their clean twin; the
+    alphabetical rule decided the top five in 21\% of Swap questions and
+    favoured clean passages
+  & Seeded random order among equal scores; retrieved Swap poisons rose from
+    0.76 to 0.85 per question
+  & D146 \\
+\midrule
+Four outcomes: Correct, Poisoned, OtherWrong, Abstain (D14)
+  & In the pilot, 8.5\% of Llama's responses had no answer line, and some
+    answers named both the gold and the false answer
+  & \textsc{NoAnswer} separated from \textsc{Abstain}; \textsc{Both} as its
+    own outcome. Accuracy and attack success keep every response in the
+    denominator
+  & D153, D155 \\
+\midrule
+Outcomes by text rules; judge only for the conflict flag (D47)
+  & A blind hand audit: rule outcomes Correct, Poisoned and Abstain were
+    exact (35/35), but only 10 of 20 \textsc{OtherWrong} answers were truly
+    wrong, mostly aliases
+  & A judge re-examined \textsc{OtherWrong} (D160). It reached
+    $\kappa = 0.836$ but failed the internal check fixed in advance (92.8\%
+    against 95\%), so the rules stay primary and the judge gives an
+    exploratory upper bound
+  & D160, D170 \\
+\midrule
+Hallucination: a wrong answer absent from every passage (D49)
+  & Word coverage flagged style, not invention (4 of 20 truly invented, 0
+    of 10 for Mistral); the next version, based on facts, produced 28 false
+    flags in 30 through matching artefacts
+  & Invented names and numbers, compared word by word (D161, D166).
+    Validated on fresh answers: precision 9/13, misses 0/18; rates are
+    always reported with these figures
+  & D157, D161, D166, D169 \\
+\midrule
+The pilot may only raise $N$ (D59)
+  & A quarter of single cells had less than 80\% power for a five-point
+    difference, and only 52 further prepared questions existed
+  & $N = 500$ kept as a documented deviation; the confirmatory tests pool
+    across cells, and every cell reports its minimum detectable difference
+  & D178 \\
+\end{longtable}
+}
+
+\paragraph{What did not change.}
+The research questions, the hypotheses, the experimental factors and their
+levels, the number of questions and the confirmatory tests F1--F4 are those
+written in Block A. The revisions changed how the data were built and how
+answers are scored, never what is asked or how it is tested. The compute plan
+and schedule of Section~\ref{sec:computeplan} were also replaced by measured
+values (D177).
 
 
 \chapter{Decision Log}\label{ch:decisions}
@@ -2564,13 +2579,13 @@ rejected, and a one-sentence justification for the oral discussion.
     inside the same repository.
   \item[Why.] Every phase must end with a push, and the commit history then
     records how the methodology was designed.
-    rule, risks losing work); build the full layout now (does A4's work out
-    of order).
+  \item[Alternatives.] Create the repository only in A4 (breaks the
+    push-per-phase rule, risks losing work); build the full layout now (does
+    A4's work out of order).
   \item[Interview line.] ``I versioned the research design from day one, so
     the repository shows how the methodology was decided.''
 \end{description}
 \end{decisionbox}
-
 \begin{decisionbox}{D2 --- Cite version 1 of the Zhou et al.\ survey}
 \begin{description}[nosep, leftmargin=0pt]
   \item[Decision.] Cite arXiv:2409.10102 version 1 (September 2024).
@@ -4290,7 +4305,7 @@ rejected, and a one-sentence justification for the oral discussion.
 \begin{decisionbox}{D178 --- N stays 500 (deviation from D59)}
 \begin{description}[nosep, leftmargin=0pt]
   \item[Decision.] $N=500$; the main analysis reports the minimum detectable difference per cell. \emph{Documented deviation from the rule of D59.}
-  \item[Why.] Pilot $p_d$ gave power 0.92 (median cell) but 0.75 (75th percentile); only 52 extra prepared questions exist (power about 0.78); confirmatory F2 tests pool 16 cells per question; single cells are exploratory.
+  \item[Why.] Pilot $p_d$ gave power 0.92 (median cell) but 0.75 (75th percentile); only 52 extra prepared questions exist (power about 0.79); confirmatory F2 tests pool 16 cells per question; single cells are exploratory.
   \item[Alternatives.] $N=552$ (rebuild of Blocks B--C, +10\% compute, still below 0.80); new data (impossible before the deadline).
   \item[Interview line.] ``A quarter of single cells were under-powered and more data was not available; my confirmatory tests pool across cells, so I kept 500 and report what each cell can detect.''
 \end{description}
@@ -4527,6 +4542,8 @@ ACL Anthology, arXiv) or the course PDF.
   & Matches the decisions taken in the chat; test-compiled \\
 
 \end{longtable}
+}
+
 \section{Block B}\label{sec:ailog-b}
 
 {\small
@@ -4572,8 +4589,9 @@ ACL Anthology, arXiv) or the course PDF.
   & \texttt{sampling.py}, \texttt{build.py}, tests
   & 49 tests pass; two builds give identical checksums \\
 48 & B1 notes and logs & This chapter's B1 content, D79--D98, entries 36--48 & Reviewed by the student \\
-
-
+49 & Colab GPU set-up and the bitsandbytes failure
+  & Set-up cells; diagnosis (removed support, mixed PyTorch in memory, browser cookies); options for the precision decision
+  & Each cell run by the student; support verified in vLLM's own list of methods; decision D101 taken by the student \\
 50 & Paraphrase prompt development
   & Prompt, three styles, two revisions
   & Outputs read and judged by the student on five pilot questions; prompt frozen after two targeted fixes \\
@@ -4585,18 +4603,16 @@ ACL Anthology, arXiv) or the course PDF.
   & 60 tests pass; failure lists inspected by the student \\
 53 & Revisions of the checks after the full run
   & Diagnosis of misfires; options A and B; measurement of option B
-
+  & Examples judged by the student; decision D111 taken by the student \\
 54 & Final question set and manual-check sheet
   & Replacement and saving cell; blind sampling script; result scripts
   & Run by the student; counts checked against the summary file; all 40 labels written by the student \\
-
 55 & Poison classes and framing templates
   & \texttt{poisons.py}, 15 templates, tests
   & Templates reviewed and accepted by the student; 72 tests pass \\
 56 & Poison construction and same-form targets
   & \texttt{poisoning/build.py}; diagnosis of the date example; D115
   & Examples inspected by the student; two builds give identical checksums \\
-
 57 & Poison checks, leak measure and frozen sample
   & \texttt{checks.py}, \texttt{freeze.py}, tests; diagnosis of the inflated leak count
   & 83 tests pass; examples inspected by the student \\
@@ -4612,7 +4628,6 @@ ACL Anthology, arXiv) or the course PDF.
 61 & Dataset card and Block B logs
   & \texttt{dataset\_card.md}; B4 notes; D116--D121; entries 57--61
   & Numbers checked against the metadata files; reviewed by the student \\
-  
 \end{longtable}
 }
 
@@ -4787,8 +4802,8 @@ ACL Anthology, arXiv) or the course PDF.
   & \texttt{docs/analysis\_plan.md}, \texttt{docs/main\_run.md}; D179--D181
   & Checked against Block A Sections 3.3--4.5 and decisions D147--D178; accepted by the student \\
 101 & Block D close
-  & State reports, notes, BLOCK\_D handoff
-  & Reviewed by the student \\
+  & State reports, notes, BLOCK\_D handoff. Two errors by Claude: the tag \texttt{evaluator-v1} was first created on commit \texttt{ce8d3a7}, which did not contain the analysis plan, because the command block continued after a failed \texttt{git add}; and the power at $N=552$ was first given as 0.78 instead of 0.79
+  & Reviewed by the student; tag deleted locally and on GitLab and recreated on \texttt{a93ec0c}, verified with \texttt{git ls-remote}; commands since chained so that a failure stops them; value corrected to 0.79 \\
 
   
   
@@ -4845,7 +4860,6 @@ ACL Anthology, arXiv) or the course PDF.
 
 
 \end{longtable}
-}
 }
 
 % ---------- Bibliography (activated once refs.bib exists) ----------
