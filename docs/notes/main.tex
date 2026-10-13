@@ -2831,6 +2831,86 @@ H4 & partly supported & interactions significant; type main effect not supported
 Open for F3: confidence intervals for the per-$\rho$ differences; the abstention explanation of the meta-prompt
 effect; the closed-book part of H1.
 
+\section{F3: Exploratory analyses}
+
+All analyses in this section are exploratory: estimates with 95\% intervals, no significance claims
+(analysis plan \S5). Differences are paired and use the question-clustered bootstrap (10{,}000 resamples,
+seed 20261009). Comparisons between groups of questions (prior belief, position, leaks, retrieval bins)
+also use question-clustered intervals, because all responses of a question fall in the same group (D264).
+Code: \texttt{analysis/exploratory.py}, \texttt{analysis/sensitivity.py}; tables:
+\texttt{results/analysis/explore\_*.csv}, \texttt{sensitivity\_*.csv}.
+
+\paragraph{How meta-prompts lower ASR.} The reduction comes mostly from abstention. For Mistral with the
+reliability prompt at $\rho=1$, ASR falls by 13.4 points (10.4--16.6), abstention rises by 18.5 (15.8--21.3)
+and accuracy does not change ($-0.5$, $-1.5$ to $0.4$); at low $\rho$ the same prompt also costs about 13
+points of accuracy. With the consistency prompt at $\rho=0.5$, Llama loses 5.1 points of ASR but also 4.8
+points of accuracy (1.8--7.7) while abstention rises by 11.6: the cost of meta-prompts is not confined to
+clean contexts. Of the answers poisoned under the plain prompt, 64--80\% stay poisoned under a meta-prompt;
+of those that change, more become abstentions than correct answers for Mistral (reliability: 18.6 vs 7.1\%)
+and Qwen (consistency: 14.2 vs 7.5\%), while Llama is balanced. Among answers poisoned only under a
+meta-prompt, 4--13\% had been correct under the plain prompt. The prompts make models more cautious,
+not more discerning.
+
+\paragraph{Crossover (O1).} Under rule-based scoring, ASR first exceeds accuracy at $\rho=0.75$ for all
+three models, with bootstrap interval $[0.75,0.75]$, and in 35 of the 36 single curves (Llama, plain prompt,
+Recency: $\rho=1$, interval 0.75--1). Under the judge-based upper bound, Llama's crossover moves to $\rho=1$
+(interval $[1,1]$) while Mistral and Qwen stay at $0.75$ (D265): for Llama the crossover depends on the scoring.
+
+\paragraph{Accuracy bracket.} The upper bound Acc$^{+}$ lies about 20 points above Acc everywhere (at
+$\rho=0$: Llama 62.7 vs 85.5\%, Mistral 64.1 vs 83.5\%, Qwen 62.9 vs 82.3\%), because the rules miss correct
+answers written in other forms. ASR$^{+}$ exceeds ASR by at most 6 points. Absolute accuracy is therefore
+known only within this bracket; ASR and all comparisons are far less sensitive to the scoring.
+
+\paragraph{Conflict flag against its baseline.} Relative to the same questions at $\rho=0$, the flag rises at
+every $\rho>0$ and peaks at $\rho=0.5$: Llama $+43.2$ points (40.4--46.0), Mistral $+14.2$ (12.3--16.2), Qwen
+$+23.6$ (20.9--26.2). At $\rho=1$, where passages no longer disagree with each other, it stays above baseline
+(Llama $+16.9$, Mistral $+1.4$, Qwen $+6.8$; all intervals exclude 0), reflecting conflict with the model's own
+knowledge or judge over-flagging, which cannot be separated here.
+
+\paragraph{Format and hallucination.} NoAnswer: Llama 6.2\% of greedy responses (5.1 points from the
+512-token cap, 1.1 stopped without an answer line), Mistral 1.4\% (all stopped), Qwen 0.1\%. Hall with
+passages: 0.6--2.2\% of all responses and 2.3--8.7\% of OtherWrong answers; without passages 45--54\% of all
+responses; the strict Block A version is higher (2.6--9.9\% with passages). Every Hall figure is read with the
+rule's measured precision (9/13) and miss rate (0/18). EM and F1 follow accuracy at every $\rho$.
+
+\paragraph{Prior knowledge (H1, third claim).} Closed-book accuracy is 11--15\% (upper bound 25--33\%), and
+1.6--2.2\% of closed-book answers already equal the target. On the 56--74 questions per model answered
+correctly without passages, ASR at $\rho=1$ is 55--64\%, the same as on the other questions (54--57\%, intervals
+overlapping): knowing the answer does not protect a model when every passage is false. This agrees with
+H1's claim and with \citet{wu2024clasheval}. On the 8--11 questions per model whose closed-book answer is
+already the target, ASR is higher at every $\rho$ (at $\rho=1$: 66--81\%), but with wide intervals; this is
+suggestive only.
+
+\paragraph{Retrieval.} About half of the BM25 contexts contain no answer-bearing passage at all, which is
+why ASR under retrieval is only 6--7\%. Read by effective $\rho$ (D144), ASR follows the controlled curve:
+13--17\% at an effective $\rho$ of 0.5 (controlled: about 15\%) and 52--61\% at 1.0 (controlled: 55--58\%).
+
+\paragraph{Position and leaks.} At $\rho=0.25$, Qwen adopts the single poisoned passage in 6.6\% of answers
+(3.9--10.0) when it comes first and in about 1\% at positions 1--3 (intervals not overlapping), a primacy
+effect; Llama shows a weaker pattern and Mistral none. Whether the original passage or a paraphrase is
+poisoned first (102 questions, D127) makes no visible difference. On the 70 questions whose poisoned
+passages still leak part of the gold (B4), ASR at $\rho>0$ is about 8--10 points lower for every model (for
+Llama 17.7\% vs 27.7\%, intervals not overlapping): leaks partly give the truth away, so ASR is slightly
+underestimated for these questions.
+
+\paragraph{Power of single cells.} From the main-run disagreement rates (median $p_d$ 0.151; pilot 0.11), the
+minimum detectable difference at 80\% power is 4.9 points in the median cell, 5.4 at the 75th percentile and
+6.3 at most; 43 of 96 cells have less than 80\% power for a five-point difference (the pilot predicted about a
+quarter). A non-significant single-cell difference below about 5--6 points is not evidence of no effect.
+
+\paragraph{Question audit and sensitivity analyses.} Of 73 candidates, each decided by hand, 9 questions are
+flagged: 1 gold error (the HotpotQA gold is wrong and the target true) and 8 comparison questions that
+passed the bridge filter (D84). Refitted without them, all 28 confirmatory tests keep the same direction and
+significance (D267). Refitted without the 70 leak questions, 26 of 28 keep their conclusion; the two that do
+not are the weakest prompt effects: Llama's ASR reduction with the reliability prompt (Holm $p=0.11$) and
+Mistral's accuracy cost with the consistency prompt (Holm $p=0.18$) (D266). The primary analysis keeps all
+500 questions.
+
+\paragraph{Reproducibility.} Every request has its own fixed seed derived from the project seed, condition,
+question and mode (D135), independent of batch order; no run was resumed; all generations ran on one GPU
+type (D139). GPU arithmetic is not guaranteed to be bit-identical, so a rerun can differ in individual tokens;
+all reported outputs are archived with a SHA-256 fingerprint (D185) and rescored by frozen code.
+
 
 
 \chapter{Decision Log}\label{ch:decisions}
@@ -4995,6 +5075,50 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{decisionbox}
 
 
+\begin{decisionbox}{D264 --- Clustered intervals for comparisons between groups of questions}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Rates compared between groups of questions (prior belief, position, original passage, leaks, retrieval bins) get question-clustered bootstrap intervals instead of Wilson intervals.
+  \item[Why.] All responses of a question fall in the same group, so Wilson intervals treated up to 12 correlated answers as independent and were far too narrow (8 questions shown as 96 observations). The plan's Wilson rule for per-condition rates is unchanged.
+  \item[Alternatives.] Wilson for everything (overconfident); dropping these analyses.
+  \item[Interview line.] ``When a group is defined by question, I resample questions, so eight questions are treated as eight, not ninety-six.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D265 --- Crossover also under the upper bound}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The crossover point is reported under rule-based scoring and under the judge-based upper bound (Acc$^{+}$, ASR$^{+}$).
+  \item[Why.] Acc$^{+}$ is about 20 points above Acc, so a crossover can depend on the scoring; it does for Llama (0.75 vs 1).
+  \item[Alternatives.] Rule-based crossover only (hides the dependence).
+  \item[Interview line.] ``For Llama, where accuracy and attack success cross depends on how I score; I report both.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D266 --- Sensitivity analysis without leak questions}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] F1--F4 are also refitted without the 70 questions whose poisoned passages leak part of the gold; exploratory, not in the plan.
+  \item[Why.] Leak questions have 8--10 points lower ASR; the check shows whether conclusions depend on them. Result: 26 of 28 unchanged; the two weakest prompt effects lose significance.
+  \item[Alternatives.] Reporting the leak effect only.
+  \item[Interview line.] ``Leaky poisons make attacks weaker, so I checked my tests without them; only my two weakest prompt effects depended on them.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D267 --- Audit result and the flagged-question sensitivity analysis}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] 9 of 73 candidates are flagged (1 gold error, 8 comparison questions); they stay in the primary analysis, and F1--F4 refitted without them keep all 28 conclusions.
+  \item[Why.] D188: flawed questions are documented and their influence shown, never removed after seeing results.
+  \item[Alternatives.] Removing flagged questions from the primary analysis (a post-hoc change of the data).
+  \item[Interview line.] ``Nine questions were flawed; removing them changes none of my conclusions.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D268 --- F2 pair check scaled to the number of questions}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The F2 completeness check expects $16\times$ the number of questions for test (a) and one pair per question for (b) and (c), instead of a fixed 8{,}000/500.
+  \item[Why.] The sensitivity analyses run F2 on fewer questions; for the full set the check is unchanged, and rerunning the primary analysis changed no result file.
+  \item[Alternatives.] A separate copy of F2 for the sensitivity runs (two definitions of the same test).
+  \item[Interview line.] ``The sensitivity runs use exactly the same test code as the primary analysis.''
+\end{description}
+\end{decisionbox}
 
 
 \chapter{AI-Usage Log}\label{ch:ailog}
@@ -5591,7 +5715,25 @@ ACL Anthology, arXiv) or the course PDF.
 175 & F1 close
   & F1 notes, decision log D250--D259, presentation note
   & Reviewed by the student \\
-
+179 & Exploratory module, first version
+  & Mistakes: a slot-0 check that compared texts in different formats (always 0); a deprecated pandas call (39 warnings). Both fixed once; the slot check replaced by the D127 count (102)
+  & Found in the output by Claude; fix run by the student \\
+180 & Interval method
+  & Mistake: Wilson intervals for comparisons between groups of questions, ignoring clustering; replaced by clustered intervals (D264); estimates unchanged
+  & Accepted by the student \\
+181 & F2 pair check
+  & Oversight: the check assumed 500 questions although a sensitivity analysis was planned; scaled (D268); primary results verified unchanged
+  & Verified by the student (empty diff) \\
+182 & Exploratory analyses and reading
+  & \texttt{analysis/exploratory.py} and tests; prompt effects, transitions, crossover, flags, bracket, format, Hall, closed-book, retrieval, position, leaks, power (D265)
+  & Run by the student; reading reviewed by the student \\
+183 & Sensitivity analyses and audit support
+  & \texttt{analysis/sensitivity.py} and tests; labelling rules for the audit sheet (D266, D267)
+  & Audit decisions made by the student \\
+184 & F3 close
+  & F3 notes, decision log D264--D268, presentation notes
+  & Reviewed by the student \\
+  
 
 \end{longtable}
 }

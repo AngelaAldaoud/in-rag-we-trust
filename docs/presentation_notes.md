@@ -318,3 +318,36 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - H1 partly, H2 partly, H3 supported (association), H4 partly, by a rule fixed before the tests (D250).
 
 
+### Finding: meta-prompts make models more cautious, not more discerning (F3)
+- **What it shows:** when a meta-prompt lowers ASR, most rescued answers become "unknown", not correct; Mistral with the reliability prompt at rho=1: ASR -13.4 points, abstention +18.5, accuracy unchanged.
+- **How to read it:** paired comparison on the same items; the transition table shows where each poisoned answer goes under the other prompt.
+- **What it means:** the prompts trade wrong answers for refusals and sometimes cost correct answers too (Llama, rho=0.5: -4.8 points).
+- **Its limitation:** exploratory; the abstention rule decides what counts as a refusal (audited, 15/15 correct).
+
+### Finding: where attacks win depends a little on how I score (F3)
+- **What it shows:** ASR passes accuracy at rho=0.75 for all models; with the judge-based upper bound, Llama crosses only at rho=1.
+- **How to read it:** rule-based accuracy misses correct answers written differently, so the true accuracy lies between Acc and Acc+ (about 20 points apart); ASR moves by at most 6 points.
+- **What it means:** conclusions about ASR are robust; absolute accuracy levels are a range.
+- **Its limitation:** the upper bound uses the judge, which itself is imperfect.
+
+### Finding: knowing the answer does not protect the model (F3, H1)
+- **What it shows:** on questions a model answers correctly without passages, ASR at rho=1 is still 55-64%, the same as on other questions.
+- **How to read it:** closed-book answers split the questions into "known" and "not known"; intervals resample questions.
+- **What it means:** with all passages false, context overrides correct prior knowledge, as ClashEval reported.
+- **Its limitation:** "known" means correct in one greedy closed-book answer; the group has 56-74 questions per model.
+
+### Finding: retrieval, position and leaks (F3)
+- **What it shows:** under BM25, half the contexts contain no answer-bearing passage; read by effective rho, ASR follows the controlled curve. Qwen is poisoned more when the poison comes first (6.6% vs ~1%). Leaky poisons are adopted 8-10 points less often.
+- **How to read it:** all with question-clustered intervals.
+- **What it means:** the controlled results transfer to retrieval when poisons are actually retrieved; position matters for Qwen; imperfect poisons weaken the attack.
+- **Its limitation:** exploratory; leak questions may differ in other ways too.
+
+### Robustness: flawed questions and leaks do not drive the conclusions (F3)
+- **What it shows:** 9 flagged questions (1 gold error, 8 comparison); without them, all 28 confirmatory conclusions are unchanged. Without the 70 leak questions, 26 of 28 are unchanged.
+- **How to read it:** each test is refitted on the reduced set and compared with the primary result.
+- **What it means:** the findings do not hinge on data flaws; the two weakest prompt effects are fragile.
+- **Its limitation:** the audit screen can miss flawed questions that show no signal.
+
+### Limitation: single cells are under-powered for small effects (F3)
+- **What it shows:** in a single cell, differences below about 5-6 points cannot be detected reliably; 43 of 96 cells have under 80% power for 5 points.
+- **What it means:** "not significant" in one cell is not "no effect"; my confirmatory tests pool cells.
