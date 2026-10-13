@@ -1,0 +1,74 @@
+question_id,reason,gold_error,comparison,note,question,gold_answer,target_answer
+5ac3aa3655429939154138a2,gold_error,False,False,,What Albanian department is reasonbile for an international integration effort first started in 2014?,Ministry of European Integration,Ministry of Foreign Affairs
+5ae7281c5542991e8301cb69,gold_error,False,False,,The fourth episode The Simpsons' seventh season has what kind of theme?,spiritual,comedic
+5ae5fa38554299546bf82ff1,gold_error,False,False,,Who directed the 2014 American biographical survival drama film which Laura Elizabeth Dern was nominated for the Academy Award for Best Supporting Actress in,Jean-Marc Vallée,David Fincher
+5a7e1a5455429965cec5ea5f,gold_error,False,False,,Moonlight starred the actor who played whom on the remake of Hawaii Five-0?,Steve McGarrett,Danny Williams
+5aba52e655429939ce03dc94,gold_error,False,False,,This term about a playwright who lived from 1564-1616 presented what about his works? ,chronological collection of critical quotations,A thematic analysis of Shakespeare's tragedies
+5ae75c395542991bbc9761f7,gold_error,False,False,,The revue Putting It Together was devised by Stephen Sondheim and what actress best known as Miss Marple?,Julia McKenzie,Angela Lansbury
+5a849c1b5542997175ce1ef9,gold_error,False,False,,What sort of activist is the author of The Irrational Atheist? ,alt-right,libertarian
+5ab84bf555429916710eb01f,gold_error,False,False,,In 1991 Euromarché was bought by a chain that operated how any hypermarkets at the end of 2016?,"1,462",789
+5a8da81e554299068b959d7e,comparison,False,False,,"Vanessa Bley is what person who organizes and often finances concerts, plays, or operas, performing a role?",impresario,agent
+5ab529965542990594ba9d1e,comparison,False,True,asks which of two named candidates; gold is one of them,Which casino closed first The Atlantic Club Casino Hotel or Trump Plaza Hotel and Casino ? ,The Atlantic Club Casino Hotel,"January 1, 2015"
+5adf33a05542993344016c22,gold_error,False,False,,Which award did the author of Anastasia on Her Own win in 2002?,the 2002 Rhode Island Children's Book Award,the 2002 Newbery Medal
+5a7265815542990c210a411b,gold_error,False,False,,What is the call sign of the airline that operates the flight with United Express Flight 3411 incident?,Brickyard,Skyline
+5ab442645542991751b4d70c,gold_error,False,False,,What type of the district is the Downtown Bentonville of the state in the southeastern region of the United States which is home to over 3 million people as of 2017?,business district,residential district
+5abe92de5542993f32c2a16b,gold_error,False,False,,Which feature does the G-shock watch have that is tested by a leakage test?,water resistance,shock resistance
+5ae241005542994d89d5b3a4,gold_error,False,False,,What nationality was the pirate who along with Robert Culliford stole Jean Fantin's ship ?,Scottish,English
+5ae3368b5542991a06ce995b,gold_error,False,False,,What relationship did the inventors of the technique through which plywood can be bent in three dimensions have?,husband and wife,father and son
+5a77b9a35542995d83181280,comparison,False,True,asks which of two named candidates; gold is one of them,"Who has written more #1 songs, Chris DeStefano or Brett Eldredge?","Christopher Michael ""Chris"" DeStefano",Adolfo José Valencia Mosquera
+5a8f141e55429918e830d181,gold_error,False,False,,What was the setting for Raphael Coleman's best known film?,Victorian England,Edwardian England
+5ac3a8525542993915413895,gold_error,False,False,,LJM was one of what type of company Andrew Fastow used in the Enron scandal? ,independent ghost-entities,publicly traded subsidiaries
+5ae199305542997b2ef7d20e,gold_error,False,False,,In what european city is a location of the college from which the woman known as Comic Book Girl 19 received her degree?,"Lacoste, France","London, England"
+5abae88c554299660624167e,gold_error,False,False,,What is this subfamily within the cat family Felidae named by Reginald Innes Pocock that is descendant of Pseudaelurus?,Pantherinae,Felinae
+5ae2f5b955429928c423957e,gold_error,False,False,,"What language, traditionally written with the ancient Libyco-Berber script, is closely related to the Tumzabt and Teggargrent languages?",The Tugurt language,The Kabyle language
+5ae2a9c6554299492dc91c42,gold_error,False,False,,Which New Jersey-based manufacturer of suitcases and bags for travel is located in the Shops at Columbus Circle in New York City?,"Tumi Holdings, Inc.",Samsonite
+5a89d36e554299515336132a,gold_error,False,False,,Who directed the film based on the rock opera 5:15 appeared in?,Franc Roddam,Ken Russell
+5a724ba25542990c210a40c7,gold_error,False,False,,What is the English translation of the social group which Baran Khan Kudezai was a part of?,grand assembly,tribal council
+5a7cdf89554299683c1c63b0,gold_error,False,False,,The Environment Act 1995 passed under the tutelage of a politician associated with what political party?,British Conservative Party,British Labour Party
+5a7fa2ad5542994857a76792,comparison,False,False,,"What was the book that was centered around a rule that is expressed algebraically, or quantities ""a"" and ""b"" with ""a"" > ""b"" > 0?","The Story of Phi, the World's Most Astonishing Number",The Number Devil: A Mathematical Adventure
+5a90991d5542990a9849366b,gold_error,False,False,,In which state is Stewart Nozette imprisoned?,Indiana,California
+5a902e755542995651fb50de,gold_error,False,False,,Shadi Attieh is often referred to as the Lebanese version of a footballer who plays for what Major League Soccer team?,Los Angeles Galaxy,New York Red Bulls
+5ae7e1fc55429952e35ea9cc,comparison,False,False,,What color clothing do people of the Netherlands wear during Oranjegekte or to celebrate the national holiday Koningsdag? ,orange,blue
+5adfe37c554299025d62a377,gold_error,False,False,,Kasper Peter Schmeichel is the son of a professional footballer who was voted what in 1992 and 1993?,IFFHS World's Best Goalkeeper,FIFA World Player of the Year
+5a7a103b5542990783324e27,gold_error,True,False,"https://en.wikipedia.org/wiki/Good_Kid,_M.A.A.D_City — Money Trees is on this album; its successor is To Pimp a Butterfly",What album succeeded Kendrick Lamar's album that had the song Money Trees in it?,Section.80,To Pimp a Butterfly
+5a84d2775542994c784dda5f,gold_error,False,False,,What disease is the Wolf Prize winner and Vadim  Bereinskii-inspired Nobel laureate suffering from?,dementia,Alzheimer's
+5abe49765542991f6610611f,gold_error,False,False,,The Bulls–Knicks rivalry involved a well known player who was how tall? ,"6'5""","7'2"""
+5ae305355542992decbdcdc2,gold_error,False,False,,What season three X Factor winner has worked with songwriter Ryan Tedder?,Leona Lewis,Alexandra Burke
+5ac3b07055429939154138b8,gold_error,False,False,,"What is the largest non-capital city in Queensland, Australia that includes a suburb named after Helena White? ",Gold Coast in Queensland,Cairns
+5ab5d27a554299494045f073,gold_error,False,False,,What is the Landsman Kill near New York State Route 308?,a body of water,a bridge
+5a81b7205542990a1d231e79,gold_error,False,False,,How long did the king who created the coins of the hawaiian dollar rule?,from 1825 to 1854,from 1840 to 1872
+5ac3bab155429939154138fb,gold_error,False,False,,"The House of Hanover held the British throne until after Victoria's death, when it was past to the dynasty that ruled which duchy?",Ernestine,Jack Chick
+5a730abe5542994cef4bc42f,gold_error,False,False,,"What ""sport"" involving animals dates all the way back to the Tang Dynasty and continued to the beginning of the 19th century?",Cricket fighting,Snake wrestling
+5adccf645542990d50227d32,gold_error,False,False,,"From which city in Oklahoma is the singer of a song that peaked at number 24 on ""Billboard"" magazine's pop chart in December 1953?",Oklahoma City,Tulsa
+5a7320565542991f9a20c61d,comparison,False,True,asks which of two named candidates; gold is one of them,who is younger Keith Bostic or Jerry Glanville ?,Keith Bostic,Jerry Rice
+5abffda6554299012d1db55b,gold_error,False,False,,What is the main nickname of the professional association football club where Ewan Fenton spent thirteen seasons?,"""the Seasiders""",the Robins
+5a800ca555429969796c1bac,gold_error,False,False,,"The ""New York Times"" bestselling book ""The 50th Law"" contains lessons and anecdotes from this historical figure who was a classical Greek (Athenian) philosopher who is known mainly through the writings of which philosopher?",Plato,Aristotle
+5a8712095542991e771816af,gold_error,False,False,,Marwan Hage played for a college team that sponsors how many varsity sports teams?,17,12
+5a794119554299029c4b5f3c,comparison,False,True,asks which of two named candidates; gold is one of them,"Who was born first, Nellee Hooper or Baz Luhrmann?","""Baz"" Luhrmann","Joseph ""Joe"" Estevez"
+5ab7867c5542992aa3b8c822,gold_error,False,False,,Who animated the TV anime adaptation of Dies irae?,studio A.C.G.T,studio DEEN
+5adddce05542992200553b70,gold_error,False,False,,Graham Linehan was the creator of the Ash Atalla-produced sitcom for what UK channel?,Channel 4,BBC One
+5a7633ff5542994ccc918712,comparison,False,False,,"When was the Chief Aerodynamicist for the British supersonic land vehicle, whose goal is to match or exceed 1000 mph achieving a new world land speed record, born?",1932,1965
+5a843b045542996488c2e518,gold_error,False,False,,"Which castles, besides Bamburgh Castle, are located on the northeast coast of England?",Lindisfarne Castle,Alnwick Castle
+5ab516485542990594ba9cfc,comparison,False,False,,"The historical Nimavar school in the Nimavar Bazaar, or bazar, is located in which country?",Iran,Turkey
+5ae1fd995542997283cd2313,gold_error,False,False,,Is It Just Me? was a single by the English rock band from what Suffolk city?,Lowestoft,Ipswich
+5abd0553554299700f9d7963,gold_error,False,False,,"Archie Norman will succeed Robert Swannell as chairman of what British multinational retailer that is headquartered in the city of Westminster, London?",Marks and Spencer plc,Tesco plc
+5a895d305542993b751ca931,gold_error,False,False,,"Which football team does Lewis Young's older brother, Ashley Young, play for?",Premier League club Manchester United and the England national team,Championship club Aston Villa and the England national team
+5a848b5c5542997175ce1ef2,gold_error,False,False,,"What sub-genre of heavy metal describes the band ""It's Alive""?",Glam metal,Thrash metal
+5a8ed87955429917b4a5bdd2,gold_error,False,False,,Which character in The Hunt for Red October was played by the actor who made his film debut in The Revolutionary,Skip Tyler,Jack Ryan
+5abe822155429976d4830b48,gold_error,False,False,,Who directed the film where Susanne Pollatschek voiced Olivia Flaversham?,"Burny Mattinson, David Michener, and the team of John Musker and Ron Clements",Don Bluth and Gary Goldman
+5adebbbd554299728e26c793,gold_error,False,False,,"Northland Mall was the first directionally-named shopping center in Columbus, 5 years before which shopping center at the intersection of US-40 and I-270?",Westland Mall,Eastland Mall
+5ade1f1c55429939a52fe82d,comparison,False,False,,"Len Wiseman directed ""Live Free or Die Hard"" which is the 4 installment in the Die Hard film franchise base on what character?",John McClane,Harry Tasker
+5ac1c9a15542994ab5c67e1c,gold_error,False,False,,What is the population of the city in which the first edition of the South American Youth Olympic Games were held?,more than 10 million,5 million
+5a8fb5905542997ba9cb32f6,gold_error,False,False,,The Party Machine with Nia Peeples was executive produced by the talk show host whose show originally ran during what time period?,from 1989 until 1994,from 1999 until 2004
+5ae077735542993d6555eb6d,gold_error,False,False,,What type of sprite did Milada Šubrtová portray in Antonín Dvořák's reknowned opera?,water sprite,forest sprite
+5a7b65ab5542997c3ec97144,gold_error,False,False,,"Where did the architect of the Governor's House, located in Knutsford, graduate from college?",Cambridge University,Oxford University
+5a8a39195542992d82986f04,gold_error,False,False,,Blues to the Bush is an album by The Who that can still be found on what e-commerce platform that was founded in 1995?,eBay Inc.,Amazon.com
+5abd2eb255429933744ab750,comparison,False,True,"asks public or private, answer is private",Is the university that Mary Jane Phillips-Matz attended in New York a public or private school?,private,explosives
+5ab682dc55429954757d3318,gold_error,False,False,,"author of the popular ""Getting Started in Electronics"" founded Micro Instrumentation and Telemetry Systems (MITS) in what state?","Albuquerque, New Mexico","Austin, Texas"
+5a74af7e55429916b01641d2,comparison,False,True,"asks Johan Leysen or George Clooney, answer is Johan Leysen","Who was born first, Johan Leysen or George Clooney?",Johan Leysen,George Clooney (born 6 May 1961)
+5ab41d855542996a3a969f4b,comparison,False,True,"asks left-hand or right-hand, answer is right-hand","Is the Pakistan fast bowler who joined the Kent County Cricket Club in June, 2011 a left-hand or right-hand batsmans?",right-hand,fourth-largest
+5a89d48c554299515336132e,gold_error,False,False,,"What Electoral Division in Victoria contained a suburb of Melbourne with a population of 25,147 at the 2016 Census?",The Division of Fawkner,The Division of Kooyong
+5a74c6a655429974ef308c5d,gold_error+comparison,False,True,"asks Pellegrini or Maren, answer is Jerry Maren; https://en.wikipedia.org/wiki/Jerry_Maren and https://en.wikipedia.org/wiki/Margaret_Pellegrini",Who was born first Margaret Pellegrini or Jerry Maren?,"Gerard Marenghi (born January 24, 1920)","Margaret Pellegrini (born June 12, 1925)"
+5add596f5542990dbb2f7e4d,gold_error,False,False,,"Grown-Ups starred the actor who was best known for which role on  ""'Allo 'Allo!""?",Captain Hans Geering,Rene Artois
+5ae25c815542992decbdcccc,gold_error,False,False,,"What trio was the songwriter of ""What Are We Doin' Lonesome"" from?",trio with his younger brothers Steve and Rudy,trio with his cousins  Jim and Tom
+5ac4d717554299076e296e0e,gold_error,False,False,,In which part of New York was the singer who released the song No Problem raised ?,Harlem,Brooklyn
