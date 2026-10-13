@@ -230,6 +230,10 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to read it:** the notebook prints the commit (a93ec0c = tag evaluator-v1) and 0 changed files; compute 65.5 units, above my 55-unit threshold; storage far above the need.
 - **What it means:** every main result comes from the frozen, validated code; the run was not at risk of running out of budget or space.
 - **Limitation:** the compute figures are Colab's own counter, read by hand at phase boundaries.
-
+## Block E · E2 Greedy run (how to explain it to Prof. Ferrara)
+- **What it shows:** the 96,000 primary answers (3 models × 64 conditions × 500 questions) were generated in 1 h 54 min for 10.2 compute units, all by the frozen code.
+- **How to read it:** the table gives load time, generation time and output tokens per model; Llama is slowest because it writes the most.
+- **What it means:** every shard is complete and every condition contains the same 500 questions, so all my comparisons are paired, question by question.
+- **Limitation:** greedy decoding on a GPU is deterministic only up to small numerical differences (D139); a rerun on other hardware might differ in rare answers.
 
 

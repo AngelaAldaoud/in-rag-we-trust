@@ -2470,6 +2470,52 @@ checkout (D182), the storage record (D183), the per-phase compute record
 cell without the pilot's folder setting (D186).
 
 
+\section{E2: Greedy run}
+
+\paragraph{Procedure.} Notebook~06 cell~3 ran \texttt{models.run\_set} with
+\texttt{--split main --modes greedy} for Qwen, Mistral and Llama in that
+order, each model in its own process (D148, D179); every shard was written
+to Drive as soon as it was complete (D136).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\hline
+Model & Load (s) & Generation (s) & Wall time (min) & Output tokens \\
+\hline
+Qwen    & 224.1 & 1460.7 & 28.5 & 2{,}015{,}738 \\
+Mistral & 117.4 & 1900.4 & 33.9 & 1{,}316{,}179 \\
+Llama   & 123.5 & 2972.7 & 51.9 & 5{,}240{,}101 \\
+\hline
+Total   &       &        & 114.3 & 8{,}572{,}018 \\
+\hline
+\end{tabular}
+\caption{Greedy main run, 64 shards of 500 prompts per model, NVIDIA A100-SXM4-40GB.}
+\end{table}
+
+\paragraph{Compute.} 64.38 units before and 54.22 after: 10.2 units for
+1\,h\,54\,min (11:01--12:56).
+
+\paragraph{Completeness.} 192 shards (64 per model), each with 500 records
+for 500 distinct questions and exactly one completion per record; every
+record carries commit \texttt{a93ec0c} with no local changes; no temporary
+files were left. All 192 shards contain the same set of 500 questions, so
+the pairing of conditions per question, on which every confirmatory test
+relies, is intact.
+
+\paragraph{Interruption.} At about 12:28 the laptop was closed briefly and the
+Mac slept; the browser lost its connection, but the Colab runtime continued
+and the browser re-attached. Llama's log reports 64 shards written and none
+skipped: no shard was lost, repeated or regenerated. From then on the Mac
+was kept awake (\texttt{caffeinate}).
+
+\paragraph{Observations for the sanity checks (not interpreted).} Llama
+produced about 2.6 times as many output tokens as Qwen and 4 times as many
+as Mistral. Mistral's shards took longer than Qwen's despite fewer tokens,
+consistent with a few long answers setting the time of a whole shard.
+Truncation and NoAnswer rates per model are checked when scoring (E5).
+
+
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
 rejected, and a one-sentence justification for the oral discussion.
@@ -4727,6 +4773,16 @@ ACL Anthology, arXiv) or the course PDF.
 104 & Preflight cells
   & Notebook~06 cells 1--2 (environment at the tag, Drive, storage, shard counts)
   & Run by the student: commit \texttt{a93ec0c}, no changed files, empty run folder, storage and compute recorded \\
+
+
+
+105 & Greedy launch and monitoring
+  & Notebook~06 cell~3; finish-time estimates per model; diagnosis of the browser disconnection after the Mac slept (runtime still running, no resume needed)
+  & Run by the student; estimates close to the measured times (greedy 1\,h\,54\,min against 1\,h\,45\,min--2\,h\,15\,min); disconnection confirmed harmless by the logs (64 written, 0 skipped) \\
+106 & Greedy completeness check
+  & Notebook~06 cell~4: shard, record, completion and commit checks, plus a new check that all shards hold the same questions
+  & Run by the student: no problems; one question set across all 192 shards \\
+
 \end{longtable}
 }
 }
