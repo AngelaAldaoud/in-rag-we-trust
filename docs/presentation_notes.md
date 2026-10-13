@@ -268,3 +268,15 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **How to explain it to Prof. Ferrara:** "This is not a new method. I built a controlled setting where I decide exactly how many passages lie and how, and measured three open models under three prompts that differ by one sentence. All rules and tests were fixed before the main run."
 - **Likely question:** "Isn't this already known?" **Answer:** "That models can be misled, yes, and I cite it. What I measure is whether a prompt-level instruction helps, at what cost on clean evidence, and whether noticing a conflict goes with resisting it."
 - **Limitation to say first:** small open models and synthetic poisons, so a controlled stress test, not everyday conditions.
+
+### Paper · Methodology (G1.3)
+- **What it says:** one formula defines the experiment: for each question, four true passages and a bridge; raising ρ replaces one true passage by its own poisoned twin, the same ones for every type, prompt and model. So every comparison is paired.
+- **How to explain it to Prof. Ferrara:** "I control exactly how many passages lie and how. The prompts differ by one sentence. All scoring rules and the four confirmatory test families were fixed and validated on a separate pilot before the main run."
+- **Likely question:** "Why trust your scoring?" **Answer:** "I audited it by hand: the rules for correct, poisoned and abstain were exact; for other-wrong answers they are conservative, so my accuracy is a lower bound. The conflict judge agrees with my blind labels at kappa 0.735."
+- **Likely question:** "Is ρ = 0.5 a majority?" **Answer:** "No, a tie. The majority starts at 0.75. My hypothesis is about when the lie stops being outnumbered, and I only test that the effect grows."
+
+### Paper · Revisions table (carried from G1.0)
+- **What it shows:** nine rules that changed after a check, each with the check's number.
+- **How to read it:** left, the plan; middle, what a measurement showed; right, the fix.
+- **What it means:** the method was tested, not assumed, and every fix came before the main run, so no change could be fitted to the main results.
+- **Its limitation:** the pilot-based fixes rely on small hand-labelled samples (20–300 items), so their error rates have wide intervals.

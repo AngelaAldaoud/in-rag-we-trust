@@ -4722,7 +4722,41 @@ rejected, and a one-sentence justification for the oral discussion.
 \end{description}
 \end{decisionbox}
 
+\begin{decisionbox}{D214 --- H1 wording: tie, not majority}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The paper states H1's steepest point as where the poisoned passages ``stop being outnumbered''; the notes' phrase ``become the majority'' at $\rho=0.5$ is imprecise, since with $k=4$ that ratio is a tie (D35) and the majority starts at 0.75. The paper also states that F1 tests only the rise, and that its steepest point is read from the curves.
+  \item[Why.] The hypothesis's reasoning (the majority rule) is unchanged; only its wording is made exact. F1 was frozen as a trend test (analysis plan), so claiming that it tests the steepest point would overstate it.
+  \item[Alternatives.] Keeping ``majority'' (factually wrong for $k=4$); restating H1 as steepest at 0.75 (would change a pre-registered hypothesis after the pilot).
+  \item[Interview line.] ``At 0.5 the passages are tied; my hypothesis was about the moment the lie stops being outnumbered, and I test only that the poison effect grows with $\rho$.''
+\end{description}
+\end{decisionbox}
 
+\begin{decisionbox}{D215 --- Paper notation}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] $\pi$ denotes the prompt; $\sigma_i$ the poisoning order and $\varphi_i$ the passage order of question $i$; the context formula writes the twin replacement explicitly.
+  \item[Why.] The notes used $\pi$ for both the prompt and the passage order; the explicit formula makes nesting and pairing visible in one line.
+  \item[Alternatives.] Keeping the notes' symbols (one symbol, two meanings).
+  \item[Interview line.] ``One formula shows that raising $\rho$ swaps one passage for its own poisoned twin and nothing else.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D216 --- What the Methodology leaves to the repository}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The full judge prompts, template lists, software versions beyond vLLM, and compute figures are not in the Methodology; compute goes to Results 3.1, the rest stays in the repository documentation.
+  \item[Why.] The page budget (D209); the paper keeps everything needed to understand and judge the method, the repository keeps everything needed to rerun it.
+  \item[Alternatives.] An appendix (counts toward the 8 pages).
+  \item[Interview line.] ``The paper explains the method; the repository has every detail needed to reproduce it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D217 --- Revisions table in the paper; no pipeline figure}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] A nine-row table of design changes is the Methodology's only float; no pipeline figure.
+  \item[Why.] At most four floats (D209); the Results need three; the changes show critical handling of the method, which the course values, while the pipeline is described by the formal definition.
+  \item[Alternatives.] A pipeline figure instead of the table (decorative; the table carries evidence).
+  \item[Interview line.] ``I used my one methodology float to show what my checks changed, not to draw boxes.''
+\end{description}
+\end{decisionbox}
 \chapter{AI-Usage Log}\label{ch:ailog}
 The course requires a disclaimer stating which AI models were used, for what
 purposes, and to what extent their outputs were modified or verified. This
@@ -5270,6 +5304,12 @@ ACL Anthology, arXiv) or the course PDF.
 139 & Introduction
   & Five paragraphs of the paper's Introduction, D211--D213
   & Every factual claim checked against the verified literature table and the official abstracts; read and accepted by the student; compiled \\
+140 & Methodology
+  & Six subsections of the paper's Section~2, including the formal definition and the revisions table; D214--D217
+  & Every number checked against the notes, \texttt{docs/analysis\_plan.md} and the Block E handoff; read and accepted by the student; compiled \\
+141 & Hypothesis wording
+  & Found that the notes call $\rho=0.5$ a majority although it is a tie (D214), and that F1 tests the rise rather than the steepest point
+  & Checked against D35 and the frozen analysis plan; the hypothesis itself unchanged \\
 \end{longtable}
 }
 
