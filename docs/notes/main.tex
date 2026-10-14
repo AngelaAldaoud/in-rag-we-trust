@@ -2967,6 +2967,25 @@ retrieval by effective $\rho$, position effects, closed-book and prior-belief re
 accuracy bracket, per-cell power and self-consistency. The reproducibility facts are in the F3 section of
 these notes (D135, D139, D185). Limitations to state are fixed in D302.
 
+\section{G2.1: Length and floats}
+
+\paragraph{Text width.} The sn-jnl text width, measured in the compiled paper, is 372\,pt (13.1\,cm), not the
+15.7\,cm assumed in D275; the figures were being scaled to 83\%, printing their 9\,pt fonts at about 7.5\,pt.
+Figures are now drawn at 5.15\,in, Fig.~2's height reduced from 6.2 to 4.4\,in, and the T2 evidence column is set
+relative to the line width; tests updated (D304).
+
+\paragraph{Length.} References are outside the 8-page body (D305). Measured on the compiled paper, the
+Methodology took 3.9 pages against a budget of 2.5. Two trimming passes (D306, D307) removed repetitions of
+the revisions table, the template example, the paraphrase and target checks and the fact-checking reference
+in the Introduction; the rates are inline; the revisions table went from 9 to 5 rows, with the removed rows
+stated in the text. Two corrections were made: the audit result (now from macros) and the power check, stated
+as a pilot estimate with the kept $N$ as a deviation. The Results now start at the bottom of page 5; moving the
+revisions table to the repository is kept in reserve if the final body exceeds 8 pages.
+
+\paragraph{Floats.} The Results use Fig.~1 and Fig.~2 (D303, D307). Fig.~3, Fig.~4 and Tables T1--T3 stay in the
+repository and are cited by the text; Fig.~5 is for the slides.
+
+
 
 \chapter{Decision Log}\label{ch:decisions}
 Each decision records what was chosen, why, which alternatives were
@@ -5027,6 +5046,50 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``Every limit I know of is in the paper, each stated once.''
 \end{description}
 \end{decisionbox}
+\begin{decisionbox}{D303 --- Results floats}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The Results use Fig.~1 (Acc and ASR against $\rho$), Fig.~2 (meta-prompt differences) and, initially, T2 (verdicts); amended by D307 (T2 out).
+  \item[Why.] Each carries what text cannot: the shape across $\rho$ and the mechanism of the prompt effect. Single values (flags, types, robustness) fit in sentences with macros.
+  \item[Alternatives.] Fig.~3 instead of Fig.~2 (RQ2's mechanism lost); T1 (28 rows, too long).
+  \item[Interview line.] ``Figures show shapes; single numbers are in the text, and every other figure is in the repository.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D304 --- Figures drawn at the measured text width}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] sn-jnl width 5.15\,in (372\,pt, measured) in \texttt{figures.py}; Fig.~2 height 4.4\,in; T2 column \verb|p{0.64\linewidth}|; tests updated.
+  \item[Why.] At the assumed 6.2\,in the figures were scaled to 83\% and their fonts printed below 8\,pt.
+  \item[Alternatives.] Keeping the scaling (small fonts); scaling tables down (unreadable).
+  \item[Interview line.] ``I measured the template's text width instead of trusting a number, and redrew the figures at true size.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D305 --- References outside the 8 pages}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The 8-page limit applies to the body; the references follow it. Student's decision; the exact course sentence is to be checked once before submission.
+  \item[Why.] The body needs every page for the results and their discussion.
+  \item[Alternatives.] G1's stricter reading (references inside the 8 pages), which would force cutting discussion.
+  \item[Interview line.] ``The body is eight pages; the references come after it.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D306 --- First trim of the Introduction and Methodology}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Cuts M1--M8 and O2: repetitions of the revisions table, template example, paraphrase and target checks, shorter BM25 and scoring text, revisions table 9 to 7 rows, the fact-checking reference; plus the audit and pilot-power corrections.
+  \item[Why.] The Methodology was 1.4 pages over budget; D209 says to cut method detail, never the discussion.
+  \item[Alternatives.] Cutting the Results or the discussion.
+  \item[Interview line.] ``I cut repetition from the method, not findings from the results.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D307 --- Second trim; T2 out of the paper}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] T2 leaves the paper (verdicts stated in one sentence per research question; T2 stays in the repository); hypotheses and rates compressed; Introduction paragraph 4 shortened; revisions table 7 to 5 rows, the removed rows becoming clauses in Sections 2.3 and 2.4; Results text about 0.85 page. Moving the revisions table out is kept in reserve.
+  \item[Why.] The first trim saved about 0.2 page, not the 1.1 estimated; T2 repeats what the text states, while the revisions table is unique evidence of the method's critical handling.
+  \item[Alternatives.] Moving the revisions table out now; dropping Fig.~2.
+  \item[Interview line.] ``When the space ran out, I kept the evidence of how my design changed and moved the summary table to the repository.''
+\end{description}
+\end{decisionbox}
 \section{Block F}\label{sec:decisions-f}
 
 \begin{decisionbox}{D250 --- Hypotheses split into tested and descriptive parts; verdict rule fixed}
@@ -5871,6 +5934,18 @@ ACL Anthology, arXiv) or the course PDF.
 203 & Notes repair
   & Block F's AI-log rows 176--178 had never been pasted; restored word for word from the Block F chat; the Block F table's caption and label (which said Block G) corrected
   & Rows compared with the Block F chat; notes compiled \\
+  204 & Notes commit guard
+  & Mistake: the guard checked only for new content, not for deletions; a stale editor buffer reverted Block F's 2.1 correction in commit \texttt{cdc7a83}; restored by exact replacements; every notes commit now also checks deletions
+  & Diff against \texttt{720e345} showed only the two intended deletions \\
+205 & Shell quoting
+  & Mistake: a \texttt{!} inside double quotes triggered zsh history expansion; rerun with single quotes
+  & Rerun by the student \\
+206 & Text-width check
+  & Found that the sn-jnl text width is 13.1\,cm, not the 15.7\,cm of D275; fixes in \texttt{figures.py} and \texttt{tables.py} with tests (D304)
+  & 350 tests pass; regenerated figures checked by eye by the student and the assistant \\
+207 & Page trimming
+  & Two trimming passes of the Introduction and Methodology (D306, D307). Mistake: the first pass was estimated to save about 640\,pt but saved about 120\,pt
+  & Section positions measured from the compile log after each pass \\
   \end{longtable}
 }
 
