@@ -297,10 +297,61 @@ Rules decide all outcomes & half of \textsc{OtherWrong} were aliases; the judge 
 \section{Experimental Results}\label{sec:results}
 
 \subsection{Experimental setup}\label{sec:setup}
-\placeholder{Written in Block G2.}
+All 192 conditions ran on one A100 GPU in 39.1 compute units: 576{,}000
+completions (96{,}000 greedy and 480{,}000 sampled) and 188{,}047 judge
+labels, with no interrupted run to resume. The raw outputs had the same
+SHA-256 fingerprint on the cloud machine and locally, and were scored with the
+evaluator frozen at tag \texttt{evaluator-v1} before any main-run output
+existed. Unless stated otherwise, rates pool prompts and poison types; rates
+carry 95\% Wilson intervals and differences question-clustered bootstrap
+intervals.
 
 \subsection{Robustness to poison (RQ1)}\label{sec:rq1}
-\placeholder{Written in Block G2.}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1_acc_asr_vs_rho.pdf}
+\caption{Accuracy (open markers) and attack success rate (filled markers)
+against the share of poisoned passages $\rho$, per model, pooled over prompts
+and poison types, with 95\% Wilson intervals. Dotted: closed-book accuracy.
+Vertical lines: first tested $\rho$ at which ASR exceeds accuracy under the
+rules (solid) and under the judge-based upper bound (dashed, Llama only).}
+\label{fig:rq1}
+\end{figure}
+Every model follows the passages (Fig.~\ref{fig:rq1}). From $\rho=0$ to
+$\rho=1$, ASR rises from \AsrRangeRhoZeroMin--\AsrRangeRhoZeroMax\,\% to
+\AsrRangeRhoOneMin--\AsrRangeRhoOneMax\,\%, and accuracy falls from
+\AccRangeRhoZeroMin--\AccRangeRhoZeroMax\,\% to
+\AccRangeRhoOneMin--\AccRangeRhoOneMax\,\%. The confirmatory test F1 is
+significant for all three models after Holm's correction: the odds ratio of a
+poisoned answer between $\rho=0$ and $\rho=1$ is \FOneOrLlama{} (95\% CI
+\FOneOrLlamaLo--\FOneOrLlamaHi) for Llama, \FOneOrMistral{}
+(\FOneOrMistralLo--\FOneOrMistralHi) for Mistral and \FOneOrQwen{}
+(\FOneOrQwenLo--\FOneOrQwenHi) for Qwen. The odds ratios are large because
+almost no answer is poisoned at $\rho=0$; the rates carry the size of the
+effect.
+
+The shape of the curves is exploratory. The largest rise in ASR comes between
+$\rho=\StepFromMistral$ and $\StepToMistral$ for Mistral
+(+\StepMaxMistral{} points) and Qwen (+\StepMaxQwen), when the poisoned
+passages become the majority, and between $\rho=\StepFromLlama$ and
+$\StepToLlama$ for Llama (+\StepMaxLlama). H1 placed the steepest change
+where the poison stops being outnumbered, $\rho=0.5$; with four passages this
+is a 2--2 tie, and the change is steepest after it, not at it. The rise holds
+for every model and the predicted location does not, so H1 is \emph{partly
+supported}. Its last part holds: at $\rho=1$ accuracy is below closed-book
+accuracy (\ClosedAccMin--\ClosedAccMax\,\%), and questions that a model
+answers correctly without passages are still poisoned in
+\PriorGoldAsrRhoOneMin--\PriorGoldAsrRhoOneMax\,\% of cases. False context
+overrides what the model knows.
+
+Under the rules, ASR first exceeds accuracy at $\rho=\CrossRulesLlama$ for
+every model. Rule-based accuracy is a lower bound: the judge-based upper bound
+adds \BrAccGapMin--\BrAccGapMax{} points to accuracy and at most
+\BrAsrGapMax{} to ASR, and moves Llama's crossover to
+$\rho=\CrossUpperLlama$, so that model's crossover depends on the scoring.
+Responses without an answer line are rare except for Llama
+(\NoAnswerLlama\,\%, of which \NoAnswerTruncLlama{} points were cut by the
+512-token cap; Mistral \NoAnswerMistral\,\%, Qwen \NoAnswerQwen\,\%).
 
 \subsection{Effect of meta-prompts (RQ2)}\label{sec:rq2}
 \placeholder{Written in Block G2.}
