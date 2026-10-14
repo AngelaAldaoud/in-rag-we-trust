@@ -133,7 +133,7 @@ def fig_prompt_effects(pe: pd.DataFrame, width: float = TEXT_WIDTH["llncs"]) -> 
     if missing:
         raise ValueError(f"explore_prompt_effects: missing metrics {missing}")
     with plt.rc_context(RC):
-        fig, axes = plt.subplots(3, 2, figsize=(width, 5.0), sharex=True, sharey="row", layout="constrained")
+        fig, axes = plt.subplots(3, 2, figsize=(width, 4.4), sharex=True, sharey="row", layout="constrained")
         for i, (metric, label) in enumerate(EFFECTS):
             for j, meta in enumerate(METAS):
                 ax = axes[i, j]

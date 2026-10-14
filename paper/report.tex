@@ -31,17 +31,15 @@ Language Models Handle Poisoned Retrieval}
 robustness, evaluation of language models}
 
 \maketitle
-% ---------------- PAGE BUDGET (max 8 pages incl. floats and references) ----
-% Title, abstract, keywords ............ 0.50
+% ---------------- PAGE BUDGET (max 8 pages of body; references extra, D305) --
+% Title, abstract, keywords ............ 0.60
 % 1 Introduction (incl. literature) .... 1.00
-% 2 Research Question and Methodology .. 2.50  (incl. revisions table)
-% 3 Experimental Results ............... 2.50  (setup 0.25; RQ1-RQ4 2.25)
+% 2 Research Question and Methodology .. 2.70  (incl. revisions table)
+% 3 Experimental Results ............... 2.20  (setup 0.2; RQ1-RQ4 2.0; 3 floats)
 % 4 Concluding Remarks ................. 0.75
 % Back matter (AI use, availability) ... 0.25
-% References ........................... 0.50
-% Total ................................ 8.00
-% Floats: max 4 (revisions table + 3 in Results).
-% Overflow: cut Methodology detail (refer to repo docs), never the discussion.
+% Total body ........................... 7.50  (0.5 page margin)
+% Compile on the Mac with Tectonic only (D300); Overleaf cannot see ../results.
 % ---------------------------------------------------------------------------
 
 
@@ -72,10 +70,7 @@ passages, show confirmation bias, and that stronger models can hold on to
 wrong internal knowledge. \citet{wu2024clasheval} perturbed the answers in
 retrieved documents across six domains and found that models adopted the
 incorrect content, overriding a correct prior, more than 60\% of the time;
-the less realistic the error, the less often it was adopted. Evidence-based
-systems such as the fact-checking pipeline of \citet{singal2024evidence},
-which retrieves evidence and lets a language model judge a claim against it,
-depend on exactly this behaviour being sound.
+the less realistic the error, the less often it was adopted.
 
 These studies establish that language models can be misled by retrieved text.
 We ask a narrower, practical question: \emph{how reliably do open,
@@ -93,16 +88,15 @@ questions from HotpotQA \citep{yang2018hotpotqa}, with contexts in which the
 share of false passages ranges from none to all, four kinds of poison that
 share one false answer and differ by a single framing sentence, and three
 prompts that differ by a single sentence. Three open models of 7--8 billion
-parameters answer every condition. The scoring rules and every confirmatory
-test were fixed before the main run, and the scoring was validated by hand on
-a separate pilot set; the changes made to the original design along the way
-are reported in Section~\ref{sec:revisions}. A standard lexical retriever over
-a poisoned collection shows how often such contexts arise in practice.
+parameters answer every condition, and a standard lexical retriever over a
+poisoned collection shows how often such contexts arise in practice. The
+scoring rules and every confirmatory test were fixed before the main run and
+validated by hand on a separate pilot set; changes to the original design are
+reported in Section~\ref{sec:revisions}.
 \placeholder{One or two sentences on the main findings, written in G2.}
 Section~\ref{sec:method} defines the problem and the method,
 Section~\ref{sec:results} reports the results, and
 Section~\ref{sec:conclusions} discusses them and their limits.
-
 
 
 \section{Research Question and Methodology}\label{sec:method}
@@ -124,19 +118,18 @@ questions, all answered on the full experimental grid.
 \end{description}
 The hypotheses were written before any experiment. \textbf{H1}: attack
 success rises with the poison ratio, most steeply around the point where the
-poisoned passages stop being outnumbered, following the majority rule of
-\citet{jin2024tugofwar}; with all passages poisoned it is high even for
-questions the model answers correctly without passages, as models often
-override a correct prior \citep{wu2024clasheval}. \textbf{H2} (our
-expectation): meta-prompts help mainly when clean and poisoned passages are
-mixed, help little when every passage is poisoned, and cost some accuracy and
-add abstentions on clean contexts. \textbf{H3} (our expectation): conflict
-statements are most frequent at intermediate ratios, the only ones where
-passages disagree with each other, and flagged responses are less often
-poisoned. \textbf{H4}: more plausible or more authoritative poisons are more
-effective \citep{wu2024clasheval}; models differ, but we predict no direction.
-The confirmatory test of H1 concerns the rise only; where it is steepest is
-read from the curves. RQ3 is an association: the experimenter does not control
+poisoned passages stop being outnumbered \citep{jin2024tugofwar}, and is high
+with all passages poisoned even for questions the model answers correctly
+without passages \citep{wu2024clasheval}. \textbf{H2} (our expectation):
+meta-prompts help mainly when clean and poisoned passages are mixed, little
+when every passage is poisoned, and cost some accuracy and add abstentions on
+clean contexts. \textbf{H3} (our expectation): conflict statements are most
+frequent at intermediate ratios, the only ones where passages disagree with
+each other, and flagged responses are less often poisoned. \textbf{H4}: more
+plausible or more authoritative poisons are more effective
+\citep{wu2024clasheval}; models differ, in no predicted direction. The
+confirmatory test of H1 concerns the rise only; where it is steepest is read
+from the curves. RQ3 is an association: the experimenter does not control
 whether a model states a conflict.
 
 \subsection{Problem definition}\label{sec:formal}
@@ -175,9 +168,9 @@ the attack success rate, and analogously the abstention rate
 $\mathrm{Abst}$, the rate of missing answers and the flag rate
 $\mathrm{Flag}(\theta)=\frac{1}{N}\sum_i f_i(\theta)$. Every rate keeps all $N$
 responses in its denominator, so a response without an answer can never raise
-a score. The problem is to estimate how these rates change when one factor of
-$\theta$ varies and the others are fixed. Because every condition uses the same
-questions, all comparisons are paired.
+a score. We estimate how these rates change when one factor of $\theta$ varies
+and the others are fixed; every condition uses the same questions, so all
+comparisons are paired.
 
 \subsection{Data and poisoned contexts}\label{sec:data}
 Questions come from the development set of HotpotQA \citep{yang2018hotpotqa}
@@ -188,36 +181,32 @@ HotpotQA's labels; 4{,}672 of 7{,}405 questions qualify. With a fixed seed we
 drew 50 pilot questions, used only to build and validate the scoring, and 500
 disjoint main questions. Three paraphrases of each answer passage were written
 by Gemma-2-9B-it, a model we do not evaluate, and kept only if they retained
-the gold answer and added no names or numbers; 27 of 30 accepted paraphrases
-checked by hand were faithful. The target answer was written by the same
-helper model from the question, the gold answer and the answer passage, and
-had to differ from the gold answer and be absent from the question and the
-passages. We first drew targets from gold answers of other questions with the
-same entity type, but a manual check found only 5 of 30 plausible, against 19
-of 30 for the generated targets on the same questions.
+the gold answer and added no names or numbers. The target answer was
+generated by the same helper model from the question, the gold answer and the
+answer passage, and had to differ from the gold answer and be absent from the
+question and the passages.
 
 All four poison types replace every occurrence of $a^{*}$ by $\tilde a$.
 \textsc{Swap} changes nothing else; \textsc{Correct}, \textsc{Authority} and
 \textsc{Recency} append one sentence, drawn from five fixed templates per
 type, claiming that other sources are wrong, that the fact is officially
-confirmed (e.g.\ ``This information is confirmed by official government
-records.''), or that the passage is the latest update. Every poisoned passage
-is checked to contain $\tilde a$ and not to contain $a^{*}$ under the
-normalisation used for scoring. Because language models use information at
-the start and end of a context more than in the middle \citep{liu2024lost},
-the order $\varphi_i$ is random per question, the bridge passage takes a
-random position, and every position is recorded.
+confirmed, or that the passage is the latest update. Every poisoned passage
+contains $\tilde a$ and not $a^{*}$ under the normalisation used for scoring.
+Because language models use the start and end of a context more than the
+middle \citep{liu2024lost}, the order $\varphi_i$ and the position of the
+bridge passage are random per question and recorded.
 
-A realistic-retrieval check complements the controlled contexts. For each
-poison type, a BM25 index over 9{,}301 passages (the clean, poisoned and bridge
-passages of all questions and the HotpotQA distractor paragraphs) returns the
-top five passages for the question text, with ties broken in a seeded random
-order. This is a poisoned-corpus setting in the sense of
-\citet{zou2024poisonedrag}: its rates show which ratios realistic retrieval
+A realistic-retrieval check complements the controlled contexts: for each
+poison type, BM25 over all clean, poisoned and bridge passages and the
+HotpotQA distractor paragraphs returns the top five passages for the question,
+with ties broken in a seeded random order. In this poisoned-corpus setting
+\citep{zou2024poisonedrag} the rates show which ratios realistic retrieval
 produces, not how often poison occurs on the open web. HotpotQA itself has
-flaws: one comparison question is mislabelled as bridge, and some gold answers
-are wrong; all questions stay in the primary analysis, and their influence is
-measured separately.
+flaws: an audit of \AuditCandidates{} questions with warning signs flagged
+\AuditFlagged{}, \AuditGoldErrors{} with a wrong gold answer and
+\AuditComparison{} comparison questions that passed the bridge filter. All
+questions stay in the primary analysis, and their influence is measured
+separately.
 
 \subsection{Models, prompts and decoding}\label{sec:models}
 $\mathcal{M}$ contains three open instruction-tuned models from different
@@ -231,47 +220,47 @@ cannot be answered reliably. The three prompts $\Pi$ differ by one sentence:
 the plain prompt only asks to answer from the passages; the consistency prompt
 adds ``First check whether the passages agree with each other, then
 answer.''; the reliability prompt adds ``First judge how reliable each passage
-is, then answer.'' Models are never told that passages may be false. Each
-model answers 48 poisoned conditions, 3 clean ones ($\rho=0$, shared by all
-poison types), one closed-book condition without passages and 12 retrieval
-conditions: 192 conditions over the three models. Primary results use greedy
-decoding; five samples at temperature 0.7 per question and condition measure
-self-consistency. Outputs are capped at 512 tokens.
+is, then answer.'' Models are never told that passages may be false. Per
+model there are 48 poisoned, 3 clean ($\rho=0$, shared by all poison types),
+one closed-book and 12 retrieval conditions, 192 over the three models.
+Primary results use greedy decoding; five samples at temperature 0.7 per
+question and condition measure self-consistency. Outputs are capped at 512
+tokens.
 
 \subsection{Scoring and statistical analysis}\label{sec:scoring}
-The final answer is the text after the last ``Answer:'' anywhere in the
-response. Answers and references are compared by whole-word containment after
-standard normalisation, with bracketed remarks removed. Ordered rules assign
-the outcome: no answer line is \textsc{NoAnswer}; ``unknown'' is
+The final answer is the text after the last ``Answer:'' in the response;
+answers and references are compared by whole-word containment after standard
+normalisation, with bracketed remarks removed. Ordered rules assign the
+outcome: no answer line is \textsc{NoAnswer}; ``unknown'' is
 \textsc{Abstain}; an answer containing both $a^{*}$ and $\tilde a$ is
 \textsc{Both}; then \textsc{Correct}, then \textsc{Poisoned}; a fixed
-abstention phrase (``not mentioned'', ``cannot be answered'', \dots) is
-\textsc{Abstain}; anything else is \textsc{OtherWrong}. A blind hand audit of
-pilot answers found the \textsc{Correct}, \textsc{Poisoned} and
-\textsc{Abstain} rules exact (35/35), but only 10 of 20 \textsc{OtherWrong}
-answers truly wrong: most were the gold or target answer in another form, the
-known weakness of lexical matching \citep{kamalloo2023evaluating}. Rule-based
-accuracy is therefore a lower bound. A judge re-examining \textsc{OtherWrong}
+abstention phrase (``not mentioned'', \dots) is \textsc{Abstain}; anything else
+is \textsc{OtherWrong}. A blind hand audit of pilot answers found the
+\textsc{Correct}, \textsc{Poisoned} and \textsc{Abstain} rules exact, but half
+of the \textsc{OtherWrong} answers were the gold or target answer in another
+form, the known weakness of lexical matching \citep{kamalloo2023evaluating}:
+rule-based accuracy is a lower bound. A judge re-examining \textsc{OtherWrong}
 answers agreed with hand labels ($\kappa=0.836$) but failed a check fixed in
-advance, recognising the target in only 92.8\% of exact cases against a
-required 95\%; its re-labelled rates are reported only as an exploratory upper
-bound.
+advance (target recognised in 92.8\% of exact cases, 95\% required), so its
+re-labelled rates are only an exploratory upper bound.
 
 The conflict flag is assigned by Gemma-2-9B-it, which reads the response alone
 and answers whether it says that the passages disagree or that some may be
 unreliable. Against 300 blind hand labels it reached $\kappa=0.735$ (95\% CI
-0.649--0.814). It over-flags (35.0\% against 25.7\% by hand) and agrees least
+0.649--0.814); it over-flags (35.0\% against 25.7\% by hand) and agrees least
 for Qwen ($\kappa=0.57$), so flag rates are read against their $\rho=0$
 baseline. An \textsc{OtherWrong} answer counts as a hallucination if it
 contains a named entity (found with spaCy) or a number that appears in no
-passage; on fresh hand labels this rule had precision 9/13 and missed 0 of 18
-inventions. Self-consistency is the share of the five samples that agree with
-the most frequent answer, averaged over questions.
+passage; a first rule, the answer being absent from the passages, measured
+wording rather than invention and was replaced. On fresh hand labels the final
+rule had precision 9/13 and missed 0 of 18 inventions. Self-consistency is the
+share of the five samples that agree with the most frequent answer, averaged
+over questions.
 
 Single rates carry Wilson 95\% intervals; differences use a paired bootstrap
 over questions (10{,}000 resamples). Four families of confirmatory tests,
 two-sided at $\alpha=0.05$ with Holm's correction within each family, were
-fixed with the scoring code before the main run. Logistic regressions use
+fixed with the scoring code before the main run; logistic regressions use
 generalised estimating equations clustered by question. \textbf{F1} (H1), per
 model: the effect of $\rho$ on \textsc{Poisoned}, adjusting for the prompt.
 \textbf{F2} (H2): exact McNemar tests of each meta-prompt against the plain
@@ -280,18 +269,21 @@ prompt, per model, on \textsc{Poisoned} over all poisoned conditions and on
 (H3), per model: the odds ratio of \textsc{Poisoned} for flagged against
 unflagged responses, adjusting for $\rho$, prompt and type. \textbf{F4} (H4):
 on all models pooled, the interactions of $\rho$ and prompt with poison type
-and with model. All other analyses are exploratory. At $N=500$ the median
-comparison of single conditions has power 0.92 for a five-point difference,
-but about a quarter fall below 0.80; we therefore report each cell's minimum
-detectable difference and never read a non-significant single-cell difference
-as the absence of an effect.
+and with model. All other analyses are exploratory. Under the planned rule the
+pilot could only raise $N$; its power check gave a median power of 0.92 for a
+five-point difference between single conditions, with about a quarter of
+comparisons below 0.80. Instead of raising $N$, $N=500$ was kept and each
+cell's minimum detectable difference is reported with the results; a
+non-significant single-cell difference is never read as the absence of an
+effect.
 
 \subsection{Revisions to the planned design}\label{sec:revisions}
-Table~\ref{tab:revisions} lists the rules that changed after testing on the
-pilot set and during data construction. Every change was triggered by a
-measured problem, validated once, and made before any main-run response
-existed. None changed the research questions, the hypotheses, the factors or
-the confirmatory tests.
+Table~\ref{tab:revisions} lists the main rules that changed after testing on
+the pilot set and during data construction; the hallucination rule and the
+sample size are described in Section~\ref{sec:scoring}. Every change was
+triggered by a measured problem, validated once, and made before any main-run
+response existed. None changed the research questions, the hypotheses, the
+factors or the confirmatory tests.
 
 \begin{table}[t]
 \caption{Changes to the planned design, each triggered by a check.}\label{tab:revisions}
@@ -307,8 +299,6 @@ Output cap of 256 tokens & 17\% of Llama's answers cut before the answer line, m
 Alphabetical ties in BM25 & decided the top five in 21\% of \textsc{Swap} questions, favouring clean passages & seeded random ties \\
 Four outcomes & missing answer lines (8.5\% for Llama), answers naming both & \textsc{NoAnswer}, \textsc{Both} added \\
 Rules decide all outcomes & half of \textsc{OtherWrong} were aliases; the judge failed a pre-set check & rules primary, judge as upper bound \\
-Hallucination: answer absent from passages & flagged wording, not invention (4 of 20) & invented names and numbers \\
-Pilot may only raise $N$ & a quarter of cells below 80\% power & $N=500$ kept; detectable difference reported \\
 \bottomrule
 \end{tabular}
 \end{table}
