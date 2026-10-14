@@ -171,7 +171,7 @@ def render_confirmatory(conf: dict[str, pd.DataFrame]) -> str:
 
 
 def render_verdicts(conf: dict[str, pd.DataFrame]) -> str:
-    body = tabular(["", "Verdict", "Evidence"], verdict_rows(conf), "llp{10cm}", rules=True)
+    body = tabular(["", "Verdict", "Evidence"], verdict_rows(conf), "llp{0.64\\linewidth}", rules=True)
     caption = "Hypothesis verdicts, assigned by a rule fixed before the tests (D250)."
     return table_env(caption, "tab:verdicts", [body])
 

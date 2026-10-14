@@ -50,7 +50,7 @@ def test_one_fixed_style_per_model():
 
 @pytest.mark.parametrize("line, cls, width", [
     ("\\documentclass[runningheads]{llncs}", "llncs", 4.8),
-    ("\\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}", "sn-jnl", 6.2),
+    ("\\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}", "sn-jnl", 5.15),
 ])
 def test_text_width_reads_active_documentclass(tmp_path, line, cls, width):
     (tmp_path / "main.tex").write_text("%\\documentclass[iicol]{sn-jnl}\n" + line + "\n\\begin{document}\n")

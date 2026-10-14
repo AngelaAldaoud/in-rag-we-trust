@@ -37,7 +37,7 @@ TYPE_MARKERS = ("o", "s", "^", "D")
 OUTCOMES = (("Poisoned", "0.15", ""), ("Abstain", "0.55", "//"), ("Correct", "0.85", ".."), ("Other", "white", "xx"))
 NAMES = ("fig1_acc_asr_vs_rho", "fig2_prompt_effects", "fig3_flag_vs_baseline", "fig4_type_model",
          "fig5_transitions")
-TEXT_WIDTH = {"llncs": 4.8, "sn-jnl": 6.2}
+TEXT_WIDTH = {"llncs": 4.8, "sn-jnl": 5.15}
 TWO_COLUMN = ("twocolumn", "iicol")
 DOCCLASS = re.compile(r"^[ \t]*\\documentclass(?:\[([^\]]*)\])?\{([^}]+)\}", re.MULTILINE)
 GREY = "0.35"
@@ -133,7 +133,7 @@ def fig_prompt_effects(pe: pd.DataFrame, width: float = TEXT_WIDTH["llncs"]) -> 
     if missing:
         raise ValueError(f"explore_prompt_effects: missing metrics {missing}")
     with plt.rc_context(RC):
-        fig, axes = plt.subplots(3, 2, figsize=(width, 6.2), sharex=True, sharey="row", layout="constrained")
+        fig, axes = plt.subplots(3, 2, figsize=(width, 5.0), sharex=True, sharey="row", layout="constrained")
         for i, (metric, label) in enumerate(EFFECTS):
             for j, meta in enumerate(METAS):
                 ax = axes[i, j]
