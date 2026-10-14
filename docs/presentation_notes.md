@@ -351,3 +351,56 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 ### Limitation: single cells are under-powered for small effects (F3)
 - **What it shows:** in a single cell, differences below about 5-6 points cannot be detected reliably; 43 of 96 cells have under 80% power for 5 points.
 - **What it means:** "not significant" in one cell is not "no effect"; my confirmatory tests pool cells.
+
+
+## Block F4 · Figures and tables
+
+### Figure 1 · Acc and ASR vs rho (RQ1, F1)
+- **What it shows:** for each model, the share of poisoned answers (ASR, solid) and correct answers (Acc, dashed) as the share of poisoned passages rho grows from 0 to 1; shaded bands are Wilson 95% intervals; the dotted line is closed-book accuracy; vertical lines mark the crossover.
+- **How to read it:** ASR rises from about 0% at rho=0 to 55-58% at rho=1, and Acc falls from 63-64% to 2-5%. The lines cross at rho=0.75 for all three models under the rules; under the judge-based upper bound Llama crosses only at 1.0 (dashed line).
+- **What it means:** the models follow the majority of the evidence. At rho=1 they are far less accurate (2-5%) than with no passages at all (11-15% closed-book): false context overrides what the model knows. The biggest jump is 0.5 -> 0.75, when the poison becomes the real majority (0.5 is a 2-2 tie).
+- **Its limitation:** pooled over prompts and poison types; Acc is rule-based (Acc+ is about 20 points higher), and Llama's crossover depends on the scoring.
+
+### Figure 2 · Meta-prompt minus plain (RQ2, F2)
+- **What it shows:** paired differences (meta-prompt minus plain, same questions) in ASR, Acc and abstention, per rho, for the consistency and reliability prompts, with question-clustered bootstrap 95% CIs.
+- **How to read it:** below zero in the top row means less poisoning. With rho>0, consistency lowers ASR by 2.4-3.3 points; reliability by 1.8 (Llama) and 7.7 (Mistral), not significantly for Qwen. At rho=0 abstention rises in 5 of 6 cases (+4 to +14 points); accuracy drops significantly only for Mistral (-4.2 consistency, -12.8 reliability).
+- **What it means:** the instructions help a little, and they help mainly by making the model refuse more, which also costs accuracy on clean evidence.
+- **Its limitation:** two prompt wordings only; per-rho intervals are exploratory; without the leak questions, Llama-reliability's ASR reduction is no longer significant.
+
+### Figure 3 · Flags above each model's own rho=0 rate (RQ3, F3)
+- **What it shows:** how much more often the judge flags a conflict than for the same questions at rho=0, per model, with clustered 95% CIs.
+- **How to read it:** each model is compared with its own clean baseline (Llama 0.31, Qwen 0.24, Mistral 0.02). The difference peaks at rho=0.5 (+43.2 / +14.2 / +23.6 points for Llama / Mistral / Qwen) and is smaller at rho=1 (+16.9 / +1.4 / +6.8).
+- **What it means:** the models signal conflict most when the evidence is mixed; when every passage tells the same lie there is no visible conflict to flag. Flagged answers are poisoned less often (odds ratios 0.81-0.84, F3).
+- **Its limitation:** an association, not a cause; the judge over-flags clean contexts, and its agreement with humans is weaker for Qwen (kappa 0.57).
+
+### Figure 4 · ASR by poison type (RQ4, F4)
+- **What it shows:** ASR for the four poison types, per model and rho, with Wilson 95% CIs, on an axis that starts at 0.
+- **How to read it:** within a model, the types differ by at most 1.4 points, with no consistent order. Llama is poisoned less often than Mistral and Qwen (about 26% vs 29.5% over rho>0).
+- **What it means:** the interaction tests are significant, but with 72,000 responses even tiny differences are detectable; the figure shows they are small. The "more plausible lies work better" idea is not supported here.
+- **Its limitation:** the four types share one false answer and differ by one framing sentence, a weak manipulation of plausibility.
+
+### Figure 5 · What the meta-prompt does to answers that were poisoned under plain (RQ2 mechanism, exploratory)
+- **What it shows:** for answers poisoned under the plain prompt (rho>0), what the same question gets under each meta-prompt: still poisoned, abstain, correct or other.
+- **How to read it:** 64-80% stay poisoned; most of the rest become abstentions, few become correct. Example: Mistral-reliability at rho=1, ASR -13.4, abstention +18.5, Acc -0.5 points.
+- **What it means:** the meta-prompts do not repair answers; they make the model refuse.
+- **Its limitation:** exploratory and pooled over rho>0.
+
+### Table T1 · Confirmatory tests
+- **What it shows:** all 28 planned tests (F1-F4), with estimate, 95% CI, raw p and Holm-adjusted p.
+- **How to read it:** Holm corrects within each family. The F1 odds ratios (50-65) are huge because the clean ASR is almost zero, so I always show the rates next to them (Figure 1).
+- **What it means:** the planned tests hold for all models in F1, F3 and F4, and in 5 of 6 F2 ASR comparisons.
+- **Its limitation:** significance is not size; sizes are read from the figures.
+
+### Table T2 · Verdicts
+- **What it shows:** H1 partly, H2 partly, H3 supported (association), H4 partly, with the reason for each.
+- **How to read it:** the verdict rule was fixed before the tests (D250).
+- **What it means:** three of four hypotheses are only partly supported, and I can name the exact part that failed.
+- **Its limitation:** H1's wording calls rho=0.5 a majority; it is a 2-2 tie (stated openly, D262).
+
+### Table T3 · Robustness (exploratory)
+- **What it shows:** whether the 28 conclusions survive without the 9 audit-flagged questions and without the leak questions.
+- **How to read it:** 28/28 survive without the flagged questions, 26/28 without the leaks; the two that change are Llama-reliability F2a and Mistral-consistency F2b, both turning from significant to n.s.
+- **What it means:** the main conclusions don't depend on bad questions or leaky poisons; two small F2 effects are fragile.
+- **Its limitation:** one changed row has a 95% interval that excludes 0 but Holm p=0.181. The interval is per comparison; the verdict uses the family-wise corrected p.
+
+
