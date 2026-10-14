@@ -97,7 +97,6 @@ Section~\ref{sec:method} defines the problem and the method,
 Section~\ref{sec:results} reports the results, and
 Section~\ref{sec:conclusions} discusses them and their limits.
 
-
 \section{Research Question and Methodology}\label{sec:method}
 
 \subsection{Goals and research questions}\label{sec:rqs}
@@ -133,37 +132,32 @@ model states a conflict.
 Let $\mathcal{Q}=\{(q_i,a^{*}_i)\}_{i=1}^{N}$ be questions with their gold
 answers, and $\tilde a_i\neq a^{*}_i$ one false \emph{target answer} per
 question. Each question has $k=4$ clean answer-bearing passages
-$c_{i1},\dots,c_{i4}$ (the original answer passage and three paraphrases), a
-bridge passage $b_i$ needed for the multi-hop question and never poisoned, and,
-for every poison type $\tau\in\mathcal{T}$, a poisoned twin
-$\tilde c^{\,\tau}_{ij}$ of each clean passage that supports $\tilde a_i$ and
-does not contain $a^{*}_i$. For a poison ratio
-$\rho\in\mathcal{R}=\{0,0.25,0.5,0.75,1\}$, the $m=\rho k$ poisoned slots are
-the first $m$ entries of a random permutation $\sigma_i$ of $\{1,\dots,4\}$
-drawn once per question, and the context is
+$c_{i1},\dots,c_{i4}$ (the answer passage and three paraphrases), a bridge
+passage $b_i$ needed for the multi-hop question and never poisoned, and, for
+every poison type $\tau\in\mathcal{T}$, a poisoned twin $\tilde c^{\,\tau}_{ij}$
+of each clean passage that supports $\tilde a_i$ and does not contain
+$a^{*}_i$. For a poison ratio $\rho\in\mathcal{R}=\{0,0.25,0.5,0.75,1\}$, the
+$m=\rho k$ poisoned slots are the first $m$ entries of a random permutation
+$\sigma_i$ of $\{1,\dots,4\}$ drawn once per question, and the context is
 \begin{equation}
 C_{\rho,\tau}(q_i)=\varphi_i\big(p_{i1},\dots,p_{i4},\,b_i\big),\qquad
 p_{ij}=\begin{cases}\tilde c^{\,\tau}_{ij} & \text{if } \sigma_i^{-1}(j)\le m,\\
 c_{ij} & \text{otherwise,}\end{cases}
 \end{equation}
 where $\varphi_i$ is a passage order fixed per question. The poisoned sets are
-nested in $\rho$ and identical for every poison type, prompt and model, so
-raising $\rho$ replaces one clean passage by its own twin and changes nothing
-else. A condition is $\theta=(M,\pi,\tau,\rho)$ with model $M\in\mathcal{M}$
-and prompt $\pi\in\Pi$; it yields the response
-$r_i(\theta)=M\big(\pi,q_i,C_{\rho,\tau}(q_i)\big)$, one outcome
-$o_i(\theta)\in\{\textsc{Correct},\textsc{Poisoned},\textsc{Both},
+nested in $\rho$ and shared by all poison types, prompts and models, so
+raising $\rho$ replaces one clean passage by its own twin and nothing else. A
+condition $\theta=(M,\pi,\tau,\rho)$, with model $M\in\mathcal{M}$ and prompt
+$\pi\in\Pi$, yields a response $r_i(\theta)=M\big(\pi,q_i,C_{\rho,\tau}(q_i)\big)$,
+an outcome $o_i(\theta)\in\{\textsc{Correct},\textsc{Poisoned},\textsc{Both},
 \textsc{OtherWrong},\textsc{Abstain},\textsc{NoAnswer}\}$
-(Section~\ref{sec:scoring}), and a conflict flag $f_i(\theta)\in\{0,1\}$, equal
-to 1 if the response states that the passages disagree or that some may be
+(Section~\ref{sec:scoring}) and a conflict flag $f_i(\theta)\in\{0,1\}$, equal
+to 1 if the response says that the passages disagree or that some may be
 unreliable. The accuracy is
 $\mathrm{Acc}(\theta)=\frac{1}{N}\sum_{i}\mathbb{1}[o_i(\theta)=\textsc{Correct}]$;
 the attack success rate $\mathrm{ASR}$, the abstention rate $\mathrm{Abst}$,
-the rate of missing answers and the flag rate
-$\mathrm{Flag}(\theta)=\frac{1}{N}\sum_i f_i(\theta)$ are defined in the same
-way. Every rate keeps all $N$ responses in its denominator, so a response
-without an answer can never raise a score, and every condition uses the same
-questions, so all comparisons are paired.
+the rate of missing answers and the flag rate $\mathrm{Flag}$ are defined in
+the same way, always over all $N$ responses, and all comparisons are paired.
 
 \subsection{Data and poisoned contexts}\label{sec:data}
 Questions come from the development set of HotpotQA \citep{yang2018hotpotqa}
@@ -186,10 +180,10 @@ All four poison types replace every occurrence of $a^{*}$ by $\tilde a$.
 \textsc{Recency} append one sentence, drawn from five fixed templates per
 type, claiming that other sources are wrong, that the fact is officially
 confirmed, or that the passage is the latest update. Every poisoned passage
-contains $\tilde a$ and not $a^{*}$ under the normalisation used for scoring.
-Because language models use the start and end of a context more than the
-middle \citep{liu2024lost}, the order $\varphi_i$ and the position of the
-bridge passage are random per question and recorded.
+contains $\tilde a$ and not $a^{*}$ under the scoring normalisation. Because
+language models use the start and end of a context more than the middle
+\citep{liu2024lost}, the order $\varphi_i$ and the position of the bridge
+passage are random per question and recorded.
 
 A realistic-retrieval check complements the controlled contexts: for each
 poison type, BM25 over all clean, poisoned and bridge passages and the
@@ -223,56 +217,52 @@ temperature 0.7 per question and condition measure self-consistency. Outputs
 are capped at 512 tokens.
 
 \subsection{Scoring and statistical analysis}\label{sec:scoring}
-The final answer is the text after the last ``Answer:'' in the response;
-answers and references are compared by whole-word containment after standard
-normalisation, with bracketed remarks removed. Ordered rules assign the
-outcome: no answer line is \textsc{NoAnswer}; ``unknown'' is
-\textsc{Abstain}; an answer containing both $a^{*}$ and $\tilde a$ is
-\textsc{Both}; then \textsc{Correct}, then \textsc{Poisoned}; a fixed
-abstention phrase (``not mentioned'', \dots) is \textsc{Abstain}; anything else
-is \textsc{OtherWrong}. A blind hand audit of pilot answers found the
-\textsc{Correct}, \textsc{Poisoned} and \textsc{Abstain} rules exact, but half
-of the \textsc{OtherWrong} answers were the gold or target answer in another
-form, the known weakness of lexical matching \citep{kamalloo2023evaluating}:
-rule-based accuracy is a lower bound. A judge re-examining \textsc{OtherWrong}
-answers agreed with hand labels ($\kappa=0.836$) but failed a check fixed in
-advance (target recognised in 92.8\% of exact cases, 95\% required), so its
-re-labelled rates are only an exploratory upper bound.
+The final answer is the text after the last ``Answer:'' in the response,
+compared with the references by whole-word containment after normalisation.
+Ordered rules give the outcome: no answer line, \textsc{NoAnswer};
+``unknown'', \textsc{Abstain}; both $a^{*}$ and $\tilde a$, \textsc{Both};
+then \textsc{Correct}, then \textsc{Poisoned}; a fixed abstention phrase,
+\textsc{Abstain}; otherwise \textsc{OtherWrong}. A blind audit of pilot
+answers found the \textsc{Correct}, \textsc{Poisoned} and \textsc{Abstain}
+rules exact, but half of the \textsc{OtherWrong} answers were the gold or
+target answer in another form \citep{kamalloo2023evaluating}: rule-based
+accuracy is a lower bound. A judge re-labelling \textsc{OtherWrong} answers
+agreed with hand labels ($\kappa=0.836$) but failed a check fixed in advance
+(92.8\% of exact targets recognised, 95\% required), so its rates are only an
+exploratory upper bound.
 
-The conflict flag is assigned by Gemma-2-9B-it, which reads the response alone
-and answers whether it says that the passages disagree or that some may be
-unreliable. Against 300 blind hand labels it reached $\kappa=0.735$ (95\% CI
-0.649--0.814); it over-flags (35.0\% against 25.7\% by hand) and agrees least
-for Qwen ($\kappa=0.57$), so flag rates are read against their $\rho=0$
-baseline. An \textsc{OtherWrong} answer counts as a hallucination if it
-contains a named entity (found with spaCy) or a number that appears in no
-passage; a first rule, the answer being absent from the passages, measured
-wording rather than invention and was replaced. On fresh hand labels the final
-rule had precision 9/13 and missed 0 of 18 inventions. Self-consistency is the
-share of the five samples that agree with the most frequent answer, averaged
-over questions.
+The conflict flag is given by Gemma-2-9B-it reading the response alone.
+Against 300 blind hand labels it reached $\kappa=0.735$ (95\% CI
+0.649--0.814), but it over-flags (35.0\% against 25.7\%) and agrees least for
+Qwen ($\kappa=0.57$), so flags are read against each model's $\rho=0$
+baseline. An \textsc{OtherWrong} answer is a hallucination if it contains a
+named entity (spaCy) or a number found in no passage; this replaced a first
+rule that measured wording rather than invention, and on fresh hand labels has
+precision 9/13 with 0 of 18 inventions missed. Self-consistency is the share
+of five samples that agree with the most frequent answer, averaged over
+questions.
 
-Rates carry Wilson 95\% intervals; differences use a paired bootstrap over
-questions (10{,}000 resamples). Four families of confirmatory tests, two-sided
-at $\alpha=0.05$ with Holm's correction within each family, were fixed with
-the scoring code before the main run; logistic regressions use generalised
-estimating equations clustered by question. \textbf{F1} (H1): per model, the
-effect of $\rho$ on \textsc{Poisoned}, adjusting for the prompt. \textbf{F2}
-(H2): exact McNemar tests of each meta-prompt against the plain prompt, per
-model, on \textsc{Poisoned} over all poisoned conditions and on
-\textsc{Correct} and \textsc{Abstain} at $\rho=0$ (18 tests). \textbf{F3}
-(H3): per model, the odds ratio of \textsc{Poisoned} for flagged against
-unflagged responses, adjusting for $\rho$, prompt and type. \textbf{F4} (H4):
-pooled over models, the interactions of $\rho$ and prompt with type and with
-model. All other analyses are exploratory. The plan allowed the pilot only to
-raise $N$; its power check gave a median power of 0.92 for a five-point
-difference, with a quarter of comparisons below 0.80. We kept $N=500$ and
-report each cell's minimum detectable difference, never reading a
-non-significant single-cell difference as the absence of an effect.
+Rates carry Wilson 95\% intervals; differences a question-clustered bootstrap
+(10{,}000 resamples). Four confirmatory families, two-sided at $\alpha=0.05$
+with Holm's correction within each, were fixed with the scoring code before
+the main run; logistic models use generalised estimating equations clustered
+by question. \textbf{F1} (H1): per model, the effect of $\rho$ on
+\textsc{Poisoned}, adjusting for the prompt. \textbf{F2} (H2): exact McNemar
+tests of each meta-prompt against the plain prompt, per model, on
+\textsc{Poisoned} over all poisoned conditions and on \textsc{Correct} and
+\textsc{Abstain} at $\rho=0$ (18 tests). \textbf{F3} (H3): per model, the odds
+ratio of \textsc{Poisoned} for flagged against unflagged responses, adjusting
+for $\rho$, prompt and type. \textbf{F4} (H4): pooled over models, the
+interactions of $\rho$ and prompt with type and with model. Everything else is
+exploratory. The plan allowed the pilot only to raise $N$; we kept $N=500$
+although a pilot power check gave a median power of 0.92 for a five-point
+difference with a quarter of comparisons below 0.80, and report each cell's
+minimum detectable difference instead, never reading a non-significant cell as
+the absence of an effect.
 
 \subsection{Revisions to the planned design}\label{sec:revisions}
 Table~\ref{tab:revisions} lists the main rules that changed after testing on
-the pilot set; the precision, the paraphrase rule, the hallucination rule and
+the pilot set; the numeric precision, the paraphrase rule, the hallucination rule and
 the sample size are described in Sections~\ref{sec:data}--\ref{sec:scoring}.
 Every change was triggered by a measured problem, validated once, and made
 before any main-run response existed. None changed the research questions,
@@ -297,156 +287,111 @@ Rules decide all outcomes & half of \textsc{OtherWrong} were aliases; the judge 
 \section{Experimental Results}\label{sec:results}
 
 \subsection{Experimental setup}\label{sec:setup}
-All 192 conditions ran on one A100 GPU in 39.1 compute units: 576{,}000
-completions (96{,}000 greedy and 480{,}000 sampled) and 188{,}047 judge
-labels, with no interrupted run to resume. The raw outputs had the same
-SHA-256 fingerprint on the cloud machine and locally, and were scored with the
-evaluator frozen at tag \texttt{evaluator-v1} before any main-run output
-existed. Unless stated otherwise, rates pool prompts and poison types; rates
-carry 95\% Wilson intervals and differences question-clustered bootstrap
-intervals.
+All 192 conditions ran on one A100 GPU in 39.1 compute units, giving 576{,}000
+completions (96{,}000 greedy, 480{,}000 sampled) and 188{,}047 judge labels,
+with no resumed run. The raw outputs had the same SHA-256 fingerprint on the
+cloud machine and locally, and were scored by the evaluator frozen at tag
+\texttt{evaluator-v1}. Rates pool prompts and poison types unless stated;
+estimates with intervals are in Tables T1--T3 of the repository.
 
 \subsection{Robustness to poison (RQ1)}\label{sec:rq1}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{fig1_acc_asr_vs_rho.pdf}
-\caption{Accuracy (open markers) and attack success rate (filled markers)
-against the share of poisoned passages $\rho$, per model, pooled over prompts
-and poison types, with 95\% Wilson intervals. Dotted: closed-book accuracy.
-Vertical lines: first tested $\rho$ at which ASR exceeds accuracy under the
-rules (solid) and under the judge-based upper bound (dashed, Llama only).}
+\caption{Accuracy (open markers) and attack success rate (filled) against the
+share of poisoned passages $\rho$, per model, pooled over prompts and poison
+types, with 95\% Wilson intervals. Dotted: closed-book accuracy. Vertical
+lines: first tested $\rho$ with ASR above accuracy, under the rules (solid)
+and the judge-based upper bound (dashed, Llama).}
 \label{fig:rq1}
 \end{figure}
-Every model follows the passages (Fig.~\ref{fig:rq1}). From $\rho=0$ to
+Every model follows the passages (Fig.~\ref{fig:rq1}): from $\rho=0$ to
 $\rho=1$, ASR rises from \AsrRangeRhoZeroMin--\AsrRangeRhoZeroMax\,\% to
-\AsrRangeRhoOneMin--\AsrRangeRhoOneMax\,\%, and accuracy falls from
+\AsrRangeRhoOneMin--\AsrRangeRhoOneMax\,\% and accuracy falls from
 \AccRangeRhoZeroMin--\AccRangeRhoZeroMax\,\% to
-\AccRangeRhoOneMin--\AccRangeRhoOneMax\,\%. The confirmatory test F1 is
-significant for all three models after Holm's correction: the odds ratio of a
-poisoned answer between $\rho=0$ and $\rho=1$ is \FOneOrLlama{} (95\% CI
-\FOneOrLlamaLo--\FOneOrLlamaHi) for Llama, \FOneOrMistral{}
-(\FOneOrMistralLo--\FOneOrMistralHi) for Mistral and \FOneOrQwen{}
-(\FOneOrQwenLo--\FOneOrQwenHi) for Qwen. The odds ratios are large because
-almost no answer is poisoned at $\rho=0$; the rates carry the size of the
-effect.
-
-The shape of the curves is exploratory. The largest rise in ASR comes between
-$\rho=\StepFromMistral$ and $\StepToMistral$ for Mistral
-(+\StepMaxMistral{} points) and Qwen (+\StepMaxQwen), when the poisoned
-passages become the majority, and between $\rho=\StepFromLlama$ and
-$\StepToLlama$ for Llama (+\StepMaxLlama). H1 placed the steepest change
-where the poison stops being outnumbered, $\rho=0.5$; with four passages this
-is a 2--2 tie, and the change is steepest after it, not at it. The rise holds
-for every model and the predicted location does not, so H1 is \emph{partly
-supported}. Its last part holds: at $\rho=1$ accuracy is below closed-book
-accuracy (\ClosedAccMin--\ClosedAccMax\,\%), and questions that a model
-answers correctly without passages are still poisoned in
-\PriorGoldAsrRhoOneMin--\PriorGoldAsrRhoOneMax\,\% of cases. False context
-overrides what the model knows.
-
-Under the rules, ASR first exceeds accuracy at $\rho=\CrossRulesLlama$ for
-every model. Rule-based accuracy is a lower bound: the judge-based upper bound
-adds \BrAccGapMin--\BrAccGapMax{} points to accuracy and at most
-\BrAsrGapMax{} to ASR, and moves Llama's crossover to
-$\rho=\CrossUpperLlama$, so that model's crossover depends on the scoring.
-Responses without an answer line are rare except for Llama
-(\NoAnswerLlama\,\%, of which \NoAnswerTruncLlama{} points were cut by the
-512-token cap; Mistral \NoAnswerMistral\,\%, Qwen \NoAnswerQwen\,\%).
+\AccRangeRhoOneMin--\AccRangeRhoOneMax\,\%. F1 is significant for every model
+after Holm's correction, with odds ratios of \FOneOrQwen--\FOneOrMistral{}
+between $\rho=0$ and $\rho=1$, large because almost no answer is poisoned at
+$\rho=0$. The steepest rise (exploratory) lies between
+$\rho=\StepFromMistral$ and $\StepToMistral$ for Mistral and Qwen
+(+\StepMaxMistral{} and +\StepMaxQwen{} points), when the poison becomes the
+majority, and between $\StepFromLlama$ and $\StepToLlama$ for Llama
+(+\StepMaxLlama). H1 placed it where the poison stops being outnumbered,
+$\rho=0.5$, which with four passages is a 2--2 tie: the rise holds, its
+location does not, and H1 is \emph{partly supported}. Its last part holds: at
+$\rho=1$ accuracy is below closed-book accuracy
+(\ClosedAccMin--\ClosedAccMax\,\%), and questions answered correctly without
+passages are still poisoned in \PriorGoldAsrRhoOneMin--\PriorGoldAsrRhoOneMax\,\%
+of cases. Under the rules ASR first exceeds accuracy at $\rho=\CrossRulesLlama$
+for every model; the judge-based upper bound adds
+\BrAccGapMin--\BrAccGapMax{} points to accuracy (at most \BrAsrGapMax{} to
+ASR) and moves Llama's crossover to $\rho=\CrossUpperLlama$. Missing answer
+lines matter only for Llama (\NoAnswerLlama\,\%, \NoAnswerTruncLlama{} points
+of them from the 512-token cap).
 
 \subsection{Effect of meta-prompts (RQ2)}\label{sec:rq2}
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{fig2_prompt_effects.pdf}
-\caption{Meta-prompt minus plain prompt by share of poisoned passages $\rho$:
-change in ASR, accuracy and abstention (rows) for the consistency and
-reliability prompts (columns), with question-clustered 95\% bootstrap
-intervals. Exploratory per-$\rho$ view of the pooled F2 tests.}
-\label{fig:rq2}
-\end{figure}
 Over all poisoned conditions the meta-prompts lower ASR in \FTwoAsrSig{} of
-\FTwoAsrTests{} confirmatory comparisons (F2). With the consistency prompt ASR
-changes by \FTwoAsrLlamaCons, \FTwoAsrMistralCons{} and \FTwoAsrQwenCons{}
-points (Llama, Mistral, Qwen), with the reliability prompt by
-\FTwoAsrLlamaRel{} and \FTwoAsrMistralRel{} points; for Qwen the reliability
-prompt shows no detectable effect (+\FTwoAsrQwenRel, 95\% CI
-\FTwoAsrQwenRelLo{} to \FTwoAsrQwenRelHi), which rules out large effects but
-not small ones. On clean contexts the cost is abstention, which rises in
-\FTwoAbstUp{} of \FTwoAbstTests{} comparisons (+\FTwoAbstMistralCons{} to
-+\FTwoAbstMistralRel{} points); accuracy falls significantly only for Mistral
-(\FTwoAccMistralCons{} points with the consistency prompt,
-\FTwoAccMistralRel{} with the reliability prompt).
-
-Fig.~\ref{fig:rq2} shows how the reductions arise (exploratory). They are not
+\FTwoAsrTests{} confirmatory comparisons (F2), changing it by \FTwoAsrLlamaRel{} to
+\FTwoAsrMistralRel{} points; for Qwen the reliability prompt shows no
+detectable effect (+\FTwoAsrQwenRel, 95\% CI \FTwoAsrQwenRelLo{} to
+\FTwoAsrQwenRelHi), which rules out large effects but not small ones. On clean
+contexts abstention rises in \FTwoAbstUp{} of \FTwoAbstTests{} comparisons
+(+\FTwoAbstMistralCons{} to +\FTwoAbstMistralRel{} points), and accuracy falls
+significantly only for Mistral (\FTwoAccMistralCons{} points with the
+consistency prompt, \FTwoAccMistralRel{} with the reliability prompt). The
+per-$\rho$ differences (exploratory; figure in the repository) are not
 concentrated at intermediate $\rho$ for every model: for Mistral with the
 reliability prompt the reduction grows with $\rho$ and is largest at $\rho=1$,
-where no clean passage is left to compare against, while abstention rises by a
-similar amount; Llama with the reliability prompt changes only at $\rho=1$. Of
-the answers poisoned under the plain prompt, \TransStayMin--\TransStayMax\,\%
-stay poisoned under a meta-prompt; the others mostly become abstentions for
-Mistral with the reliability prompt (\TransMistralRelAbstain\,\%, against
-\TransMistralRelCorrect\,\% correct) and spread over abstentions, correct and
-other answers for Llama. The prompts reduce ASR mostly by refusing, not by
-recovering the true answer. H2 is \emph{partly supported}: the reductions
-exist, but they are not concentrated at intermediate $\rho$, and the accuracy
-cost is not small for Mistral. Single cells are noisy: the median minimum
-detectable difference is \MddMedian{} points, and \MddUnderpowered{} of
-\MddCells{} cells have less than 80\% power for a five-point difference.
+where no clean passage is left to compare against, and Llama with the
+reliability prompt changes only at $\rho=1$. Of the answers poisoned under the
+plain prompt, \TransStayMin--\TransStayMax\,\% stay poisoned under a
+meta-prompt; for Mistral with the reliability prompt the others are mostly
+abstentions (\TransMistralRelAbstain\,\%, against \TransMistralRelCorrect\,\%
+correct). The prompts reduce ASR mostly by refusing, not by recovering the true
+answer, and H2 is \emph{partly supported}. Single cells are noisy: the median
+minimum detectable difference is \MddMedian{} points, and \MddUnderpowered{}
+of \MddCells{} cells have under 80\% power for five points.
 
 \subsection{Conflict awareness (RQ3)}\label{sec:rq3}
-With $\rho$, prompt and type held fixed, flagged responses are less often
-poisoned for all three models (F3, significant after Holm's correction): the
-odds ratio is \FThreeOrLlama{} (95\% CI \FThreeOrLlamaLo--\FThreeOrLlamaHi)
-for Llama, \FThreeOrMistral{} (\FThreeOrMistralLo--\FThreeOrMistralHi) for
-Mistral and \FThreeOrQwen{} (\FThreeOrQwenLo--\FThreeOrQwenHi) for Qwen.
-Flagged answers are still often poisoned
-(\FThreeAsrFlaggedMistral--\FThreeAsrFlaggedQwen\,\%), and the test shows an
-association, not that noticing a conflict prevents poisoning. Flag rates are
-read against each model's clean baseline, which the over-flagging judge puts
-at \FlagBaseMistral\,\% (Mistral), \FlagBaseQwen\,\% (Qwen) and
-\FlagBaseLlama\,\% (Llama). Above it, flags peak at $\rho=0.5$, where clean
-and poisoned passages are tied (+\FlagDiffLlamaRhoHalf,
-+\FlagDiffMistralRhoHalf{} and +\FlagDiffQwenRhoHalf{} points), and fall at
-$\rho=1$, where all passages agree (+\FlagDiffLlamaRhoOne,
-+\FlagDiffMistralRhoOne, +\FlagDiffQwenRhoOne; Fig.~3 in the repository). H3
-is \emph{supported}, as an association.
+With $\rho$, prompt and type fixed, flagged responses are less often poisoned
+for all three models (F3, significant after Holm's correction; odds ratios
+\FThreeOrMistral--\FThreeOrLlama), yet flagged answers are still poisoned in
+\FThreeAsrFlaggedMistral--\FThreeAsrFlaggedQwen\,\% of cases: the test shows
+an association, not that noticing a conflict prevents poisoning. Flags are
+read against each model's clean baseline
+(\FlagBaseMistral--\FlagBaseLlama\,\%, partly inflated by the judge's over-flagging).
+Above it they peak at $\rho=0.5$, where clean and poisoned passages are tied
+(+\FlagDiffMistralRhoHalf{} to +\FlagDiffLlamaRhoHalf{} points), and fall at
+$\rho=1$, where all passages agree (+\FlagDiffMistralRhoOne{} to
++\FlagDiffLlamaRhoOne). H3 is \emph{supported}, as an association.
 
 \subsection{Poison types, models and further measures (RQ4)}\label{sec:rq4}
-All \FFourSig{} interaction blocks of F4 are significant
-($\rho\times$type $\chi^2(\FFourDfRhoType)=\FFourChiRhoType$, prompt$\times$type
-$\chi^2(\FFourDfPromptType)=\FFourChiPromptType$, $\rho\times$model
-$\chi^2(\FFourDfRhoModel)=\FFourChiRhoModel$, prompt$\times$model
-$\chi^2(\FFourDfPromptModel)=\FFourChiPromptModel$), but the differences
-behind them are small. Pooled over $\rho>0$, the poison types differ by at
-most \TypeSpreadPooledMax{} points within a model (at most \TypeSpreadMax{} at
-a single $\rho$), with no consistent order; the models differ more, Llama
-being poisoned less often (\TypeAsrPooledLlama\,\%) than Mistral
-(\TypeAsrPooledMistral\,\%) and Qwen (\TypeAsrPooledQwen\,\%). H4 is
-\emph{partly supported}: the interactions exist, but more authoritative
-framing does not make a poison more effective here.
+All \FFourSig{} interaction blocks of F4 are significant ($\chi^2$ from
+\FFourChiRhoType{} to \FFourChiPromptModel), but the differences behind them
+are small: pooled over $\rho>0$ the poison types differ by at most
+\TypeSpreadPooledMax{} points within a model (\TypeSpreadMax{} at a single
+$\rho$), in no consistent order, while Llama is poisoned less often
+(\TypeAsrPooledLlama\,\%) than Mistral (\TypeAsrPooledMistral\,\%) and Qwen
+(\TypeAsrPooledQwen\,\%). H4 is \emph{partly supported}: the interactions
+exist, but authoritative framing does not make a poison more effective here.
 
-The remaining results are exploratory. At $\rho=0.25$ Qwen is poisoned in
-\PosAsrQwenFirst\,\% (\PosAsrQwenFirstLo--\PosAsrQwenFirstHi) of cases when
-the single poisoned passage comes first, against
-\PosAsrQwenThird--\PosAsrQwenSecond\,\% in the middle positions; the other
-models show no clear primacy. With BM25 retrieval, \RetrShareLlamaEffNone\,\%
-of the retrieved contexts contain no answer-bearing passage and
-\RetrShareLlamaEffHundred\,\% are fully poisoned; where answer-bearing passages
-are retrieved, ASR follows their effective poisoned share rather than the
-nominal condition. Invented names or numbers are rare with controlled
-passages (\HallQwenRhoZero--\HallMistralRhoOne\,\% of responses; detector
-precision \HallPrecision, misses \HallMiss) and reach \HallLlamaRetrieval\,\%
-for Llama with retrieval. Self-consistency over five samples ranges from
-\ScRangeMin{} to \ScRangeMax\,\% (agreement on the outcome:
-\ScOutcomeRangeMin--\ScOutcomeRangeMax\,\%); it is highest for Qwen, falls from
-$\rho=0$ to $\rho=1$ for every model and prompt (Qwen, plain prompt:
-\ScQwenPlainRhoZero{} to \ScQwenPlainRhoOne\,\%), and is highest with the plain
-prompt. Finally, excluding the \AuditFlagged{} audit-flagged questions leaves
-all \SensFlaggedSame{} of \SensConclusions{} confirmatory conclusions
-unchanged. Excluding the \LeakQuestions{} questions whose poison leaks the gold
-answer, on which ASR is \LeakDiffMistral--\LeakDiffLlama{} points lower,
-leaves \SensLeaksSame{}: Llama's ASR reduction with the reliability prompt and
-Mistral's accuracy cost with the consistency prompt lose significance
-(Table~T3 in the repository).
+Exploratory results follow. At $\rho=0.25$ Qwen is poisoned in
+\PosAsrQwenFirst\,\% of cases when the single poisoned passage comes first,
+against \PosAsrQwenThird--\PosAsrQwenSecond\,\% in the middle positions. With
+BM25, \RetrShareLlamaEffNone\,\% of the retrieved contexts contain no
+answer-bearing passage; elsewhere ASR follows the effective poisoned share.
+Hallucinations are rare with controlled passages
+(\HallQwenRhoZero--\HallMistralRhoOne\,\% of responses; precision
+\HallPrecision, misses \HallMiss) and reach \HallLlamaRetrieval\,\% for Llama
+with retrieval. Self-consistency over five samples ranges from \ScRangeMin{}
+to \ScRangeMax\,\% (outcome agreement \ScOutcomeRangeMin--\ScOutcomeRangeMax\,\%);
+it is highest for Qwen and with the plain prompt, and falls from $\rho=0$ to
+$\rho=1$ for every model and prompt. Without the \AuditFlagged{}
+audit-flagged questions all \SensFlaggedSame{} confirmatory conclusions hold;
+without the \LeakQuestions{} questions whose poison leaks the gold answer (ASR
+\LeakDiffMistral--\LeakDiffLlama{} points lower on them) \SensLeaksSame{} of
+\SensConclusions{} hold, as Llama's reliability-prompt ASR reduction and
+Mistral's consistency-prompt accuracy cost lose significance.
 
 \section{Concluding Remarks}\label{sec:conclusions}
 \placeholder{Critical discussion, limitations and future work, written in
