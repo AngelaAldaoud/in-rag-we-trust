@@ -73,8 +73,7 @@ instruction-tuned language models answer when part of the retrieved evidence
 is deliberately false, and can simple prompt-level instructions make them
 more reliable?} A user of an open model cannot retrain it but can change what
 it is told, so whether an instruction to check the passages protects, and at
-what cost, is worth measuring. We also record whether the model states that
-the passages conflict, since noticing a conflict and resisting it differ.
+what cost, is worth measuring.
 
 Our contribution is a measurement, not a new method. We use 500 multi-hop
 questions from HotpotQA \citep{yang2018hotpotqa}, with contexts in which the
@@ -204,10 +203,7 @@ never read as no effect.
 
 \subsection{Revisions to the planned design}\label{sec:revisions}
 Five rules changed after pilot checks and before any main-run response (target
-generation, output cap, BM25 tie-breaking, two added outcomes, the judge as an
-upper bound); none touched the research questions, hypotheses, factors or
-tests. Each is documented with the check that triggered it in the project
-notes.
+generation, output cap, BM25 tie-breaking, two added outcomes, the judge as an upper bound), none touching the research questions, hypotheses, factors or tests; each is documented with its triggering check in the project notes.
 
 \section{Experimental Results}\label{sec:results}
 
@@ -307,8 +303,7 @@ against \PosAsrQwenThird--\PosAsrQwenSecond\,\% in the middle positions. With
 BM25, \RetrShareLlamaEffNone\,\% of the retrieved contexts contain no
 answer-bearing passage; elsewhere ASR follows the effective poisoned share.
 Hallucinations are rare with controlled passages
-(\HallQwenRhoZero--\HallMistralRhoOne\,\% of responses; precision
-\HallPrecision, misses \HallMiss) and reach \HallLlamaRetrieval\,\% for Llama
+(\HallQwenRhoZero--\HallMistralRhoOne\,\% of responses) and reach \HallLlamaRetrieval\,\% for Llama
 with retrieval. Self-consistency over five samples ranges from \ScRangeMin{}
 to \ScRangeMax\,\%; it is highest for Qwen and with the plain prompt, and
 falls from $\rho=0$ to $\rho=1$ for every model and prompt. Without the
