@@ -375,8 +375,8 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 
 ### Figure 4 · ASR by poison type (RQ4, F4)
 - **What it shows:** ASR for the four poison types, per model and rho, with Wilson 95% CIs, on an axis that starts at 0.
-- **How to read it:** within a model, the types differ by at most 1.4 points, with no consistent order. Llama is poisoned less often than Mistral and Qwen (about 26% vs 29.5% over rho>0).
-- **What it means:** the interaction tests are significant, but with 72,000 responses even tiny differences are detectable; the figure shows they are small. The "more plausible lies work better" idea is not supported here.
+- **How to read it:** at each rho the four markers sit almost on top of each other. Pooled over rho>0, the types differ by at most about 1.4 points within a model; at a single rho the largest gap is 3.7 points (Mistral at rho=0.75), and the order of types changes from one rho to the next. Llama is poisoned less often than Mistral and Qwen (about 26% vs 29.5% over rho>0).
+- **What it means:** the interaction tests are significant, but with 72,000 responses even tiny differences are detectable; the figure shows they are small and without a consistent direction. The "more plausible lies work better" idea is not supported here.
 - **Its limitation:** the four types share one false answer and differ by one framing sentence, a weak manipulation of plausibility.
 
 
