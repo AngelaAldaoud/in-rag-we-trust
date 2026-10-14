@@ -17,3 +17,7 @@ data/raw/
 
 # Model outputs (D150): canonical copy on Google Drive, never committed
 runs/
+paper/_check.*
+paper/*.log
+paper/*.blg
+paper/report.pdf
