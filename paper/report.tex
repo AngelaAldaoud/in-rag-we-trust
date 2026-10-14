@@ -354,13 +354,99 @@ Responses without an answer line are rare except for Llama
 512-token cap; Mistral \NoAnswerMistral\,\%, Qwen \NoAnswerQwen\,\%).
 
 \subsection{Effect of meta-prompts (RQ2)}\label{sec:rq2}
-\placeholder{Written in Block G2.}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig2_prompt_effects.pdf}
+\caption{Meta-prompt minus plain prompt by share of poisoned passages $\rho$:
+change in ASR, accuracy and abstention (rows) for the consistency and
+reliability prompts (columns), with question-clustered 95\% bootstrap
+intervals. Exploratory per-$\rho$ view of the pooled F2 tests.}
+\label{fig:rq2}
+\end{figure}
+Over all poisoned conditions the meta-prompts lower ASR in \FTwoAsrSig{} of
+\FTwoAsrTests{} confirmatory comparisons (F2). With the consistency prompt ASR
+changes by \FTwoAsrLlamaCons, \FTwoAsrMistralCons{} and \FTwoAsrQwenCons{}
+points (Llama, Mistral, Qwen), with the reliability prompt by
+\FTwoAsrLlamaRel{} and \FTwoAsrMistralRel{} points; for Qwen the reliability
+prompt shows no detectable effect (+\FTwoAsrQwenRel, 95\% CI
+\FTwoAsrQwenRelLo{} to \FTwoAsrQwenRelHi), which rules out large effects but
+not small ones. On clean contexts the cost is abstention, which rises in
+\FTwoAbstUp{} of \FTwoAbstTests{} comparisons (+\FTwoAbstMistralCons{} to
++\FTwoAbstMistralRel{} points); accuracy falls significantly only for Mistral
+(\FTwoAccMistralCons{} points with the consistency prompt,
+\FTwoAccMistralRel{} with the reliability prompt).
+
+Fig.~\ref{fig:rq2} shows how the reductions arise (exploratory). They are not
+concentrated at intermediate $\rho$ for every model: for Mistral with the
+reliability prompt the reduction grows with $\rho$ and is largest at $\rho=1$,
+where no clean passage is left to compare against, while abstention rises by a
+similar amount; Llama with the reliability prompt changes only at $\rho=1$. Of
+the answers poisoned under the plain prompt, \TransStayMin--\TransStayMax\,\%
+stay poisoned under a meta-prompt; the others mostly become abstentions for
+Mistral with the reliability prompt (\TransMistralRelAbstain\,\%, against
+\TransMistralRelCorrect\,\% correct) and spread over abstentions, correct and
+other answers for Llama. The prompts reduce ASR mostly by refusing, not by
+recovering the true answer. H2 is \emph{partly supported}: the reductions
+exist, but they are not concentrated at intermediate $\rho$, and the accuracy
+cost is not small for Mistral. Single cells are noisy: the median minimum
+detectable difference is \MddMedian{} points, and \MddUnderpowered{} of
+\MddCells{} cells have less than 80\% power for a five-point difference.
 
 \subsection{Conflict awareness (RQ3)}\label{sec:rq3}
-\placeholder{Written in Block G2.}
+With $\rho$, prompt and type held fixed, flagged responses are less often
+poisoned for all three models (F3, significant after Holm's correction): the
+odds ratio is \FThreeOrLlama{} (95\% CI \FThreeOrLlamaLo--\FThreeOrLlamaHi)
+for Llama, \FThreeOrMistral{} (\FThreeOrMistralLo--\FThreeOrMistralHi) for
+Mistral and \FThreeOrQwen{} (\FThreeOrQwenLo--\FThreeOrQwenHi) for Qwen.
+Flagged answers are still often poisoned
+(\FThreeAsrFlaggedMistral--\FThreeAsrFlaggedQwen\,\%), and the test shows an
+association, not that noticing a conflict prevents poisoning. Flag rates are
+read against each model's clean baseline, which the over-flagging judge puts
+at \FlagBaseMistral\,\% (Mistral), \FlagBaseQwen\,\% (Qwen) and
+\FlagBaseLlama\,\% (Llama). Above it, flags peak at $\rho=0.5$, where clean
+and poisoned passages are tied (+\FlagDiffLlamaRhoHalf,
++\FlagDiffMistralRhoHalf{} and +\FlagDiffQwenRhoHalf{} points), and fall at
+$\rho=1$, where all passages agree (+\FlagDiffLlamaRhoOne,
++\FlagDiffMistralRhoOne, +\FlagDiffQwenRhoOne; Fig.~3 in the repository). H3
+is \emph{supported}, as an association.
 
-\subsection{Poison types, models and realistic retrieval (RQ4)}\label{sec:rq4}
-\placeholder{Written in Block G2.}
+\subsection{Poison types, models and further measures (RQ4)}\label{sec:rq4}
+All \FFourSig{} interaction blocks of F4 are significant
+($\rho\times$type $\chi^2(\FFourDfRhoType)=\FFourChiRhoType$, prompt$\times$type
+$\chi^2(\FFourDfPromptType)=\FFourChiPromptType$, $\rho\times$model
+$\chi^2(\FFourDfRhoModel)=\FFourChiRhoModel$, prompt$\times$model
+$\chi^2(\FFourDfPromptModel)=\FFourChiPromptModel$), but the differences
+behind them are small. Pooled over $\rho>0$, the poison types differ by at
+most \TypeSpreadPooledMax{} points within a model (at most \TypeSpreadMax{} at
+a single $\rho$), with no consistent order; the models differ more, Llama
+being poisoned less often (\TypeAsrPooledLlama\,\%) than Mistral
+(\TypeAsrPooledMistral\,\%) and Qwen (\TypeAsrPooledQwen\,\%). H4 is
+\emph{partly supported}: the interactions exist, but more authoritative
+framing does not make a poison more effective here.
+
+The remaining results are exploratory. At $\rho=0.25$ Qwen is poisoned in
+\PosAsrQwenFirst\,\% (\PosAsrQwenFirstLo--\PosAsrQwenFirstHi) of cases when
+the single poisoned passage comes first, against
+\PosAsrQwenThird--\PosAsrQwenSecond\,\% in the middle positions; the other
+models show no clear primacy. With BM25 retrieval, \RetrShareLlamaEffNone\,\%
+of the retrieved contexts contain no answer-bearing passage and
+\RetrShareLlamaEffHundred\,\% are fully poisoned; where answer-bearing passages
+are retrieved, ASR follows their effective poisoned share rather than the
+nominal condition. Invented names or numbers are rare with controlled
+passages (\HallQwenRhoZero--\HallMistralRhoOne\,\% of responses; detector
+precision \HallPrecision, misses \HallMiss) and reach \HallLlamaRetrieval\,\%
+for Llama with retrieval. Self-consistency over five samples ranges from
+\ScRangeMin{} to \ScRangeMax\,\% (agreement on the outcome:
+\ScOutcomeRangeMin--\ScOutcomeRangeMax\,\%); it is highest for Qwen, falls from
+$\rho=0$ to $\rho=1$ for every model and prompt (Qwen, plain prompt:
+\ScQwenPlainRhoZero{} to \ScQwenPlainRhoOne\,\%), and is highest with the plain
+prompt. Finally, excluding the \AuditFlagged{} audit-flagged questions leaves
+all \SensFlaggedSame{} of \SensConclusions{} confirmatory conclusions
+unchanged. Excluding the \LeakQuestions{} questions whose poison leaks the gold
+answer, on which ASR is \LeakDiffMistral--\LeakDiffLlama{} points lower,
+leaves \SensLeaksSame{}: Llama's ASR reduction with the reliability prompt and
+Mistral's accuracy cost with the consistency prompt lose significance
+(Table~T3 in the repository).
 
 \section{Concluding Remarks}\label{sec:conclusions}
 \placeholder{Critical discussion, limitations and future work, written in
