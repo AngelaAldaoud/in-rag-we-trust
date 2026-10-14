@@ -24,22 +24,20 @@ def conf() -> dict[str, pd.DataFrame]:
     return {"f1": f1, "f2": f2, "f3": f3, "f4": f4}
 
 
-def sens(change: bool = True) -> dict[tuple[str, str], pd.DataFrame]:
+def sens(change: tuple[str, str] | None = ("leaks", "f2")) -> dict[tuple[str, str], pd.DataFrame]:
+    """Same schema as the real sensitivity CSVs: F4 has no CI columns."""
     out = {}
     for kind in tb.KINDS:
         for fam, d in conf().items():
             s = d.rename(columns={"estimate": "estimate_primary", "ci_low": "ci_low_primary",
                                   "ci_high": "ci_high_primary", "p_holm": "p_holm_primary"})
-            for c in ("estimate", "ci_low", "ci_high"):
-                s[f"{c}_sens"] = s.get(f"{c}_primary", math.nan)
-            s["ci_low_primary"] = s.get("ci_low_primary", math.nan)
-            s["ci_high_primary"] = s.get("ci_high_primary", math.nan)
-            s["ci_low_sens"] = s["ci_low_primary"]
-            s["ci_high_sens"] = s["ci_high_primary"]
-            s["p_holm_sens"] = s["p_holm_primary"]
+            s = s.drop(columns=[c for c in ("family", "df", "p_raw", "estimate_kind") if c in s.columns])
+            s["estimate_sens"], s["p_holm_sens"] = s["estimate_primary"], s["p_holm_primary"]
+            if fam != "f4":
+                s["ci_low_sens"], s["ci_high_sens"] = s["ci_low_primary"], s["ci_high_primary"]
             s["conclusion_primary"] = s["conclusion_sens"] = "down"
             s["same_conclusion"] = True
-            if change and (kind, fam) == ("leaks", "f2"):
+            if change == (kind, fam):
                 s.loc[0, ["conclusion_sens", "same_conclusion", "p_holm_sens"]] = ["n.s.", False, 0.2]
             out[(kind, fam)] = s
     return out
@@ -73,8 +71,13 @@ def test_robustness_counts_and_changed_rows():
     assert len(changed) == 1 and "Llama-3.1-8B, cons." in changed[0][1] and changed[0][6] == "down $\\to$ n.s."
 
 
+def test_f4_sensitivity_without_ci_columns():
+    _, changed = tb.robustness_rows(sens(change=("flagged", "f4")))
+    assert len(changed) == 1 and changed[0][2] == "$\\chi^2=22.2$" and "[" not in changed[0][2]
+
+
 def test_robustness_without_changes_says_so():
-    assert "No conclusion changed." in tb.render_robustness(sens(change=False))
+    assert "No conclusion changed." in tb.render_robustness(sens(change=None))
 
 
 def test_main_writes_three_tables(tmp_path):
