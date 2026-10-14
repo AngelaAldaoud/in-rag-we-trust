@@ -406,3 +406,9 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Its limitation:** one changed row has a 95% interval that excludes 0 but Holm p=0.181. The interval is per comparison; the verdict uses the family-wise corrected p.
 
 
+
+### Paper Fig 1: accuracy and attack success against the share of poisoned passages (RQ1, H1)
+- **What it shows:** per model, accuracy (open) falls and ASR (filled) rises as rho goes from 0 to 1; dotted line = closed-book accuracy; vertical lines = first rho where ASR passes accuracy.
+- **How to read it:** each point pools prompts and poison types; ASR passes accuracy at rho = 0.75 under the rules for all three models; under the judge-based upper bound Llama's crossover moves to 1.
+- **What it means:** the models follow the majority of the passages, and at rho = 1 accuracy falls below closed-book: false context overrides what the model knows.
+- **Its limitation:** accuracy is a bracket (rules = lower bound), and my hypothesis placed the majority at 0.5, which with four passages is a tie.

@@ -2985,6 +2985,20 @@ revisions table to the repository is kept in reserve if the final body exceeds 8
 \paragraph{Floats.} The Results use Fig.~1 and Fig.~2 (D303, D307). Fig.~3, Fig.~4 and Tables T1--T3 stay in the
 repository and are cited by the text; Fig.~5 is for the slides.
 
+\section{G2.2--G2.4: Results, Concluding Remarks, front and back matter}
+
+\paragraph{Results.} Section~3 reports RQ1 with Fig.~1 and RQ2--RQ4 in text, with each hypothesis verdict
+stated at the end of its subsection. Every result is a macro from \texttt{numbers.tex} or \texttt{numbers\_sc.tex};
+only the run facts in 3.1 are typed (D308). Macro meanings were checked before citing: \verb|\HallMax| is Llama
+with retrieval, not the controlled contexts, so the controlled range is cited cell by cell; closed-book
+``hallucination'' is not reported, since without passages every name counts as absent.
+
+\paragraph{Length.} Measured after each pass, the paper went from about 10 pages to 8 pages including references:
+Fig.~2 and the revisions table moved to the repository and these notes, the Methodology points to the repository
+for details, captions were shortened and Fig.~1 drawn at 2.0\,in (D309, D310). The abstract, the Introduction's
+findings sentence, a reproducibility sentence (D135, D139, D185), the AI-use statement and the availability
+statement (D311) were written last. Commit \texttt{ee3af8b} carries the Concluding Remarks under the previous
+commit's message because the same command ran twice.
 
 
 \chapter{Decision Log}\label{ch:decisions}
@@ -5090,6 +5104,44 @@ rejected, and a one-sentence justification for the oral discussion.
   \item[Interview line.] ``When the space ran out, I kept the evidence of how my design changed and moved the summary table to the repository.''
 \end{description}
 \end{decisionbox}
+
+\begin{decisionbox}{D308 --- Run facts typed once in Section 3.1}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] GPU, compute units, completion and judge-label counts are typed in 3.1; every result elsewhere is a macro.
+  \item[Why.] They describe the run, were verified in Block E, and cannot drift from the analysis; generating them would have cost an hour of new code on the deadline day.
+  \item[Alternatives.] Generating them as macros in \texttt{numbers.py}.
+  \item[Interview line.] ``Results come from generated macros; the only typed numbers are fixed facts about the run, checked in Block E.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D309 --- Fig.~2 to the repository; Results compressed}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] Results reported as ranges with intervals in the repository tables; Fig.~2 kept in the repository and slides; Methodology tightened again.
+  \item[Why.] Measured, the Results took 3.5 pages against 2.1; RQ2's findings can be stated in text with macros.
+  \item[Alternatives.] Removing findings from 3.5; keeping Fig.~2 and exceeding the limit.
+  \item[Interview line.] ``Fig.~2 is in my slides; in the paper I kept every finding and moved the picture.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D310 --- Eight pages including references}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The paper meets the safe reading of the limit (8 pages including references): the revisions table moves to these notes (Section~2.6 names the five changes), the Methodology points to the repository for details, captions are shortened and Fig.~1 is drawn at 2.0\,in. This meets the stricter reading that D305 had relaxed.
+  \item[Why.] The student set the safe reading as the target; the cuts remove method detail and repetition, never findings, limitations or discussion.
+  \item[Alternatives.] References on page 9 (the fallback); cutting discussion.
+  \item[Interview line.] ``The paper is eight pages with references; every detail I cut is in the repository or the notes.''
+\end{description}
+\end{decisionbox}
+
+\begin{decisionbox}{D311 --- Availability statement}
+\begin{description}[nosep, leftmargin=0pt]
+  \item[Decision.] The paper cites the public GitHub mirror; the raw model outputs are available from the author on request, their integrity checkable against the recorded SHA-256 fingerprint (D150, D185). Duplicate links were removed from two bibliography entries (both copies identical).
+  \item[Why.] It states the truth today at no extra cost; a public archive (e.g.\ Zenodo) can be added later.
+  \item[Alternatives.] A public Drive link; a Zenodo archive.
+  \item[Interview line.] ``Code and derived data are public; the raw generations are on request and verifiable by fingerprint.''
+\end{description}
+\end{decisionbox}
+
+
 \section{Block F}\label{sec:decisions-f}
 
 \begin{decisionbox}{D250 --- Hypotheses split into tested and descriptive parts; verdict rule fixed}
@@ -5946,7 +5998,19 @@ ACL Anthology, arXiv) or the course PDF.
 207 & Page trimming
   & Two trimming passes of the Introduction and Methodology (D306, D307). Mistake: the first pass was estimated to save about 640\,pt but saved about 120\,pt
   & Section positions measured from the compile log after each pass \\
-  \end{longtable}
+208 & Push verification
+  & Mistake: a status line assumed a push had succeeded instead of checking it
+  & Since then, every step confirms the state with \texttt{git log} and \texttt{git status} \\
+209 & Editing method
+  & Mistake: whole-file replacements were given for small changes, costing the student's usage; replaced by targeted terminal edits with checks
+  & Each edit verified by \texttt{grep} counts before the commit \\
+210 & Results, Concluding Remarks, front and back matter
+  & Sections 3--4, abstract, findings sentence, AI-use and availability statements (D308--D311); macro meanings checked before citing
+  & Read and accepted by the student; compiled with 0 errors; values checked against \texttt{numbers.tex} \\
+211 & Fitting the page limit
+  & Trimming passes measured from the compile log; estimates were repeatedly optimistic, so each pass was measured before the next
+  & Final PDF: 8 pages including references, read in the compile log \\
+\end{longtable}
 }
 
 \section{Block F}\label{sec:ailog-f}
