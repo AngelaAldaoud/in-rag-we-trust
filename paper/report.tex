@@ -86,9 +86,7 @@ contexts arise. Scoring rules and confirmatory tests were fixed before the
 main run and validated by hand on a pilot set. We find that all three models
 follow the majority of the passages, that the meta-prompts lower attack
 success mainly by making the models abstain, and that stating a conflict goes
-with resisting it but does not guarantee it. Sections~\ref{sec:method}
-to~\ref{sec:conclusions} present the method, the results, and their discussion
-and limits.
+with resisting it but does not guarantee it.
 
 \section{Research Question and Methodology}\label{sec:method}
 
@@ -219,8 +217,7 @@ completions (96{,}000 greedy, 480{,}000 sampled) and 188{,}047 judge labels,
 with no resumed run. Each request had its own seed; with one GPU type,
 residual hardware non-determinism remains. The raw outputs had the same
 SHA-256 fingerprint on the cloud machine and locally, and were scored by the
-evaluator frozen at tag \texttt{evaluator-v1}. Rates pool prompts and poison
-types unless stated; estimates with intervals are in Tables T1--T3 of the
+evaluator frozen at tag \texttt{evaluator-v1}. Estimates with intervals are in Tables T1--T3 of the
 repository.
 
 \subsection{Robustness to poison (RQ1)}\label{sec:rq1}
@@ -317,7 +314,7 @@ to \ScRangeMax\,\%; it is highest for Qwen and with the plain prompt, and
 falls from $\rho=0$ to $\rho=1$ for every model and prompt. Without the
 \AuditFlagged{} audit-flagged questions all \SensFlaggedSame{} confirmatory
 conclusions hold; without the \LeakQuestions{} questions whose poison leaks
-the gold answer (ASR \LeakDiffMistral--\LeakDiffLlama{} points lower on them)
+the gold answer
 \SensLeaksSame{} of \SensConclusions{} hold, as Llama's reliability-prompt ASR
 reduction and Mistral's consistency-prompt accuracy cost lose significance.
 
@@ -376,9 +373,9 @@ three evaluated models are research instruments, not writing aids.
 
 \bmhead{Code and data availability}
 Code, constructed data, analysis outputs, tables, figures and the generated
-result macros are in the public repository \placeholder{GitHub URL}, with
+result macros are in the public repository \url{https://github.com/AngelaAldaoud/in-rag-we-trust}, with
 instructions to reproduce every table and figure.
-\placeholder{How to obtain the raw model outputs (D150).}
+The raw model outputs are not in the repository; they are available from the author on request, and their integrity can be checked against the SHA-256 fingerprint recorded in the project notes.
 
 \bibliography{refs}
 
