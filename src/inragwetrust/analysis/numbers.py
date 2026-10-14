@@ -32,8 +32,9 @@ TENS = {2: "Twenty", 3: "Thirty", 4: "Forty", 5: "Fifty", 6: "Sixty", 7: "Sevent
 NAME = re.compile(r"[A-Za-z]+")
 CHECKS = ("NQuestions", "FOneOrLlama", "AsrLlamaAllRhoOne", "AccLlamaAllRhoOne", "CrossRulesLlama",
           "CrossUpperLlama", "StepMaxLlama", "FTwoAsrSig", "FTwoAsrTests", "FThreeSig", "FFourSig",
-          "FlagDiffLlamaRhoHalf", "TypeSpreadMax", "LeakQuestions", "MddMedian", "MddUnderpowered", "MddCells",
-          "AuditCandidates", "AuditFlagged", "SensFlaggedSame", "SensLeaksSame", "SensConclusions")
+          "FlagDiffLlamaRhoHalf", "TypeSpreadPooledMax", "TypeSpreadMax", "LeakQuestions", "MddMedian",
+          "MddUnderpowered", "MddCells", "AuditCandidates", "AuditFlagged", "SensFlaggedSame", "SensLeaksSame",
+          "SensConclusions")
 
 
 def word(s) -> str:
@@ -261,9 +262,11 @@ def flag_baseline(M: Macros, fb: pd.DataFrame) -> None:
 
 
 def type_model(M: Macros, tm: pd.DataFrame) -> None:
+    """Two spreads between poison types (D279): pooled over rho > 0, and the largest gap at one single rho."""
     need(tm, ["model", "poison_type", "rho", "n", "poisoned", "poisoned_lo", "poisoned_hi"], "explore_type_model")
-    M.section("ASR by poison type (percent, Wilson CI); spread = largest gap between types at one rho (points)")
-    spreads = []
+    M.section("ASR by poison type (percent, Wilson CI); TypeSpreadPooled = gap between types pooled over rho>0, "
+              "TypeSpread = largest gap at one rho (points)")
+    spreads, pooled_spreads = [], []
     for m, g in tm.groupby("model"):
         for _, r in g.iterrows():
             M.trio("TypeAsr" + MODEL[m] + word(r["poison_type"]) + rho_name(r["rho"]), r["poisoned"],
@@ -271,8 +274,15 @@ def type_model(M: Macros, tm: pd.DataFrame) -> None:
         spread = g.groupby("rho")["poisoned"].agg(lambda s: s.max() - s.min()).max()
         spreads.append(spread)
         M.add("TypeSpread" + MODEL[m], pct(spread))
+        sums = g.assign(k=g["poisoned"] * g["n"]).groupby("poison_type")[["k", "n"]].sum()
+        by_type = sums["k"] / sums["n"]
+        for t, v in by_type.items():
+            M.add("TypeAsrPooled" + MODEL[m] + word(t), pct(v))
+        pooled_spreads.append(by_type.max() - by_type.min())
+        M.add("TypeSpreadPooled" + MODEL[m], pct(pooled_spreads[-1]))
         M.add("TypeAsrPooled" + MODEL[m], pct((g["poisoned"] * g["n"]).sum() / g["n"].sum()))
     M.add("TypeSpreadMax", pct(max(spreads)))
+    M.add("TypeSpreadPooledMax", pct(max(pooled_spreads)))
 
 
 def transitions(M: Macros, tr: pd.DataFrame) -> None:

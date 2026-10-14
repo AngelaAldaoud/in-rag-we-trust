@@ -49,6 +49,16 @@ def test_largest_step_and_ranges():
     assert M.items["AsrRangeRhoOneMax"] == "55.0" and M.items["AsrLlamaAllRhoOneLo"] == "55.0"
 
 
+def test_type_spread_pooled_vs_single_rho():
+    rows = [("authority", 0.5, 0.10), ("authority", 1.0, 0.50), ("swap", 0.5, 0.14), ("swap", 1.0, 0.46)]
+    tm = pd.DataFrame([{"model": "mistral", "poison_type": t, "rho": r, "n": 100, "poisoned": p,
+                        "poisoned_lo": p - 0.01, "poisoned_hi": p + 0.01} for t, r, p in rows])
+    M = nb.Macros()
+    nb.type_model(M, tm)
+    assert M.items["TypeSpreadMistral"] == "4.0" and M.items["TypeSpreadPooledMistral"] == "0.0"
+    assert M.items["TypeAsrPooledMistralAuthority"] == "30.0" and M.items["TypeSpreadPooledMax"] == "0.0"
+
+
 def test_leak_question_count_must_agree_between_models():
     rows = [{"model": m, "leak_any": leak, "n_questions": (70 if m == "llama" else 71) if leak else 430,
              "poisoned": 0.2, "poisoned_lo": 0.1, "poisoned_hi": 0.3}
@@ -74,6 +84,7 @@ def test_frozen_numbers_regression():
     M = nb.build(REAL)
     expected = {"NQuestions": "500", "FOneOrLlama": "53.7", "FOneOrMistral": "64.9", "FOneOrQwen": "50.3",
                 "CrossRulesLlama": "0.75", "CrossUpperLlama": "1.00", "FTwoAsrSig": "5", "FTwoAsrTests": "6",
-                "FThreeSig": "3", "FFourSig": "4", "MddCells": "96", "AuditFlagged": "9", "AuditCandidates": "73",
+                "FThreeSig": "3", "FFourSig": "4", "MddCells": "96", "MddUnderpowered": "43", "MddMedian": "4.9",
+                "AuditFlagged": "9", "AuditCandidates": "73", "LeakQuestions": "70", "TypeSpreadMax": "3.7",
                 "SensConclusions": "28", "SensFlaggedSame": "28", "SensLeaksSame": "26"}
     assert {k: M.items[k] for k in expected} == expected
