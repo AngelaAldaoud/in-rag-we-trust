@@ -100,7 +100,7 @@ def fig_rho_curves(desc: pd.DataFrame, crossover: pd.DataFrame, closed_book: pd.
     cr = crossover[crossover["prompt"] == "all"].set_index(["model", "scoring"])["crossover"]
     cb = closed_book.set_index("model")["correct"]
     with plt.rc_context(RC):
-        fig, axes = plt.subplots(1, 3, figsize=(width, 2.7), sharey=True, layout="constrained")
+        fig, axes = plt.subplots(1, 3, figsize=(width, 2.0), sharey=True, layout="constrained")
         for i, (ax, m) in enumerate(zip(axes, MODELS)):
             g, c = d[d["model"] == m].sort_values("rho"), COLORS[m]
             for col, ls, face in (("asr", "-", c), ("acc", "--", "white")):
