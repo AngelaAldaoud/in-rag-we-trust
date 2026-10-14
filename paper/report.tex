@@ -392,10 +392,45 @@ without the \LeakQuestions{} questions whose poison leaks the gold answer (ASR
 \LeakDiffMistral--\LeakDiffLlama{} points lower on them) \SensLeaksSame{} of
 \SensConclusions{} hold, as Llama's reliability-prompt ASR reduction and
 Mistral's consistency-prompt accuracy cost lose significance.
-
 \section{Concluding Remarks}\label{sec:conclusions}
-\placeholder{Critical discussion, limitations and future work, written in
-Block G2.}
+The three open models we tested follow retrieved evidence almost mechanically.
+Their answers track the share of poisoned passages, attack success overtakes
+accuracy once the false passages are the majority, and full poisoning
+overrides answers the models give correctly without any passage. This matches
+the majority behaviour reported by \citet{jin2024tugofwar} and the overriding
+of correct priors reported by \citet{wu2024clasheval}, here measured with
+paired contexts that change one passage at a time. The practical consequence
+is that a 7--8B model in a RAG system is no more reliable than the share of
+trustworthy passages its retriever returns.
+
+Prompt-level defences help less than they appear to. The meta-prompts lower
+attack success by a few points, mostly by making the model abstain rather than
+recover the true answer, and the largest reduction comes with the largest
+accuracy cost on clean evidence (Mistral with the reliability prompt): the
+user gains caution, not discernment. Conflict statements are informative,
+since flagged answers are poisoned less often, but a flag is neither a
+guarantee nor shown to be a cause: flagged answers are still often poisoned,
+and the judge that detects flags over-flags. Poison framing barely mattered;
+the models differed more than the poison types.
+
+What the study does not show matters as much. Accuracy is a bracket between
+the rule-based lower bound and the judge-based upper bound, and Llama's
+crossover depends on which bound is used. H1 placed the majority at
+$\rho=0.5$, which with four passages is a tie; we kept the wording and report
+where the change actually occurs. The four poison types share one false answer
+and differ by one sentence, a weak manipulation of plausibility, and all
+poisons are synthetic. The flag result is an association measured by an
+imperfect judge ($\kappa=0.57$ for Qwen). Many single cells are under-powered,
+so a non-significant cell is not evidence of no effect. HotpotQA contributed
+comparison questions with implausible targets and some answer leaks, although
+the sensitivity analyses left nearly all conclusions unchanged. The retrieval
+check uses a small poisoned BM25 corpus, and all results come from three
+7--8B models on one dataset.
+
+Future work should test larger models, natural rather than synthetic conflicts
+such as outdated or disputed facts, dense and hybrid retrievers over realistic
+corpora, and defences that act on the passages, such as source scoring or
+cross-passage verification, rather than on the prompt alone.
 
 \backmatter
 
