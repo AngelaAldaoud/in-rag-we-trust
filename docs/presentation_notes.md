@@ -356,9 +356,9 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 ## Block F4 · Figures and tables
 
 ### Figure 1 · Acc and ASR vs rho (RQ1, F1)
-- **What it shows:** for each model, the share of poisoned answers (ASR, solid) and correct answers (Acc, dashed) as the share of poisoned passages rho grows from 0 to 1; shaded bands are Wilson 95% intervals; the dotted line is closed-book accuracy; vertical lines mark the crossover.
-- **How to read it:** ASR rises from about 0% at rho=0 to 55-58% at rho=1, and Acc falls from 63-64% to 2-5%. The lines cross at rho=0.75 for all three models under the rules; under the judge-based upper bound Llama crosses only at 1.0 (dashed line).
-- **What it means:** the models follow the majority of the evidence. At rho=1 they are far less accurate (2-5%) than with no passages at all (11-15% closed-book): false context overrides what the model knows. The biggest jump is 0.5 -> 0.75, when the poison becomes the real majority (0.5 is a 2-2 tie).
+- **What it shows:** for each model, the share of poisoned answers (ASR, solid) and correct answers (Acc, dashed) as the share of poisoned passages rho grows from 0 to 1; shaded bands are Wilson 95% intervals; the dotted line is closed-book accuracy; vertical lines mark the first tested rho at which ASR exceeds Acc.
+- **How to read it:** ASR rises from about 0% at rho=0 to 55-58% at rho=1, and Acc falls from 63-64% to 2-5%. The curves cross between rho=0.5 and 0.75, so the first tested level with ASR above Acc is 0.75 for all three models under the rules; under the judge-based upper bound, Llama reaches it only at 1.0 (dashed line). The vertical line marks a tested level, not the exact crossing point.
+- **What it means:** the models follow the majority of the evidence. At rho=1 they are far less accurate (2-5%) than with no passages at all (11-15% closed-book): false context overrides what the model knows. The largest step is 0.5 -> 0.75 for Mistral and Qwen (+27.5 and +27.4 ASR points), when the poison becomes the actual majority (0.5 is a 2-2 tie), but 0.75 -> 1 for Llama (+22.9): Llama resists longer and gives way only when every passage agrees.
 - **Its limitation:** pooled over prompts and poison types; Acc is rule-based (Acc+ is about 20 points higher), and Llama's crossover depends on the scoring.
 
 ### Figure 2 · Meta-prompt minus plain (RQ2, F2)
@@ -379,11 +379,13 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **What it means:** the interaction tests are significant, but with 72,000 responses even tiny differences are detectable; the figure shows they are small. The "more plausible lies work better" idea is not supported here.
 - **Its limitation:** the four types share one false answer and differ by one framing sentence, a weak manipulation of plausibility.
 
+
+
 ### Figure 5 · What the meta-prompt does to answers that were poisoned under plain (RQ2 mechanism, exploratory)
-- **What it shows:** for answers poisoned under the plain prompt (rho>0), what the same question gets under each meta-prompt: still poisoned, abstain, correct or other.
-- **How to read it:** 64-80% stay poisoned; most of the rest become abstentions, few become correct. Example: Mistral-reliability at rho=1, ASR -13.4, abstention +18.5, Acc -0.5 points.
-- **What it means:** the meta-prompts do not repair answers; they make the model refuse.
-- **Its limitation:** exploratory and pooled over rho>0.
+- **What it shows:** for answers poisoned under the plain prompt (rho>0), what the same question gets under each meta-prompt: still poisoned, abstain, correct, or other (any other outcome, such as a different wrong answer or NoAnswer).
+- **How to read it:** 64-80% stay poisoned. For Mistral and Qwen, abstention is the main exit (Mistral-reliability: 19% abstain); for Llama the exits split about evenly between abstain, correct and other (consistency: 11 / 10 / 12%).
+- **What it means:** the meta-prompts mostly do not repair answers. Their net effect (Figure 2) is more abstention, and for Mistral-reliability at rho=1, ASR -13.4, abstention +18.5, Acc -0.5 points. Llama is the one model where a meta-prompt turns a noticeable share of poisoned answers into correct ones.
+- **Its limitation:** exploratory, pooled over rho>0; these are flows of single answers in both directions, so the net differences are read from Figure 2.
 
 ### Table T1 · Confirmatory tests
 - **What it shows:** all 28 planned tests (F1-F4), with estimate, 95% CI, raw p and Holm-adjusted p.
