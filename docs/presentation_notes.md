@@ -309,7 +309,7 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 - **Its limitation:** association, not cause; the judge over-flags and agrees least for Qwen; flagged answers are still poisoned 21-26% of the time.
 
 ### Result: models and poison types modify the effects, but the types barely differ (F4, H4)
-- **What it shows:** all four interaction tests are significant; overall ASR differs by at most 1.4 points between types.
+- **What it shows:** all four interaction tests are significant; overall ASR differs by at most 2.1 points between types.
 - **How to read it:** significance with 72,000 responses detects small differences; the size comes from the curves.
 - **What it means:** the "more plausible lies work better" claim is not supported here.
 - **Its limitation:** my four types share one false answer and differ by one sentence, a weak manipulation of plausibility.
@@ -375,7 +375,7 @@ One entry per result, table or plot (Rule 10). Each entry has four parts.
 
 ### Figure 4 · ASR by poison type (RQ4, F4)
 - **What it shows:** ASR for the four poison types, per model and rho, with Wilson 95% CIs, on an axis that starts at 0.
-- **How to read it:** at each rho the four markers sit almost on top of each other. Pooled over rho>0, the types differ by at most about 1.4 points within a model; at a single rho the largest gap is 3.7 points (Mistral at rho=0.75), and the order of types changes from one rho to the next. Llama is poisoned less often than Mistral and Qwen (about 26% vs 29.5% over rho>0).
+- **How to read it:** at each rho the four markers sit almost on top of each other. Pooled over rho>0, the types differ by at most about 2.1 points within a model; at a single rho the largest gap is 3.7 points (Mistral at rho=0.75), and the order of types changes from one rho to the next. Llama is poisoned less often than Mistral and Qwen (about 26% vs 29.5% over rho>0).
 - **What it means:** the interaction tests are significant, but with 72,000 responses even tiny differences are detectable; the figure shows they are small and without a consistent direction. The "more plausible lies work better" idea is not supported here.
 - **Its limitation:** the four types share one false answer and differ by one framing sentence, a weak manipulation of plausibility.
 
