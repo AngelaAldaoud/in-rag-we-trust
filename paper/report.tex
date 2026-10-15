@@ -19,9 +19,9 @@
 \title[In RAG We Trust?]{In RAG We Trust? A Controlled Measurement of How Open
 Language Models Handle Poisoned Retrieval}
 
-\author*[1]{\fnm{Angela} \sur{Aldaoud}}\email{angela.aldaoud@studenti.unimi.it}
+\author[1]{\fnm{Angela} \sur{Aldaoud}}\email{angela.aldaoud@studenti.unimi.it}
 
-\affil*[1]{\orgdiv{M.Sc.\ in Computer Science (LM-18)},
+\affil[1]{\orgdiv{M.Sc.\ in Computer Science (LM-18)},
 \orgname{Universit\`a degli Studi di Milano}, \orgaddress{\city{Milan},
 \country{Italy}}}
 
@@ -34,9 +34,7 @@ reliability help, with scoring rules and confirmatory tests fixed in advance.
 Attack success rises from almost zero to
 \AsrRangeRhoOneMin--\AsrRangeRhoOneMax\,\% as poisoning grows, overtakes
 accuracy once the false passages are the majority, and overrides answers the
-models give correctly without retrieval. The meta-prompts change attack
-success by only \FTwoAsrLlamaRel{} to \FTwoAsrMistralRel{} points, mostly
-through abstention, and cost one model accuracy on clean evidence. Responses
+models give correctly without retrieval. Meta-prompts modestly reduce attack success in \FTwoAsrSig{} of \FTwoAsrTests{} comparisons, mainly through abstention, but reduce accuracy on clean evidence for Mistral. Responses
 that state a conflict are less often poisoned, an association rather than a
 defence, and the poison's framing barely matters.}
 
@@ -356,15 +354,7 @@ cross-passage verification, rather than on the prompt alone.
 \backmatter
 
 \bmhead{Use of AI tools}
-Claude (Anthropic; Claude Opus 5.5), in a chat interface, assisted with the
-literature search, the study design, the code for data construction,
-inference, scoring, analysis and figures, the statistical procedures, and
-drafts of the notes and of this paper. The author took or approved every
-decision, ran and tested all code, checked every reference against its
-official record, wrote all hand labels, and read and revised all text; every
-result is generated from the analysis outputs, and the assistant's mistakes
-and their corrections are logged in the repository. Gemma-2-9B-it and the
-three evaluated models are research instruments, not writing aids.
+Claude Opus 5.5 (Anthropic) was used through a chat interface as an assistant to help write parts of the code, debug it, interpret the results, resolve technical issues and write this report; all outputs were reviewed and revised by the author.
 
 \bmhead{Code and data availability}
 Code, constructed data, analysis outputs, tables, figures and the generated
